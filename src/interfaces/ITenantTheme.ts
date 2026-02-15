@@ -1,0 +1,28 @@
+export interface TenantTheme {
+	primary?: string;
+	primaryForeground?: string;
+	secondary?: string;
+	secondaryForeground?: string;
+	background?: string;
+	foreground?: string;
+	surface?: string;
+	surfaceAlt?: string;
+	muted?: string;
+	mutedForeground?: string;
+	border?: string;
+	ring?: string;
+	accent?: string;
+	accentForeground?: string;
+	success?: string;
+	successLight?: string;
+	warning?: string;
+	warningLight?: string;
+	error?: string;
+	errorLight?: string;
+	info?: string;
+	infoLight?: string;
+	radiusSm?: string;
+	radiusMd?: string;
+	radiusLg?: string;
+	radiusXl?: string;
+}

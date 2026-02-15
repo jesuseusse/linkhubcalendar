@@ -1,0 +1,83 @@
+import { IUserRepository } from "../../domain/interfaces/IUserRepository";
+import { UserResponseDto, CreateCalendarSlotDto } from "../../domain/dtos/AuthDtos";
+import { toUserResponse } from "./mappers";
+
+export class AddCalendarSlotUseCase {
+  constructor(private userRepository: IUserRepository) {}
+
+  async execute(tenantId: string, userId: string, dto: CreateCalendarSlotDto): Promise<UserResponseDto> {
+    if (!dto.date || !dto.startTime || !dto.endTime) {
+      throw new Error("Date, start time, and end time are required");
+    }
+
+    if (dto.startTime >= dto.endTime) {
+      throw new Error("Start time must be before end time");
+    }
+
+    const user = await this.userRepository.addCalendarSlot(tenantId, userId, {
+      date: dto.date,
+      startTime: dto.startTime,
+      endTime: dto.endTime,
+      booked: false,
+    });
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    return toUserResponse(user);
+  }
+}
+
+export class DeleteCalendarSlotUseCase {
+  constructor(private userRepository: IUserRepository) {}
+
+  async execute(tenantId: string, userId: string, slotId: string): Promise<UserResponseDto> {
+    const user = await this.userRepository.deleteCalendarSlot(tenantId, userId, slotId);
+    if (!user) {
+      throw new Error("User not found");
+    }
+    return toUserResponse(user);
+  }
+}
+
+export class ReleaseCalendarSlotUseCase {
+  constructor(private userRepository: IUserRepository) {}
+
+  async execute(tenantId: string, userId: string, slotId: string): Promise<UserResponseDto> {
+    const user = await this.userRepository.updateCalendarSlotBooked(tenantId, userId, slotId, false);
+    if (!user) {
+      throw new Error("User or slot not found");
+    }
+    return toUserResponse(user);
+  }
+}
+
+export class GetPublicCalendarUseCase {
+  constructor(private userRepository: IUserRepository) {}
+
+  async execute(tenantId: string, username: string) {
+    const user = await this.userRepository.findByUsername(tenantId, username);
+    if (!user || !user.username) {
+      throw new Error("Profile not found");
+    }
+
+    if (!user.calendarEnabled) {
+      throw new Error("Calendar is not available");
+    }
+
+    const availableSlots = (user.calendarSlots || []).filter((slot) => !slot.booked);
+
+    return {
+      name: user.name,
+      username: user.username,
+      profilePhoto: user.profilePhoto,
+      calendarSlots: availableSlots.map((slot) => ({
+        id: slot.id,
+        date: slot.date,
+        startTime: slot.startTime,
+        endTime: slot.endTime,
+      })),
+    };
+  }
+}

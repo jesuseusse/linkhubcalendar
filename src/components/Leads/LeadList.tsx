@@ -1,0 +1,47 @@
+'use client';
+
+import { LeadDto } from '@/dtos/user.dto';
+
+interface Props {
+	leads: LeadDto[];
+	loading: boolean;
+}
+
+export function LeadList({ leads, loading }: Props) {
+	if (loading) {
+		return (
+			<p className='text-sm text-zinc-400 text-center py-4'>Cargando...</p>
+		);
+	}
+
+	if (leads.length === 0) {
+		return (
+			<div className='text-center py-8'>
+				<span
+					className='material-icons text-zinc-300 text-4xl mb-2'
+					aria-hidden='true'
+				>
+					mail_outline
+				</span>
+				<p className='text-sm text-zinc-400'>No hay leads registrados</p>
+			</div>
+		);
+	}
+
+	return (
+		<div className='space-y-3'>
+			{leads.map(lead => (
+				<div key={lead.id} className='border border-zinc-200 p-3'>
+					<div className='flex items-center justify-between mb-1'>
+						<p className='text-sm font-medium text-zinc-900'>{lead.name}</p>
+						<p className='text-xs text-zinc-400'>
+							{new Date(lead.createdAt).toLocaleDateString()}
+						</p>
+					</div>
+					<p className='text-xs text-zinc-500 mb-1'>{lead.email}</p>
+					<p className='text-sm text-zinc-700'>{lead.message}</p>
+				</div>
+			))}
+		</div>
+	);
+}
