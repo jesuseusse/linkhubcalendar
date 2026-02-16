@@ -41,26 +41,26 @@ export function LinkItem({ link, existingLinks, onUpdate, onDelete }: Props) {
 
 	if (editing) {
 		return (
-			<div className='border border-zinc-200 p-3 space-y-2'>
-				{error && <p className='text-xs text-red-600'>{error}</p>}
+			<div className='border border-border p-3 space-y-2'>
+				{error && <p className='text-xs text-error'>{error}</p>}
 				<input
 					type='text'
 					value={title}
 					onChange={e => setTitle(e.target.value)}
 					placeholder='Título'
-					className='w-full px-2 py-1 text-sm border border-zinc-300 focus:outline-none focus:border-zinc-900'
+					className='w-full px-2 py-1 text-sm border border-border focus:outline-none focus:border-foreground'
 				/>
 				<input
 					type='url'
 					value={url}
 					onChange={e => setUrl(e.target.value)}
 					placeholder='URL'
-					className='w-full px-2 py-1 text-sm border border-zinc-300 focus:outline-none focus:border-zinc-900'
+					className='w-full px-2 py-1 text-sm border border-border focus:outline-none focus:border-foreground'
 				/>
 				<div className='flex gap-2'>
 					<button
 						onClick={handleSave}
-						className='px-3 py-1 text-xs font-medium bg-zinc-900 text-white hover:bg-zinc-800 transition-colors'
+						className='px-3 py-1 text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors'
 					>
 						Guardar
 					</button>
@@ -71,7 +71,7 @@ export function LinkItem({ link, existingLinks, onUpdate, onDelete }: Props) {
 							setUrl(link.url);
 							setError(null);
 						}}
-						className='px-3 py-1 text-xs font-medium bg-zinc-100 text-zinc-600 hover:bg-zinc-200 transition-colors'
+						className='px-3 py-1 text-xs font-medium bg-muted text-muted-foreground hover:bg-muted transition-colors'
 					>
 						Cancelar
 					</button>
@@ -81,31 +81,31 @@ export function LinkItem({ link, existingLinks, onUpdate, onDelete }: Props) {
 	}
 
 	return (
-		<div className='flex items-center justify-between border border-zinc-200 px-3 py-2'>
+		<div className='flex items-center justify-between border border-border px-3 py-2'>
 			<div className='flex items-center gap-2 min-w-0'>
 				<span
-					className='material-icons text-zinc-400 text-base'
+					className='material-icons text-muted-foreground text-base'
 					aria-hidden='true'
 				>
 					{icon}
 				</span>
 				<div className='min-w-0'>
-					<p className='text-sm font-medium text-zinc-900 truncate'>
+					<p className='text-sm font-medium text-foreground truncate'>
 						{link.title}
 					</p>
-					<p className='text-xs text-zinc-400 truncate'>{link.url}</p>
+					<p className='text-xs text-muted-foreground truncate'>{link.url}</p>
 				</div>
 			</div>
 			<div className='flex gap-1 shrink-0'>
 				<button
 					onClick={() => setEditing(true)}
-					className='px-2 py-1 text-xs text-zinc-500 hover:text-zinc-900 transition-colors'
+					className='px-2 py-1 text-xs text-muted-foreground hover:text-foreground transition-colors'
 				>
 					Editar
 				</button>
 				<button
 					onClick={() => onDelete(link.id)}
-					className='px-2 py-1 text-xs text-red-500 hover:text-red-700 transition-colors'
+					className='px-2 py-1 text-xs text-error hover:text-error transition-colors'
 				>
 					Eliminar
 				</button>

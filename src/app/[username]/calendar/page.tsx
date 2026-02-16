@@ -10,8 +10,8 @@ export default async function PublicCalendarPage({ params }: { params: Promise<{
     return <PublicCalendarClient calendar={calendar} username={username} />;
   } catch {
     return (
-      <div className="min-h-screen bg-zinc-50 flex items-center justify-center">
-        <p className="text-sm text-zinc-500">Calendar is not available</p>
+      <div className="min-h-screen bg-surface flex items-center justify-center">
+        <p className="text-sm text-muted-foreground">Calendar is not available</p>
       </div>
     );
   }

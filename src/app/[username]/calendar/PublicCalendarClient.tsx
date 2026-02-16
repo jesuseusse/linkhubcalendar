@@ -9,6 +9,7 @@ import { profileService } from '@/services/serviceFactory';
 import { AppointmentBookingForm } from '@/components/Appointments/AppointmentBookingForm';
 import { getProfilePhotoUrl } from '@/utils/profilePhoto';
 import 'react-day-picker/style.css';
+import Image from 'next/image';
 
 interface Props {
 	calendar: PublicCalendarDto;
@@ -60,12 +61,12 @@ export function PublicCalendarClient({
 	);
 
 	return (
-		<div className='min-h-screen bg-zinc-50 flex flex-col items-center p-4'>
+		<div className='min-h-screen bg-surface flex flex-col items-center p-4'>
 			<div className='w-full max-w-2xl'>
 				<div className='flex justify-between items-center mb-6'>
 					<Link
 						href={`/${username}`}
-						className='text-sm text-zinc-500 hover:text-zinc-900 transition-colors'
+						className='text-sm text-muted-foreground hover:text-foreground transition-colors'
 					>
 						&larr; Back to profile
 					</Link>
@@ -73,26 +74,28 @@ export function PublicCalendarClient({
 
 				<div className='text-center mb-8'>
 					{calendar.profilePhoto ? (
-						<img
+						<Image
 							src={getProfilePhotoUrl(calendar.profilePhoto)}
 							alt={calendar.name}
 							className='w-16 h-16 object-cover mx-auto mb-3'
 						/>
 					) : (
-						<div className='w-16 h-16 bg-zinc-900 text-white flex items-center justify-center text-2xl font-semibold mx-auto mb-3'>
+						<div className='w-16 h-16 bg-primary text-primary-foreground flex items-center justify-center text-2xl font-semibold mx-auto mb-3'>
 							{calendar.name.charAt(0).toUpperCase()}
 						</div>
 					)}
-					<h1 className='text-lg font-semibold text-zinc-900'>
+					<h1 className='text-lg font-semibold text-foreground'>
 						{calendar.name}
 					</h1>
-					<p className='text-xs text-zinc-400 mt-1'>@{calendar.username}</p>
-					<h2 className='text-sm font-medium text-zinc-600 mt-3'>
+					<p className='text-xs text-muted-foreground mt-1'>
+						@{calendar.username}
+					</p>
+					<h2 className='text-sm font-medium text-muted-foreground mt-3'>
 						Calendario público
 					</h2>
 				</div>
 
-				<div className='bg-white border border-zinc-200 p-6'>
+				<div className='bg-background border border-border p-6'>
 					<div className='flex flex-col md:flex-row gap-6'>
 						<div className='shrink-0 flex justify-center'>
 							<DayPicker
@@ -108,7 +111,7 @@ export function PublicCalendarClient({
 						<div className='flex-1 min-w-0'>
 							{selectedDate ? (
 								<div>
-									<h3 className='text-sm font-medium text-zinc-700 mb-3'>
+									<h3 className='text-sm font-medium text-foreground mb-3'>
 										{format(selectedDate, 'MMMM d, yyyy')}
 									</h3>
 									{slotsForSelectedDate.length > 0 ? (
@@ -121,7 +124,7 @@ export function PublicCalendarClient({
 																selectedSlot?.id === slot.id ? null : slot
 															)
 														}
-														className={`w-full text-left px-4 py-3 text-sm border transition-colors ${selectedSlot?.id === slot.id ? 'bg-emerald-200 border-emerald-400 text-emerald-900' : 'bg-emerald-50 border-emerald-200 text-emerald-800 hover:bg-emerald-100'}`}
+														className={`w-full text-left px-4 py-3 text-sm border transition-colors ${selectedSlot?.id === slot.id ? 'bg-success-light border-success text-success' : 'bg-success-light border-success text-success hover:bg-success-light'}`}
 													>
 														{slot.startTime} - {slot.endTime}
 													</button>
@@ -153,14 +156,14 @@ export function PublicCalendarClient({
 											))}
 										</ul>
 									) : (
-										<p className='text-xs text-zinc-400'>
+										<p className='text-xs text-muted-foreground'>
 											No slots available for this date
 										</p>
 									)}
 								</div>
 							) : (
 								<div className='py-8 text-center'>
-									<p className='text-sm text-zinc-400'>
+									<p className='text-sm text-muted-foreground'>
 										Select a date to view available slots
 									</p>
 								</div>
@@ -169,21 +172,21 @@ export function PublicCalendarClient({
 					</div>
 
 					{Object.keys(groupedSlots).length > 0 && (
-						<div className='mt-6 border-t border-zinc-200 pt-4'>
-							<h3 className='text-xs font-semibold text-zinc-500 mb-3 uppercase tracking-wider'>
+						<div className='mt-6 border-t border-border pt-4'>
+							<h3 className='text-xs font-semibold text-muted-foreground mb-3 uppercase tracking-wider'>
 								All Available Slots
 							</h3>
 							<div className='space-y-3'>
 								{Object.entries(groupedSlots).map(([date, dateSlots]) => (
 									<div key={date}>
-										<p className='text-xs font-medium text-zinc-600 mb-1'>
+										<p className='text-xs font-medium text-muted-foreground mb-1'>
 											{format(new Date(date + 'T00:00:00'), 'MMMM d, yyyy')}
 										</p>
 										<div className='flex flex-wrap gap-2'>
 											{dateSlots.map(slot => (
 												<span
 													key={slot.id}
-													className='inline-block bg-emerald-50 border border-emerald-200 px-3 py-1 text-xs text-emerald-700'
+													className='inline-block bg-success-light border border-success px-3 py-1 text-xs text-success'
 												>
 													{slot.startTime} - {slot.endTime}
 												</span>
@@ -196,13 +199,13 @@ export function PublicCalendarClient({
 					)}
 
 					{calendar.calendarSlots.length === 0 && (
-						<p className='text-sm text-zinc-400 text-center py-8'>
+						<p className='text-sm text-muted-foreground text-center py-8'>
 							No available slots
 						</p>
 					)}
 				</div>
 
-				<p className='mt-8 text-xs text-zinc-300 text-center'>
+				<p className='mt-8 text-xs text-muted-foreground text-center'>
 					Powered by LinkHub
 				</p>
 			</div>

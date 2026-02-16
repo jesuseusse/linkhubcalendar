@@ -44,16 +44,16 @@ export function ThemeCustomizer({ theme, onSave, loading }: Props) {
 	return (
 		<div className='space-y-4'>
 			<div>
-				<h3 className='text-sm font-semibold text-zinc-900'>
+				<h3 className='text-sm font-semibold text-foreground'>
 					Personalización del tema
 				</h3>
-				<p className='text-xs text-zinc-500'>
+				<p className='text-xs text-muted-foreground'>
 					Ajusta los colores de tu perfil público.
 				</p>
 			</div>
-			{error && <p className='text-xs text-red-600'>{error}</p>}
+			{error && <p className='text-xs text-error'>{error}</p>}
 			{success && (
-				<p className='text-xs text-emerald-600'>Tema guardado correctamente.</p>
+				<p className='text-xs text-success'>Tema guardado correctamente.</p>
 			)}
 			<div className='grid grid-cols-2 gap-3'>
 				{fields.map(({ key, label }) => (
@@ -62,14 +62,14 @@ export function ThemeCustomizer({ theme, onSave, loading }: Props) {
 							type='color'
 							value={current[key]}
 							onChange={e => setCurrent({ ...current, [key]: e.target.value })}
-							className='w-8 h-8 border border-zinc-300 cursor-pointer'
+							className='w-8 h-8 border border-border cursor-pointer'
 						/>
-						<span className='text-xs text-zinc-600'>{label}</span>
+						<span className='text-xs text-muted-foreground'>{label}</span>
 					</div>
 				))}
 			</div>
 			<div
-				className='p-4 border border-zinc-200'
+				className='p-4 border border-border'
 				style={{ backgroundColor: current.backgroundColor }}
 			>
 				<p
@@ -92,13 +92,13 @@ export function ThemeCustomizer({ theme, onSave, loading }: Props) {
 				<button
 					onClick={handleSave}
 					disabled={loading}
-					className='px-4 py-2 text-sm font-medium bg-zinc-900 text-white hover:bg-zinc-800 disabled:opacity-50 transition-colors'
+					className='px-4 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors rounded'
 				>
 					{loading ? 'Guardando...' : 'Guardar'}
 				</button>
 				<button
 					onClick={() => setCurrent(DEFAULT_THEME)}
-					className='px-4 py-2 text-sm font-medium bg-zinc-100 text-zinc-600 hover:bg-zinc-200 transition-colors'
+					className='px-4 py-2 text-sm font-medium bg-muted text-muted-foreground hover:bg-muted transition-colors'
 				>
 					Restablecer
 				</button>

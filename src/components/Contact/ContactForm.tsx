@@ -44,16 +44,16 @@ export function ContactForm({ username, theme }: Props) {
 		: undefined;
 
 	return (
-		<div className='mt-8 border-t border-zinc-200 pt-6' style={borderStyle}>
+		<div className='mt-8 border-t border-border pt-6' style={borderStyle}>
 			<h2
-				className='text-sm font-semibold text-zinc-900 mb-4'
+				className='text-sm font-semibold text-foreground mb-4'
 				style={textStyle}
 			>
 				Contacto
 			</h2>
-			{error && <p className='text-xs text-red-600 mb-2'>{error}</p>}
+			{error && <p className='text-xs text-error mb-2'>{error}</p>}
 			{success && (
-				<p className='text-xs text-emerald-600 mb-2'>
+				<p className='text-xs text-success mb-2'>
 					Mensaje enviado correctamente.
 				</p>
 			)}
@@ -64,7 +64,7 @@ export function ContactForm({ username, theme }: Props) {
 					value={name}
 					onChange={e => setName(e.target.value)}
 					required
-					className='w-full px-3 py-2 text-sm border border-zinc-300 focus:outline-none focus:border-zinc-900'
+					className='w-full px-3 py-2 text-sm border border-border focus:outline-none focus:border-foreground rounded'
 					style={borderStyle}
 				/>
 				<input
@@ -73,7 +73,7 @@ export function ContactForm({ username, theme }: Props) {
 					value={email}
 					onChange={e => setEmail(e.target.value)}
 					required
-					className='w-full px-3 py-2 text-sm border border-zinc-300 focus:outline-none focus:border-zinc-900'
+					className='w-full px-3 py-2 text-sm border border-border focus:outline-none focus:border-foreground rounded'
 					style={borderStyle}
 				/>
 				<textarea
@@ -82,13 +82,13 @@ export function ContactForm({ username, theme }: Props) {
 					onChange={e => setMessage(e.target.value)}
 					required
 					rows={3}
-					className='w-full px-3 py-2 text-sm border border-zinc-300 focus:outline-none focus:border-zinc-900 resize-none'
+					className='w-full px-3 py-2 text-sm border border-border focus:outline-none focus:border-foreground rounded resize-none'
 					style={borderStyle}
 				/>
 				<button
 					type='submit'
 					disabled={loading || success}
-					className='w-full py-2 text-sm font-medium bg-zinc-900 text-white hover:bg-zinc-800 disabled:opacity-50 transition-colors'
+					className='w-full py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors'
 					style={buttonStyle}
 				>
 					{loading ? 'Enviando...' : 'Enviar'}

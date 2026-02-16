@@ -20,7 +20,7 @@ export function Header({ userName, isAuthenticated, onLogout }: Props) {
 					{isAuthenticated && onLogout && (
 						<button
 							onClick={onLogout}
-							className='px-3 py-1 text-xs font-medium bg-white/10 hover:bg-white/20 transition-colors'
+							className='px-3 py-1 text-xs font-medium bg-primary-foreground/10 hover:bg-primary-foreground/20 transition-colors'
 						>
 							Cerrar Sesión
 						</button>

@@ -41,7 +41,7 @@ export default function AppointmentsDashboardPage() {
 						&larr; Dashboard
 					</Link>
 				</div>
-				<section className='bg-surface border border-border p-6'>
+				<section className='bg-surface border border-border p-6 rounded'>
 					<h2 className='text-sm font-semibold text-foreground mb-4 uppercase tracking-wider'>
 						Citas
 					</h2>

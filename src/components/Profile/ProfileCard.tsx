@@ -34,12 +34,12 @@ export function ProfileCard({
 						className='w-16 h-16 object-cover'
 					/>
 				) : (
-					<div className='w-16 h-16 bg-zinc-900 text-white flex items-center justify-center text-2xl font-semibold'>
+					<div className='w-16 h-16 bg-primary text-primary-foreground flex items-center justify-center text-2xl font-semibold'>
 						{name.charAt(0).toUpperCase()}
 					</div>
 				)}
 				<label className='absolute inset-0 flex items-center justify-center bg-black/40 opacity-0 hover:opacity-100 cursor-pointer transition-opacity'>
-					<span className='text-white text-xs font-medium'>
+					<span className='text-primary-foreground text-xs font-medium'>
 						{loading ? '...' : 'Cambiar foto'}
 					</span>
 					<input
@@ -52,8 +52,8 @@ export function ProfileCard({
 				</label>
 			</div>
 			<div>
-				<p className='text-sm font-semibold text-zinc-900'>{name}</p>
-				<p className='text-xs text-zinc-500'>{email}</p>
+				<p className='text-sm font-semibold text-foreground'>{name}</p>
+				<p className='text-xs text-muted-foreground'>{email}</p>
 			</div>
 		</div>
 	);

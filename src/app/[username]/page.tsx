@@ -14,14 +14,14 @@ export default async function PublicProfilePage({
 		return <PublicProfileClient profile={profile} />;
 	} catch {
 		return (
-			<div className='min-h-screen bg-zinc-50 flex items-center justify-center'>
-				<p className='text-sm text-zinc-500'>Profile not found</p>
+			<div className='min-h-screen bg-surface flex items-center justify-center'>
+				<p className='text-sm text-muted-foreground'>Profile not found</p>
 			</div>
 		);
 	} finally {
 		return (
-			<div className='min-h-screen bg-zinc-50 flex items-center justify-center'>
-				<p className='text-sm text-zinc-500'>Profile not found</p>
+			<div className='min-h-screen bg-surface flex items-center justify-center'>
+				<p className='text-sm text-muted-foreground'>Profile not found</p>
 			</div>
 		); // Ensure cleanup happens if needed
 	}

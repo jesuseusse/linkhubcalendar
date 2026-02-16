@@ -10,13 +10,13 @@ export function ContactFormToggle({ enabled, onToggle, loading }: Props) {
 	return (
 		<div className='flex items-center justify-between'>
 			<div>
-				<h3 className='text-sm font-semibold text-zinc-900'>Título</h3>
-				<p className='text-xs text-zinc-500'>Descripción</p>
+				<h3 className='text-sm font-semibold text-foreground'>Título</h3>
+				<p className='text-xs text-muted-foreground'>Descripción</p>
 			</div>
 			<button
 				onClick={() => onToggle(!enabled)}
 				disabled={loading}
-				className={`px-3 py-1.5 text-xs font-medium transition-colors ${enabled ? 'bg-emerald-100 text-emerald-700' : 'bg-zinc-100 text-zinc-500'}`}
+				className={`px-3 py-1.5 text-xs font-medium transition-colors ${enabled ? 'bg-success-light text-success' : 'bg-muted text-muted-foreground'}`}
 			>
 				{enabled ? 'activado' : 'desactivado'}
 			</button>

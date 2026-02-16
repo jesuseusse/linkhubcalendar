@@ -41,7 +41,7 @@ export function AddLinkForm({ onSubmit, loading, existingLinks }: Props) {
 
 	return (
 		<form onSubmit={handleSubmit} className='space-y-3'>
-			{error && <p className='text-xs text-red-600'>{error}</p>}
+			{error && <p className='text-xs text-error'>{error}</p>}
 			<div className='flex gap-2'>
 				<input
 					type='text'
@@ -49,7 +49,7 @@ export function AddLinkForm({ onSubmit, loading, existingLinks }: Props) {
 					value={title}
 					onChange={e => setTitle(e.target.value)}
 					required
-					className='flex-1 px-3 py-2 text-sm border border-zinc-300 focus:outline-none focus:border-zinc-900'
+					className='flex-1 px-3 py-2 text-sm border border-border focus:outline-none focus:border-foreground rounded'
 				/>
 				<input
 					type='url'
@@ -57,12 +57,12 @@ export function AddLinkForm({ onSubmit, loading, existingLinks }: Props) {
 					value={url}
 					onChange={e => setUrl(e.target.value)}
 					required
-					className='flex-1 px-3 py-2 text-sm border border-zinc-300 focus:outline-none focus:border-zinc-900'
+					className='flex-1 px-3 py-2 text-sm border border-border focus:outline-none focus:border-foreground rounded'
 				/>
 				<button
 					type='submit'
 					disabled={loading}
-					className='px-4 py-2 text-sm font-medium bg-zinc-900 text-white hover:bg-zinc-800 disabled:opacity-50 transition-colors'
+					className='px-4 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors rounded'
 				>
 					{loading ? 'Agregando...' : 'Agregar'}
 				</button>

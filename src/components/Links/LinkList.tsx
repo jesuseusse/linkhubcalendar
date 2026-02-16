@@ -14,12 +14,12 @@ export function LinkList({ links, onUpdate, onDelete }: Props) {
 		return (
 			<div className='text-center py-8'>
 				<span
-					className='material-icons text-zinc-300 text-4xl mb-2'
+					className='material-icons text-muted-foreground text-4xl mb-2'
 					aria-hidden='true'
 				>
 					link_off
 				</span>
-				<p className='text-sm text-zinc-400'>No hay enlaces registrados</p>
+				<p className='text-sm text-muted-foreground'>No hay enlaces registrados</p>
 			</div>
 		);
 	}

@@ -36,11 +36,11 @@ export function AppointmentBookingForm({ slot, loading, onSubmit }: Props) {
 	return (
 		<form
 			onSubmit={handleSubmit}
-			className='mt-3 p-3 bg-zinc-50 border border-zinc-200 space-y-2'
+			className='mt-3 p-3 bg-surface border border-border space-y-2'
 		>
-			{error && <p className='text-xs text-red-600'>{error}</p>}
+			{error && <p className='text-xs text-error'>{error}</p>}
 			{success && (
-				<p className='text-xs text-emerald-600'>Cita reservada exitosamente</p>
+				<p className='text-xs text-success'>Cita reservada exitosamente</p>
 			)}
 			<input
 				type='text'
@@ -48,7 +48,7 @@ export function AppointmentBookingForm({ slot, loading, onSubmit }: Props) {
 				value={name}
 				onChange={e => setName(e.target.value)}
 				required
-				className='w-full px-2 py-1.5 text-sm border border-zinc-300 focus:outline-none focus:border-zinc-900'
+				className='w-full px-2 py-1.5 text-sm border border-border focus:outline-none focus:border-foreground'
 			/>
 			<input
 				type='email'
@@ -56,7 +56,7 @@ export function AppointmentBookingForm({ slot, loading, onSubmit }: Props) {
 				value={email}
 				onChange={e => setEmail(e.target.value)}
 				required
-				className='w-full px-2 py-1.5 text-sm border border-zinc-300 focus:outline-none focus:border-zinc-900'
+				className='w-full px-2 py-1.5 text-sm border border-border focus:outline-none focus:border-foreground'
 			/>
 			<input
 				type='tel'
@@ -64,7 +64,7 @@ export function AppointmentBookingForm({ slot, loading, onSubmit }: Props) {
 				value={phone}
 				onChange={e => setPhone(e.target.value)}
 				required
-				className='w-full px-2 py-1.5 text-sm border border-zinc-300 focus:outline-none focus:border-zinc-900'
+				className='w-full px-2 py-1.5 text-sm border border-border focus:outline-none focus:border-foreground'
 			/>
 			<textarea
 				placeholder={'Motivo de la cita'}
@@ -72,12 +72,12 @@ export function AppointmentBookingForm({ slot, loading, onSubmit }: Props) {
 				onChange={e => setReason(e.target.value)}
 				required
 				rows={2}
-				className='w-full px-2 py-1.5 text-sm border border-zinc-300 focus:outline-none focus:border-zinc-900 resize-none'
+				className='w-full px-2 py-1.5 text-sm border border-border focus:outline-none focus:border-foreground resize-none'
 			/>
 			<button
 				type='submit'
 				disabled={loading || success}
-				className='w-full py-1.5 text-xs font-medium bg-emerald-600 text-white hover:bg-emerald-700 disabled:opacity-50 transition-colors'
+				className='w-full py-1.5 text-xs font-medium bg-success text-primary-foreground hover:bg-success disabled:opacity-50 transition-colors'
 			>
 				{loading ? 'Reservando...' : 'Reservar cita'}
 			</button>

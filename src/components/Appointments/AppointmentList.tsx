@@ -27,7 +27,7 @@ export function AppointmentList({
 }: Props) {
 	if (loading) {
 		return (
-			<p className='text-sm text-zinc-400 text-center py-8'>
+			<p className='text-sm text-muted-foreground text-center py-8'>
 				Cargando citas...
 			</p>
 		);
@@ -37,12 +37,12 @@ export function AppointmentList({
 		return (
 			<div className='text-center py-8'>
 				<span
-					className='material-icons text-zinc-300 text-4xl mb-2'
+					className='material-icons text-muted-foreground text-4xl mb-2'
 					aria-hidden='true'
 				>
 					event_busy
 				</span>
-				<p className='text-sm text-zinc-400'>No hay citas programadas</p>
+				<p className='text-sm text-muted-foreground'>No hay citas programadas</p>
 			</div>
 		);
 	}
@@ -52,52 +52,52 @@ export function AppointmentList({
 			<div className='overflow-x-auto'>
 				<table className='w-full text-sm'>
 					<thead>
-						<tr className='border-b border-zinc-200'>
-							<th className='text-left py-2 px-2 text-xs font-medium text-zinc-500 uppercase'>
+						<tr className='border-b border-border'>
+							<th className='text-left py-2 px-2 text-xs font-medium text-muted-foreground uppercase'>
 								Fecha
 							</th>
-							<th className='text-left py-2 px-2 text-xs font-medium text-zinc-500 uppercase'>
+							<th className='text-left py-2 px-2 text-xs font-medium text-muted-foreground uppercase'>
 								Hora
 							</th>
-							<th className='text-left py-2 px-2 text-xs font-medium text-zinc-500 uppercase'>
+							<th className='text-left py-2 px-2 text-xs font-medium text-muted-foreground uppercase'>
 								Nombre
 							</th>
-							<th className='text-left py-2 px-2 text-xs font-medium text-zinc-500 uppercase'>
+							<th className='text-left py-2 px-2 text-xs font-medium text-muted-foreground uppercase'>
 								Correo
 							</th>
-							<th className='text-left py-2 px-2 text-xs font-medium text-zinc-500 uppercase'>
+							<th className='text-left py-2 px-2 text-xs font-medium text-muted-foreground uppercase'>
 								Teléfono
 							</th>
-							<th className='text-left py-2 px-2 text-xs font-medium text-zinc-500 uppercase'>
+							<th className='text-left py-2 px-2 text-xs font-medium text-muted-foreground uppercase'>
 								Motivo
 							</th>
-							<th className='text-left py-2 px-2 text-xs font-medium text-zinc-500 uppercase'>
+							<th className='text-left py-2 px-2 text-xs font-medium text-muted-foreground uppercase'>
 								Estado
 							</th>
-							<th className='text-left py-2 px-2 text-xs font-medium text-zinc-500 uppercase'>
+							<th className='text-left py-2 px-2 text-xs font-medium text-muted-foreground uppercase'>
 								Acciones
 							</th>
 						</tr>
 					</thead>
 					<tbody>
 						{appointments.map(a => (
-							<tr key={a.id} className='border-b border-zinc-100'>
-								<td className='py-2 px-2 text-zinc-700'>{a.date}</td>
-								<td className='py-2 px-2 text-zinc-700'>
+							<tr key={a.id} className='border-b border-border'>
+								<td className='py-2 px-2 text-foreground'>{a.date}</td>
+								<td className='py-2 px-2 text-foreground'>
 									{a.startTime} - {a.endTime}
 								</td>
-								<td className='py-2 px-2 text-zinc-700'>{a.name}</td>
-								<td className='py-2 px-2 text-zinc-700'>{a.email}</td>
-								<td className='py-2 px-2 text-zinc-700'>{a.phone}</td>
-								<td className='py-2 px-2 text-zinc-700 max-w-[150px] truncate'>
+								<td className='py-2 px-2 text-foreground'>{a.name}</td>
+								<td className='py-2 px-2 text-foreground'>{a.email}</td>
+								<td className='py-2 px-2 text-foreground'>{a.phone}</td>
+								<td className='py-2 px-2 text-foreground max-w-[150px] truncate'>
 									{a.reason}
 								</td>
 								<td className='py-2 px-2'>
 									<span
 										className={`px-2 py-0.5 text-xs font-medium ${
 											a.status === 'confirmed'
-												? 'bg-emerald-100 text-emerald-700'
-												: 'bg-amber-100 text-amber-700'
+												? 'bg-success-light text-success'
+												: 'bg-warning-light text-warning'
 										}`}
 									>
 										{a.status === 'confirmed' ? 'Confirmada' : 'Pendiente'}
@@ -108,20 +108,20 @@ export function AppointmentList({
 										{a.status !== 'confirmed' && (
 											<button
 												onClick={() => onConfirm(a.id)}
-												className='text-xs text-emerald-600 hover:text-emerald-800'
+												className='text-xs text-success hover:text-success'
 											>
 												Confirmar
 											</button>
 										)}
 										<button
 											onClick={() => onReleaseSlot(a.id)}
-											className='text-xs text-blue-600 hover:text-blue-800'
+											className='text-xs text-info hover:text-info'
 										>
 											Liberar horario
 										</button>
 										<button
 											onClick={() => onDelete(a.id)}
-											className='text-xs text-red-500 hover:text-red-700'
+											className='text-xs text-error hover:text-error'
 										>
 											Eliminar
 										</button>
@@ -132,23 +132,23 @@ export function AppointmentList({
 					</tbody>
 				</table>
 			</div>
-			<div className='flex items-center justify-between mt-4 pt-4 border-t border-zinc-200'>
-				<p className='text-xs text-zinc-500'>Total de registros: {total}</p>
+			<div className='flex items-center justify-between mt-4 pt-4 border-t border-border'>
+				<p className='text-xs text-muted-foreground'>Total de registros: {total}</p>
 				<div className='flex items-center gap-2'>
 					<button
 						onClick={() => onPageChange(page - 1)}
 						disabled={page <= 1}
-						className='px-3 py-1 text-xs font-medium bg-zinc-100 text-zinc-600 hover:bg-zinc-200 disabled:opacity-50 transition-colors'
+						className='px-3 py-1 text-xs font-medium bg-muted text-muted-foreground hover:bg-muted disabled:opacity-50 transition-colors'
 					>
 						Anterior
 					</button>
-					<span className='text-xs text-zinc-500'>
+					<span className='text-xs text-muted-foreground'>
 						Página {page} de {totalPages}
 					</span>
 					<button
 						onClick={() => onPageChange(page + 1)}
 						disabled={page >= totalPages}
-						className='px-3 py-1 text-xs font-medium bg-zinc-100 text-zinc-600 hover:bg-zinc-200 disabled:opacity-50 transition-colors'
+						className='px-3 py-1 text-xs font-medium bg-muted text-muted-foreground hover:bg-muted disabled:opacity-50 transition-colors'
 					>
 						Siguiente
 					</button>

@@ -49,27 +49,29 @@ export function UsernameForm({
 
 	return (
 		<div className='space-y-3'>
-			<h3 className='text-sm font-semibold text-zinc-900'>Nombre de usuario</h3>
+			<h3 className='text-sm font-semibold text-foreground'>
+				Nombre de usuario
+			</h3>
 			{username && <PublicProfileLink username={username} />}
 			{!username && (
-				<p className='text-xs text-zinc-400'>
+				<p className='text-xs text-muted-foreground'>
 					Configura tu nombre de usuario para crear tu perfil público.
 				</p>
 			)}
-			{error && <p className='text-xs text-red-600'>{error}</p>}
+			{error && <p className='text-xs text-error'>{error}</p>}
 			{success && (
-				<p className='text-xs text-emerald-600'>
+				<p className='text-xs text-success'>
 					Nombre de usuario actualizado correctamente.
 				</p>
 			)}
 			{isLocked && username ? (
-				<p className='text-xs text-amber-600'>
+				<p className='text-xs text-warning'>
 					Podrás cambiar tu usuario nuevamente en ${daysLeft} día(s).
 				</p>
 			) : (
 				<form onSubmit={handleSubmit} className='flex gap-2'>
-					<div className='flex items-center border border-zinc-300'>
-						<span className='px-2 text-sm text-zinc-400'>/</span>
+					<div className='flex items-center border border-border'>
+						<span className='px-2 text-sm text-muted-foreground'>/</span>
 						<input
 							type='text'
 							value={value}
@@ -84,7 +86,7 @@ export function UsernameForm({
 					<button
 						type='submit'
 						disabled={loading}
-						className='px-4 py-2 text-sm font-medium bg-zinc-900 text-white hover:bg-zinc-800 disabled:opacity-50 transition-colors'
+						className='px-4 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors rounded'
 					>
 						{loading ? 'Guardando...' : username ? 'Cambiar' : 'Establecer'}
 					</button>

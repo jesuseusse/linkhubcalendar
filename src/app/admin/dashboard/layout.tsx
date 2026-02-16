@@ -16,8 +16,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   if (loading || !token) {
     return (
-      <div className="min-h-screen bg-zinc-50 flex items-center justify-center">
-        <p className="text-sm text-zinc-400">Loading...</p>
+      <div className="min-h-screen bg-surface flex items-center justify-center">
+        <p className="text-sm text-muted-foreground">Loading...</p>
       </div>
     );
   }
