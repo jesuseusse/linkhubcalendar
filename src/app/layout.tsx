@@ -27,8 +27,6 @@ export default async function RootLayout({
 		// Tenant resolution failed — @theme defaults apply
 	}
 
-	console.log(themeStyle);
-
 	return (
 		<html lang='en' style={themeStyle}>
 			<head>

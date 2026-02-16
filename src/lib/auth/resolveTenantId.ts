@@ -11,7 +11,11 @@ import { TenantRegistryData } from '@/interfaces/ITenantRegistryData';
 export function resolveEffectiveHostname(host: string): string {
 	const hostname = host.split(':')[0];
 
-	if (hostname === 'localhost' || hostname === '127.0.0.1') {
+	if (
+		hostname === 'localhost' ||
+		hostname === '127.0.0.1' ||
+		hostname.includes('amplifyapp.com') // Para testing en AWS Amplify
+	) {
 		const defaultHostname = process.env.NEXT_PUBLIC_DEFAULT_TENANT_HOSTNAME;
 		if (!defaultHostname) {
 			throw new Error(

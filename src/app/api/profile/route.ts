@@ -4,17 +4,14 @@ import { container } from '@/infrastructure/container';
 
 export async function GET(req: NextRequest) {
 	try {
-		console.log('Attempting to get profile for request:', req);
 		const { userId, tenantId } = await checkAuth(req);
-		console.log(`Authenticated user ${userId} from tenant ${tenantId}`);
 		const result = await container.getProfileUseCase.execute(tenantId, userId);
-		console.log(result);
 
 		return NextResponse.json(result);
 	} catch (err: unknown) {
 		const message =
 			err instanceof Error ? err.message : 'Failed to get profile';
-		console.log(err);
+		console.error(err);
 
 		return NextResponse.json({ error: message }, { status: 401 });
 	}
