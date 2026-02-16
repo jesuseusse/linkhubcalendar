@@ -3,7 +3,7 @@ frontend:
   phases:
     preBuild:
       commands:
-        - yarn install --frozen-lockfile
+        - yarn install
     build:
       commands:
         - env | grep -e NEXT_PUBLIC_ -e FIREBASE_ADMIN_ >> .env.production
@@ -11,7 +11,7 @@ frontend:
   artifacts:
     baseDirectory: .next
     files:
-      - "**/*"
+      - '**/*'
   cache:
     paths:
       - node_modules/**/*
