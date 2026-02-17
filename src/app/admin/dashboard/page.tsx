@@ -25,7 +25,7 @@ import { RequirePermission } from '@/components/Common/RequirePermission';
 import { PERMISSIONS } from '@/permissions/plans';
 
 export default function DashboardPage() {
-	const { logout, user } = useAuth(authService);
+	const { logout } = useAuth(authService);
 	const {
 		profile,
 		loading,

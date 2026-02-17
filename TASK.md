@@ -5,6 +5,7 @@
 - [ ] Insert styles from tenantId
 - [ ] Button Verify Email
 - [ ] Conect with stripe according tenantId
+- [ ] verify email
 
 ---
 

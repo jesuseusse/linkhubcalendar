@@ -19,13 +19,15 @@ export function LinkList({ links, onUpdate, onDelete }: Props) {
 				>
 					link_off
 				</span>
-				<p className='text-sm text-muted-foreground'>No hay enlaces registrados</p>
+				<p className='text-sm text-muted-foreground'>
+					No hay enlaces registrados
+				</p>
 			</div>
 		);
 	}
 
 	return (
-		<div className='space-y-2'>
+		<div className='space-y-2 mt-2'>
 			{links.map(link => (
 				<LinkItem
 					key={link.id}

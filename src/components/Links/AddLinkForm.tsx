@@ -42,30 +42,35 @@ export function AddLinkForm({ onSubmit, loading, existingLinks }: Props) {
 	return (
 		<form onSubmit={handleSubmit} className='space-y-3'>
 			{error && <p className='text-xs text-error'>{error}</p>}
-			<div className='flex gap-2'>
+
+			<div className='flex flex-col gap-2 w-full md:flex-row md:items-end'>
 				<input
 					type='text'
 					placeholder='Título'
 					value={title}
 					onChange={e => setTitle(e.target.value)}
 					required
-					className='flex-1 px-3 py-2 text-sm border border-border focus:outline-none focus:border-foreground rounded'
+					className='w-full md:flex-1 px-3 py-2 text-sm border border-border focus:outline-none focus:border-foreground rounded'
 				/>
+
 				<input
 					type='url'
 					placeholder='URL'
 					value={url}
 					onChange={e => setUrl(e.target.value)}
 					required
-					className='flex-1 px-3 py-2 text-sm border border-border focus:outline-none focus:border-foreground rounded'
+					className='w-full md:flex-1 px-3 py-2 text-sm border border-border focus:outline-none focus:border-foreground rounded'
 				/>
-				<button
-					type='submit'
-					disabled={loading}
-					className='px-4 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors rounded'
-				>
-					{loading ? 'Agregando...' : 'Agregar'}
-				</button>
+
+				<div className='w-full flex justify-start md:w-auto md:justify-end'>
+					<button
+						type='submit'
+						disabled={loading}
+						className='w-full md:w-auto px-4 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors rounded'
+					>
+						{loading ? 'Agregando...' : 'Agregar'}
+					</button>
+				</div>
 			</div>
 		</form>
 	);
