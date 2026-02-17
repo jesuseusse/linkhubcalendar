@@ -4,10 +4,10 @@ import { container } from '@/infrastructure/container';
 
 export async function GET(req: NextRequest) {
 	try {
-		const { userId, tenantId } = await checkAuth(req);
+		const { userId, tenantId, emailVerified } = await checkAuth(req);
 		const result = await container.getProfileUseCase.execute(tenantId, userId);
 
-		return NextResponse.json(result);
+		return NextResponse.json({ ...result, emailVerified });
 	} catch (err: unknown) {
 		const message =
 			err instanceof Error ? err.message : 'Failed to get profile';

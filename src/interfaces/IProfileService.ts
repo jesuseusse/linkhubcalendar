@@ -21,4 +21,5 @@ export interface IProfileService {
   submitLead(username: string, dto: CreateLeadDto): Promise<LeadDto>;
   getLeads(token: string): Promise<LeadDto[]>;
   downgradePlan(token: string): Promise<UserDto>;
+  sendVerificationEmail(token: string): Promise<void>;
 }

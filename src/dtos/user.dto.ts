@@ -27,6 +27,7 @@ export interface UserDto {
 	id: string;
 	name: string;
 	email: string;
+	emailVerified: boolean;
 	username?: string;
 	usernameChangedAt?: string;
 	profilePhoto?: string;

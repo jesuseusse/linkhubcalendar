@@ -6,6 +6,7 @@ export function toUserResponse(user: User): UserResponseDto {
     id: user.id,
     name: user.name,
     email: user.email,
+    emailVerified: user.emailVerified,
     username: user.username,
     usernameChangedAt: user.usernameChangedAt?.toISOString(),
     profilePhoto: user.profilePhoto,

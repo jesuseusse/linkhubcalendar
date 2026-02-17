@@ -25,6 +25,7 @@ import { Plan } from '@/permissions/plans';
 export interface User {
   id: string;
   email: string;
+  emailVerified?: boolean;
   password?: string;
   name: string;
   username?: string;
@@ -37,6 +38,7 @@ export interface User {
   theme?: ThemeConfig;
   links: Link[];
   calendarSlots: CalendarSlot[];
+  lastVerificationEmailSentAt?: Date;
   createdAt: Date;
   updatedAt: Date;
 }

@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useState, useCallback, useEffect } from 'react';
 import { IProfileService } from '@/interfaces/IProfileService';
@@ -156,7 +156,8 @@ export function useProfile(profileService: IProfileService) {
 				const data = await profileService.addCalendarSlot(token, dto);
 				updateUser(data);
 			} catch (err: unknown) {
-				const message = err instanceof Error ? err.message : 'Failed to add slot';
+				const message =
+					err instanceof Error ? err.message : 'Failed to add slot';
 				setError(message);
 				throw err;
 			} finally {
@@ -204,6 +205,11 @@ export function useProfile(profileService: IProfileService) {
 		[token, profileService, updateUser]
 	);
 
+	const sendVerificationEmail = useCallback(async () => {
+		if (!token) return;
+		await profileService.sendVerificationEmail(token);
+	}, [token, profileService]);
+
 	const fetchLeads = useCallback(async () => {
 		if (!token) return;
 		setLeadsLoading(true);
@@ -238,6 +244,7 @@ export function useProfile(profileService: IProfileService) {
 		releaseCalendarSlot,
 		leads,
 		leadsLoading,
+		sendVerificationEmail,
 		refetchLeads: fetchLeads,
 		refetch: fetchProfile
 	};

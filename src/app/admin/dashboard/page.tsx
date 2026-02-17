@@ -23,6 +23,7 @@ import { CalendarManager } from '@/components/Calendar/CalendarManager';
 import { LeadList } from '@/components/Leads/LeadList';
 import { RequirePermission } from '@/components/Common/RequirePermission';
 import { PERMISSIONS } from '@/permissions/plans';
+import { InfoVerifyEmail } from '@/components/Profile/InfoVerifyEmail';
 
 export default function DashboardPage() {
 	const { logout } = useAuth(authService);
@@ -40,6 +41,7 @@ export default function DashboardPage() {
 		addCalendarSlot,
 		deleteCalendarSlot,
 		releaseCalendarSlot,
+		sendVerificationEmail,
 		leads,
 		leadsLoading
 	} = useProfile(profileService);
@@ -57,6 +59,12 @@ export default function DashboardPage() {
 		<div className='min-h-screen bg-background'>
 			<Header userName={profile.name} isAuthenticated onLogout={logout} />
 			<main className='max-w-5xl mx-auto py-8 px-4 space-y-6'>
+				{profile.emailVerified === false && (
+					<InfoVerifyEmail
+						onSendEmail={sendVerificationEmail}
+						loading={loading}
+					/>
+				)}
 				{error && (
 					<p className='text-sm text-error bg-error-light border border-error/20 p-3'>
 						{error}
@@ -83,9 +91,6 @@ export default function DashboardPage() {
 						onSubmit={updateUsername}
 						loading={loading}
 					/>
-					{profile.username && (
-						<PublicProfileLink username={profile.username} />
-					)}
 				</section>
 
 				<section className='bg-surface border border-border p-6 rounded'>

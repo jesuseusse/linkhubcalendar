@@ -10,7 +10,11 @@ export default async function PublicProfilePage({
 	const { username } = await params;
 	try {
 		const tenantId = await resolveTenantIdFromHeaders();
-		const profile = await container.getPublicProfileUseCase.execute(tenantId, username);
+		const profile = await container.getPublicProfileUseCase.execute(
+			tenantId,
+			username
+		);
+		console.log('Fetched profile:', profile); // Debug log to verify profile data
 		return <PublicProfileClient profile={profile} />;
 	} catch {
 		return (

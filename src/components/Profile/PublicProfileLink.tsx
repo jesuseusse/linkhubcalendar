@@ -20,11 +20,12 @@ export function PublicProfileLink({ username }: Props) {
 	return (
 		<div className='flex items-center gap-2'>
 			<p className='text-xs text-muted-foreground'>
-				Perfil público: <span className='text-foreground font-medium'>{url}</span>
+				Perfil público:{' '}
+				<span className='text-foreground font-medium'>{url}</span>
 			</p>
 			<button
 				onClick={handleCopy}
-				className='px-2 py-0.5 text-xs font-medium bg-muted text-muted-foreground hover:bg-muted transition-colors'
+				className='rounded px-2 py-0.5 text-xs font-medium bg-muted text-muted-foreground hover:bg-muted transition-colors'
 			>
 				{copied ? 'Copiado' : 'Copiar enlace'}
 			</button>

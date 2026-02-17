@@ -97,4 +97,8 @@ export class ApiProfileService implements IProfileService {
   async downgradePlan(): Promise<UserDto> {
     return apiClient('/api/profile', { method: 'PUT', body: JSON.stringify({ plan: 'free' }) });
   }
+
+  async sendVerificationEmail(): Promise<void> {
+    return apiClient('/api/auth/verify-email', { method: 'POST' });
+  }
 }

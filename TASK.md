@@ -5,7 +5,9 @@
 - [ ] Insert styles from tenantId
 - [ ] Button Verify Email
 - [ ] Conect with stripe according tenantId
-- [ ] verify email
+- [x] verify email
+- [ ] update tenant collection to accept stripe config, proPriceId
+- [ ] crate collections tenant/{tenant}
 
 ---
 
