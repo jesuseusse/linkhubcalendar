@@ -17,6 +17,6 @@ export interface IUserRepository {
   updateCalendarSlotBooked(tenantId: string, userId: string, slotId: string, booked: boolean): Promise<User | null>;
   deleteCalendarSlot(tenantId: string, userId: string, slotId: string): Promise<User | null>;
   updateTheme(tenantId: string, id: string, theme: ThemeConfig): Promise<User | null>;
-  updatePlan(tenantId: string, id: string, plan: string, planExpiredAt?: Date | null): Promise<User | null>;
+  updatePlan(tenantId: string, id: string, plan: string, planExpiredAt?: number | null): Promise<User | null>;
   updateLastVerificationEmailSentAt(tenantId: string, id: string): Promise<User | null>;
 }

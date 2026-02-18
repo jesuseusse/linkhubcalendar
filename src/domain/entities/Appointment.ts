@@ -12,5 +12,5 @@ export interface Appointment {
   phone: string;
   reason: string;
   status: AppointmentStatus;
-  createdAt: Date;
+  createdAt: number;
 }

@@ -19,7 +19,7 @@ export class GetAppointmentsUseCase {
         phone: a.phone,
         reason: a.reason,
         status: a.status || "pending",
-        createdAt: a.createdAt.toISOString(),
+        createdAt: a.createdAt,
       })),
       total,
       page,

@@ -4,5 +4,5 @@ export interface Lead {
   name: string;
   email: string;
   message: string;
-  createdAt: Date;
+  createdAt: number;
 }

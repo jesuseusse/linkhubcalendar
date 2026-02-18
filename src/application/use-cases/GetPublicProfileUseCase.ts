@@ -15,7 +15,7 @@ export class GetPublicProfileUseCase {
       username: user.username,
       profilePhoto: user.profilePhoto,
       plan: user.plan ?? "free",
-      planExpiredAt: user.planExpiredAt?.toISOString() ?? null,
+      planExpiredAt: user.planExpiredAt ?? null,
       contactFormEnabled: user.contactFormEnabled,
       calendarEnabled: user.calendarEnabled,
       theme: user.theme

@@ -56,7 +56,7 @@ export class BookAppointmentUseCase {
       phone: appointment.phone,
       reason: appointment.reason,
       status: appointment.status,
-      createdAt: appointment.createdAt.toISOString(),
+      createdAt: appointment.createdAt,
     };
   }
 }

@@ -5,7 +5,7 @@ import { PublicProfileLink } from './PublicProfileLink';
 
 interface Props {
 	username?: string;
-	usernameChangedAt?: string;
+	usernameChangedAt?: number;
 	onSubmit: (username: string) => Promise<void>;
 	loading: boolean;
 }
@@ -22,13 +22,11 @@ export function UsernameForm({
 
 	const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 	const isLocked = usernameChangedAt
-		? new Date().getTime() - new Date(usernameChangedAt).getTime() <
-			THIRTY_DAYS_MS
+		? Date.now() - usernameChangedAt < THIRTY_DAYS_MS
 		: false;
 	const daysLeft = usernameChangedAt
 		? Math.ceil(
-				(THIRTY_DAYS_MS -
-					(new Date().getTime() - new Date(usernameChangedAt).getTime())) /
+				(THIRTY_DAYS_MS - (Date.now() - usernameChangedAt)) /
 					(24 * 60 * 60 * 1000)
 			)
 		: 0;

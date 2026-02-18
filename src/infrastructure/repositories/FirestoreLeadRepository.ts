@@ -11,7 +11,7 @@ function docToLead(id: string, data: FirebaseFirestore.DocumentData): Lead {
     name: data.name,
     email: data.email,
     message: data.message,
-    createdAt: data.createdAt?.toDate?.() ?? new Date(),
+    createdAt: data.createdAt?.toMillis?.() ?? (typeof data.createdAt === 'number' ? data.createdAt : Date.now()),
   };
 }
 
@@ -21,7 +21,7 @@ export class FirestoreLeadRepository implements ILeadRepository {
   }
 
   async create(tenantId: string, lead: Omit<Lead, 'id' | 'createdAt'>): Promise<Lead> {
-    const now = new Date();
+    const now = Date.now();
     const ref = this.col(tenantId).doc();
     const data = { ...lead, createdAt: now };
     await ref.set(data);

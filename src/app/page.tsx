@@ -1,6 +1,5 @@
-import Link from 'next/link';
-import DefaultLandingPage from './(landing)/DefaultLandingPage';
+import DefaultLandingPage from './landing-tenants/DefaultLandingPage';
 
-export default function LandingPage() {
+export default function HomePage() {
 	return <DefaultLandingPage />;
 }

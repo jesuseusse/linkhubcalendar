@@ -17,7 +17,7 @@ function docToAppointment(id: string, data: FirebaseFirestore.DocumentData): App
     phone: data.phone,
     reason: data.reason,
     status: data.status ?? 'pending',
-    createdAt: data.createdAt?.toDate?.() ?? new Date(),
+    createdAt: data.createdAt?.toMillis?.() ?? (typeof data.createdAt === 'number' ? data.createdAt : Date.now()),
   };
 }
 
@@ -27,7 +27,7 @@ export class FirestoreAppointmentRepository implements IAppointmentRepository {
   }
 
   async create(tenantId: string, appointment: Omit<Appointment, 'id' | 'createdAt'>): Promise<Appointment> {
-    const now = new Date();
+    const now = Date.now();
     const ref = this.col(tenantId).doc();
     const data = { ...appointment, createdAt: now };
     await ref.set(data);

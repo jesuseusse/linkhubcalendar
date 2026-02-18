@@ -29,16 +29,16 @@ export interface User {
   password?: string;
   name: string;
   username?: string;
-  usernameChangedAt?: Date;
+  usernameChangedAt?: number;
   profilePhoto?: string;
   plan?: Plan;
-  planExpiredAt?: Date | null;
+  planExpiredAt?: number | null;
   contactFormEnabled: boolean;
   calendarEnabled: boolean;
   theme?: ThemeConfig;
   links: Link[];
   calendarSlots: CalendarSlot[];
-  lastVerificationEmailSentAt?: Date;
-  createdAt: Date;
-  updatedAt: Date;
+  lastVerificationEmailSentAt?: number;
+  createdAt: number;
+  updatedAt: number;
 }

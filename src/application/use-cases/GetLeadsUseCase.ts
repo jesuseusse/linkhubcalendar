@@ -11,7 +11,7 @@ export class GetLeadsUseCase {
       name: lead.name,
       email: lead.email,
       message: lead.message,
-      createdAt: lead.createdAt.toISOString(),
+      createdAt: lead.createdAt,
     }));
   }
 }

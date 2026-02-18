@@ -14,10 +14,10 @@ export interface UserResponseDto {
   email: string;
   emailVerified: boolean;
   username?: string;
-  usernameChangedAt?: string;
+  usernameChangedAt?: number;
   profilePhoto?: string;
   plan?: Plan;
-  planExpiredAt?: string | null;
+  planExpiredAt?: number | null;
   contactFormEnabled: boolean;
   calendarEnabled: boolean;
   theme?: ThemeResponseDto;
@@ -75,7 +75,7 @@ export interface LeadResponseDto {
   name: string;
   email: string;
   message: string;
-  createdAt: string;
+  createdAt: number;
 }
 
 export interface UpdateThemeDto {
@@ -91,7 +91,7 @@ export interface PublicProfileDto {
   username: string;
   profilePhoto?: string;
   plan?: Plan;
-  planExpiredAt?: string | null;
+  planExpiredAt?: number | null;
   contactFormEnabled: boolean;
   calendarEnabled: boolean;
   theme?: ThemeResponseDto;
@@ -118,7 +118,7 @@ export interface AppointmentResponseDto {
   phone: string;
   reason: string;
   status: string;
-  createdAt: string;
+  createdAt: number;
 }
 
 export interface PaginatedAppointmentsDto {

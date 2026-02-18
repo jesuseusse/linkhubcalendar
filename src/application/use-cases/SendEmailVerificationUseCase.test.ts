@@ -16,8 +16,8 @@ function makeUser(overrides: Partial<User> = {}): User {
 		links: [],
 		calendarSlots: [],
 		plan: 'free',
-		createdAt: new Date(),
-		updatedAt: new Date(),
+		createdAt: Date.now(),
+		updatedAt: Date.now(),
 		...overrides
 	};
 }
@@ -115,7 +115,7 @@ describe('SendEmailVerificationUseCase', () => {
 	});
 
 	it('enforces 120s cooldown', async () => {
-		const thirtySecondsAgo = new Date(Date.now() - 30_000);
+		const thirtySecondsAgo = Date.now() - 30_000;
 		vi.mocked(userRepo.findById).mockResolvedValue(
 			makeUser({ lastVerificationEmailSentAt: thirtySecondsAgo })
 		);
@@ -132,7 +132,7 @@ describe('SendEmailVerificationUseCase', () => {
 	});
 
 	it('allows resend after cooldown expires', async () => {
-		const twoMinutesAgo = new Date(Date.now() - 130_000);
+		const twoMinutesAgo = Date.now() - 130_000;
 		vi.mocked(userRepo.findById).mockResolvedValue(
 			makeUser({ lastVerificationEmailSentAt: twoMinutesAgo })
 		);

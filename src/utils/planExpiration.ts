@@ -1,4 +1,4 @@
-export function isPlanExpired(planExpiredAt?: string | null): boolean {
+export function isPlanExpired(planExpiredAt?: number | null): boolean {
   if (!planExpiredAt) return false;
-  return new Date(planExpiredAt) <= new Date();
+  return planExpiredAt <= Date.now();
 }

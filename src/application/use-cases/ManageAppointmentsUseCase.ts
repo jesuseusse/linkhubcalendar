@@ -50,7 +50,7 @@ export class ConfirmAppointmentUseCase {
       phone: updated.phone,
       reason: updated.reason,
       status: updated.status,
-      createdAt: updated.createdAt.toISOString(),
+      createdAt: updated.createdAt,
     };
   }
 }

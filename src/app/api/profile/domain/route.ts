@@ -20,7 +20,7 @@ export async function PUT(req: NextRequest) {
       username: user.username,
       userId,
       verified: false,
-      createdAt: new Date(),
+      createdAt: Date.now(),
     });
     return NextResponse.json({
       domain: cleanDomain,

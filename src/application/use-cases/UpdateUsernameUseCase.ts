@@ -24,7 +24,7 @@ export class UpdateUsernameUseCase {
     }
 
     if (user.usernameChangedAt) {
-      const elapsed = Date.now() - user.usernameChangedAt.getTime();
+      const elapsed = Date.now() - user.usernameChangedAt;
       if (elapsed < THIRTY_DAYS_MS) {
         const daysLeft = Math.ceil((THIRTY_DAYS_MS - elapsed) / (24 * 60 * 60 * 1000));
         throw new Error(`Username can only be changed every 30 days. ${daysLeft} day(s) remaining`);

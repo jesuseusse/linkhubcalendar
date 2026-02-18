@@ -17,17 +17,7 @@ export async function middleware(req: NextRequest) {
     const username = await resolveTenant(host);
     if (username) {
       const url = req.nextUrl.clone();
-      const path = url.pathname;
-      if (path === "/" || path === "") {
-        url.pathname = "/t";
-        url.searchParams.set("username", username);
-      } else if (path === "/calendar") {
-        url.pathname = "/t/calendar";
-        url.searchParams.set("username", username);
-      } else {
-        url.pathname = "/t" + path;
-        url.searchParams.set("username", username);
-      }
+      url.pathname = `/${username}${url.pathname === "/" ? "" : url.pathname}`;
       return NextResponse.rewrite(url);
     }
   } catch {

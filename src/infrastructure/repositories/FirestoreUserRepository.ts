@@ -4,6 +4,13 @@ import { User, Link, CalendarSlot, ThemeConfig } from '@/domain/entities/User';
 
 const COLLECTION = 'users';
 
+function toMillis(val: unknown): number | undefined {
+	if (typeof val === 'number') return val;
+	if (val && typeof (val as { toMillis?: unknown }).toMillis === 'function')
+		return (val as { toMillis: () => number }).toMillis();
+	return undefined;
+}
+
 function docToUser(id: string, data: FirebaseFirestore.DocumentData): User {
 	return {
 		id,
@@ -11,23 +18,18 @@ function docToUser(id: string, data: FirebaseFirestore.DocumentData): User {
 		emailVerified: data.emailVerified ?? false,
 		name: data.name ?? '',
 		username: data.username,
-		usernameChangedAt:
-			data.usernameChangedAt?.toDate?.() ??
-			(data.usernameChangedAt ? new Date(data.usernameChangedAt) : undefined),
+		usernameChangedAt: toMillis(data.usernameChangedAt),
 		profilePhoto: data.profilePhoto,
 		plan: data.plan,
-		planExpiredAt:
-			data.planExpiredAt?.toDate?.() ??
-			(data.planExpiredAt ? new Date(data.planExpiredAt) : null),
+		planExpiredAt: toMillis(data.planExpiredAt) ?? null,
 		contactFormEnabled: data.contactFormEnabled ?? false,
 		calendarEnabled: data.calendarEnabled ?? false,
 		theme: data.theme,
 		links: data.links ?? [],
 		calendarSlots: data.calendarSlots ?? [],
-		lastVerificationEmailSentAt:
-			data.lastVerificationEmailSentAt?.toDate?.() ?? undefined,
-		createdAt: data.createdAt?.toDate?.() ?? new Date(),
-		updatedAt: data.updatedAt?.toDate?.() ?? new Date()
+		lastVerificationEmailSentAt: toMillis(data.lastVerificationEmailSentAt),
+		createdAt: toMillis(data.createdAt) ?? Date.now(),
+		updatedAt: toMillis(data.updatedAt) ?? Date.now()
 	};
 }
 
@@ -40,7 +42,7 @@ export class FirestoreUserRepository implements IUserRepository {
 		tenantId: string,
 		user: Omit<User, 'id' | 'createdAt' | 'updatedAt'>
 	): Promise<User> {
-		const now = new Date();
+		const now = Date.now();
 		const ref = this.col(tenantId).doc();
 		const data = {
 			...user,
@@ -56,7 +58,7 @@ export class FirestoreUserRepository implements IUserRepository {
 		id: string,
 		user: Omit<User, 'id' | 'createdAt' | 'updatedAt'>
 	): Promise<User> {
-		const now = new Date();
+		const now = Date.now();
 		const data = {
 			...user,
 			createdAt: now,
@@ -103,7 +105,7 @@ export class FirestoreUserRepository implements IUserRepository {
 		const ref = this.col(tenantId).doc(id);
 		const doc = await ref.get();
 		if (!doc.exists) return null;
-		await ref.update({ ...data, updatedAt: new Date() });
+		await ref.update({ ...data, updatedAt: Date.now() });
 		const updated = await ref.get();
 		return docToUser(id, updated.data()!);
 	}
@@ -116,7 +118,7 @@ export class FirestoreUserRepository implements IUserRepository {
 		const ref = this.col(tenantId).doc(id);
 		const doc = await ref.get();
 		if (!doc.exists) return null;
-		await ref.update({ contactFormEnabled: enabled, updatedAt: new Date() });
+		await ref.update({ contactFormEnabled: enabled, updatedAt: Date.now() });
 		const updated = await ref.get();
 		return docToUser(id, updated.data()!);
 	}
@@ -129,7 +131,7 @@ export class FirestoreUserRepository implements IUserRepository {
 		const ref = this.col(tenantId).doc(id);
 		const doc = await ref.get();
 		if (!doc.exists) return null;
-		await ref.update({ calendarEnabled: enabled, updatedAt: new Date() });
+		await ref.update({ calendarEnabled: enabled, updatedAt: Date.now() });
 		const updated = await ref.get();
 		return docToUser(id, updated.data()!);
 	}
@@ -144,8 +146,8 @@ export class FirestoreUserRepository implements IUserRepository {
 		if (!doc.exists) return null;
 		await ref.update({
 			username,
-			usernameChangedAt: new Date(),
-			updatedAt: new Date()
+			usernameChangedAt: Date.now(),
+			updatedAt: Date.now()
 		});
 		const updated = await ref.get();
 		return docToUser(id, updated.data()!);
@@ -163,7 +165,7 @@ export class FirestoreUserRepository implements IUserRepository {
 		const links = data.links ?? [];
 		const newLink = { ...link, id: crypto.randomUUID() };
 		links.push(newLink);
-		await ref.update({ links, updatedAt: new Date() });
+		await ref.update({ links, updatedAt: Date.now() });
 		const updated = await ref.get();
 		return docToUser(userId, updated.data()!);
 	}
@@ -181,7 +183,7 @@ export class FirestoreUserRepository implements IUserRepository {
 		const links = (data.links ?? []).map((l: Link) =>
 			l.id === linkId ? { ...l, ...link } : l
 		);
-		await ref.update({ links, updatedAt: new Date() });
+		await ref.update({ links, updatedAt: Date.now() });
 		const updated = await ref.get();
 		return docToUser(userId, updated.data()!);
 	}
@@ -196,7 +198,7 @@ export class FirestoreUserRepository implements IUserRepository {
 		if (!doc.exists) return null;
 		const data = doc.data()!;
 		const links = (data.links ?? []).filter((l: Link) => l.id !== linkId);
-		await ref.update({ links, updatedAt: new Date() });
+		await ref.update({ links, updatedAt: Date.now() });
 		const updated = await ref.get();
 		return docToUser(userId, updated.data()!);
 	}
@@ -213,7 +215,7 @@ export class FirestoreUserRepository implements IUserRepository {
 		const calendarSlots = data.calendarSlots ?? [];
 		const newSlot = { ...slot, id: crypto.randomUUID() };
 		calendarSlots.push(newSlot);
-		await ref.update({ calendarSlots, updatedAt: new Date() });
+		await ref.update({ calendarSlots, updatedAt: Date.now() });
 		const updated = await ref.get();
 		return docToUser(userId, updated.data()!);
 	}
@@ -231,7 +233,7 @@ export class FirestoreUserRepository implements IUserRepository {
 		const calendarSlots = (data.calendarSlots ?? []).map((s: CalendarSlot) =>
 			s.id === slotId ? { ...s, booked } : s
 		);
-		await ref.update({ calendarSlots, updatedAt: new Date() });
+		await ref.update({ calendarSlots, updatedAt: Date.now() });
 		const updated = await ref.get();
 		return docToUser(userId, updated.data()!);
 	}
@@ -248,7 +250,7 @@ export class FirestoreUserRepository implements IUserRepository {
 		const calendarSlots = (data.calendarSlots ?? []).filter(
 			(s: CalendarSlot) => s.id !== slotId
 		);
-		await ref.update({ calendarSlots, updatedAt: new Date() });
+		await ref.update({ calendarSlots, updatedAt: Date.now() });
 		const updated = await ref.get();
 		return docToUser(userId, updated.data()!);
 	}
@@ -261,7 +263,7 @@ export class FirestoreUserRepository implements IUserRepository {
 		const ref = this.col(tenantId).doc(id);
 		const doc = await ref.get();
 		if (!doc.exists) return null;
-		await ref.update({ theme, updatedAt: new Date() });
+		await ref.update({ theme, updatedAt: Date.now() });
 		const updated = await ref.get();
 		return docToUser(id, updated.data()!);
 	}
@@ -270,12 +272,12 @@ export class FirestoreUserRepository implements IUserRepository {
 		tenantId: string,
 		id: string,
 		plan: string,
-		planExpiredAt?: Date | null
+		planExpiredAt?: number | null
 	): Promise<User | null> {
 		const ref = this.col(tenantId).doc(id);
 		const doc = await ref.get();
 		if (!doc.exists) return null;
-		const updateData: Record<string, unknown> = { plan, updatedAt: new Date() };
+		const updateData: Record<string, unknown> = { plan, updatedAt: Date.now() };
 		if (planExpiredAt !== undefined) {
 			updateData.planExpiredAt = planExpiredAt ?? null;
 		}
@@ -292,8 +294,8 @@ export class FirestoreUserRepository implements IUserRepository {
 		const doc = await ref.get();
 		if (!doc.exists) return null;
 		await ref.update({
-			lastVerificationEmailSentAt: new Date(),
-			updatedAt: new Date()
+			lastVerificationEmailSentAt: Date.now(),
+			updatedAt: Date.now()
 		});
 		const updated = await ref.get();
 		return docToUser(id, updated.data()!);

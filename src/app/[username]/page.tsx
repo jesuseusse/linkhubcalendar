@@ -1,6 +1,7 @@
 import { container } from '@/infrastructure/container';
 import { PublicProfileClient } from './PublicProfileClient';
 import { resolveTenantIdFromHeaders } from '@/lib/auth/resolveTenantId';
+import { PublicProfileDto } from '@/dtos/user.dto';
 
 export default async function PublicProfilePage({
 	params
@@ -8,25 +9,25 @@ export default async function PublicProfilePage({
 	params: Promise<{ username: string }>;
 }) {
 	const { username } = await params;
+
+	let profile: PublicProfileDto | null = null;
 	try {
 		const tenantId = await resolveTenantIdFromHeaders();
-		const profile = await container.getPublicProfileUseCase.execute(
+		profile = await container.getPublicProfileUseCase.execute(
 			tenantId,
 			username
 		);
-		console.log('Fetched profile:', profile); // Debug log to verify profile data
-		return <PublicProfileClient profile={profile} />;
 	} catch {
+		// Profile fetch failed — handled below
+	}
+
+	if (!profile) {
 		return (
 			<div className='min-h-screen bg-surface flex items-center justify-center'>
 				<p className='text-sm text-muted-foreground'>Profile not found</p>
 			</div>
 		);
-	} finally {
-		return (
-			<div className='min-h-screen bg-surface flex items-center justify-center'>
-				<p className='text-sm text-muted-foreground'>Profile not found</p>
-			</div>
-		); // Ensure cleanup happens if needed
 	}
+
+	return <PublicProfileClient profile={profile} />;
 }

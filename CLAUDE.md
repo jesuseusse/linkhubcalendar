@@ -15,10 +15,10 @@ Multi-tenant link-in-bio platform built with Next.js App Router and Firebase.
 ```
 src/
 ├── app/                    # Next.js App Router pages
-│   ├── [username]/         # Public profile pages
+│   ├── (landing)/          # Landing page
 │   ├── admin/              # Admin dashboard (login, dashboard, dates)
 │   ├── api/                # API routes
-│   └── t/                  # Tenant discovery
+│   └── [username]/         # Public profile pages
 ├── application/use-cases/  # Application layer use cases
 ├── components/             # React components by domain
 │   ├── Appointments/       # Appointment booking

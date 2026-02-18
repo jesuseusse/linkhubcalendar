@@ -18,7 +18,7 @@ export class SendEmailVerificationUseCase {
     private emailSenderService: IEmailSenderService
   ) {}
 
-  async execute(input: SendEmailVerificationInput): Promise<{ sentAt: string }> {
+  async execute(input: SendEmailVerificationInput): Promise<{ sentAt: number }> {
     const { tenantId, userId, emailConfig, companyName } = input;
 
     const user = await this.userRepository.findById(tenantId, userId);
@@ -27,7 +27,7 @@ export class SendEmailVerificationUseCase {
     }
 
     if (user.lastVerificationEmailSentAt) {
-      const elapsed = (Date.now() - user.lastVerificationEmailSentAt.getTime()) / 1000;
+      const elapsed = (Date.now() - user.lastVerificationEmailSentAt) / 1000;
       if (elapsed < COOLDOWN_SECONDS) {
         const remaining = Math.ceil(COOLDOWN_SECONDS - elapsed);
         throw new Error(`Debes esperar ${remaining} segundos antes de reenviar`);
@@ -48,6 +48,6 @@ export class SendEmailVerificationUseCase {
 
     await this.userRepository.updateLastVerificationEmailSentAt(tenantId, userId);
 
-    return { sentAt: new Date().toISOString() };
+    return { sentAt: Date.now() };
   }
 }
