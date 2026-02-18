@@ -1,5 +1,3 @@
-import DefaultLandingPage from './landing-tenants/DefaultLandingPage';
-
-export default function HomePage() {
-	return <DefaultLandingPage />;
+export default async function HomePage() {
+	return <div className=''>Hola</div>;
 }

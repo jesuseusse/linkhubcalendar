@@ -1,3 +1,4 @@
+import { FirestoreTenantRegistryRepository } from './repositories/FirestoreTenantRegistryRepository';
 import { FirestoreUserRepository } from './repositories/FirestoreUserRepository';
 import { FirestoreAppointmentRepository } from './repositories/FirestoreAppointmentRepository';
 import { FirestoreLeadRepository } from './repositories/FirestoreLeadRepository';
@@ -34,6 +35,7 @@ import { SubmitLeadUseCase } from '@/application/use-cases/SubmitLeadUseCase';
 import { GetLeadsUseCase } from '@/application/use-cases/GetLeadsUseCase';
 import { SendEmailVerificationUseCase } from '@/application/use-cases/SendEmailVerificationUseCase';
 
+export const tenantRegistryRepo = new FirestoreTenantRegistryRepository();
 export const userRepo = new FirestoreUserRepository();
 const appointmentRepo = new FirestoreAppointmentRepository();
 const leadRepo = new FirestoreLeadRepository();
@@ -42,6 +44,7 @@ const emailVerificationService = new FirebaseEmailVerificationService();
 const emailSenderService = new ResendEmailSenderService();
 
 export const container = {
+  tenantRegistryRepo,
   userRepo,
   getProfileUseCase: new GetProfileUseCase(userRepo),
   updateProfileUseCase: new UpdateProfileUseCase(userRepo),

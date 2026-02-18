@@ -7,6 +7,7 @@ import { getProfilePhotoUrl } from '@/utils/profilePhoto';
 import { ContactForm } from '@/components/Contact/ContactForm';
 import { isPlanExpired } from '@/utils/planExpiration';
 import { hasPermission, PERMISSIONS, type Plan } from '@/permissions/plans';
+import Image from 'next/image';
 
 interface Props {
 	profile: PublicProfileDto;
@@ -30,19 +31,17 @@ export function PublicProfileClient({ profile }: Props) {
 	return (
 		<div
 			className='min-h-screen flex flex-col items-center p-4 bg-surface'
-			style={
-				theme
-					? { backgroundColor: theme.backgroundColor }
-					: undefined
-			}
+			style={theme ? { backgroundColor: theme.backgroundColor } : undefined}
 		>
 			<div className='w-full max-w-md'>
 				<div className='text-center mb-8'>
 					{profile.profilePhoto ? (
-						<img
+						<Image
 							src={getProfilePhotoUrl(profile.profilePhoto)}
 							alt={profile.name}
 							className='w-20 h-20 object-cover mx-auto mb-3'
+							width={180}
+							height={180}
 						/>
 					) : (
 						<div className='w-20 h-20 bg-primary text-primary-foreground flex items-center justify-center text-3xl font-semibold mx-auto mb-3'>
@@ -57,9 +56,7 @@ export function PublicProfileClient({ profile }: Props) {
 					</h1>
 					<p
 						className='text-xs mt-1 text-muted-foreground'
-						style={
-							theme ? { color: `${theme.textColor}80` } : undefined
-						}
+						style={theme ? { color: `${theme.textColor}80` } : undefined}
 					>
 						{profile.username}
 					</p>
@@ -96,9 +93,7 @@ export function PublicProfileClient({ profile }: Props) {
 					) : (
 						<p
 							className='text-sm text-center text-muted-foreground'
-							style={
-								theme ? { color: `${theme.textColor}60` } : undefined
-							}
+							style={theme ? { color: `${theme.textColor}60` } : undefined}
 						>
 							No links yet
 						</p>
@@ -123,7 +118,7 @@ export function PublicProfileClient({ profile }: Props) {
 					className='mt-12 text-xs text-foreground/25'
 					style={theme ? { color: `${theme.textColor}40` } : undefined}
 				>
-					Powered by LinkHub
+					Powered by Link Hub
 				</p>
 			</div>
 		</div>

@@ -1,7 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import React from 'react';
-import HeroSection from './components/DefaultHeroSection';
+import HeroSection from './DefaultHeroSection';
 
 type Testimonial = {
 	name: string;

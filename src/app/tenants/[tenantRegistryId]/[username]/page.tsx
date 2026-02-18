@@ -1,25 +1,28 @@
 import { container } from '@/infrastructure/container';
 import { PublicProfileClient } from './PublicProfileClient';
-import { resolveTenantIdFromHeaders } from '@/lib/auth/resolveTenantId';
 import { PublicProfileDto } from '@/dtos/user.dto';
+import { notFound } from 'next/navigation';
 
 export default async function PublicProfilePage({
 	params
 }: {
-	params: Promise<{ username: string }>;
+	params: Promise<{ username: string; tenantRegistryId: string }>;
 }) {
-	const { username } = await params;
+	const { username, tenantRegistryId } = await params;
 
 	let profile: PublicProfileDto | null = null;
-	try {
-		const tenantId = await resolveTenantIdFromHeaders();
-		profile = await container.getPublicProfileUseCase.execute(
-			tenantId,
-			username
-		);
-	} catch {
-		// Profile fetch failed — handled below
+
+	const tenantConfig =
+		await container.tenantRegistryRepo.getByHostname(tenantRegistryId);
+
+	if (!tenantConfig) {
+		notFound();
 	}
+
+	profile = await container.getPublicProfileUseCase.execute(
+		tenantConfig.tenantId,
+		username
+	);
 
 	if (!profile) {
 		return (

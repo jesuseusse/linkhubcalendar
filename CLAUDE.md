@@ -49,11 +49,13 @@ src/
 Each tenant is identified by their domain. Firestore `tenant_registry/{hostname}` documents map domains to tenant IDs and optional theme overrides.
 
 **Resolution flow:**
+
 1. `middleware.ts` resolves `tenantId` from the request `host` header
 2. Root layout (`src/app/layout.tsx`) calls `resolveTenantRegistryFromHeaders()` to get both `tenantId` and `theme` in a single Firestore read
 3. Firebase Auth uses Identity Platform with tenant-scoped authentication
 
 **Key files:**
+
 - `src/lib/auth/resolveTenantId.ts` — tenant resolution functions
 - `src/lib/tenant/tenantTheme.ts` — theme-to-CSS-var converter
 - `middleware.ts` — request-level tenant resolution
@@ -70,33 +72,33 @@ Three-layer cascade (lowest to highest priority):
 
 Always use semantic Tailwind classes instead of hardcoded colors:
 
-| Use this | Not this |
-|---|---|
-| `bg-background` | `bg-white` |
-| `bg-surface` | `bg-zinc-50` |
-| `text-foreground` | `text-zinc-900` |
-| `text-muted-foreground` | `text-zinc-500`, `text-zinc-600` |
-| `border-border` | `border-zinc-200`, `border-zinc-300` |
-| `bg-primary` | `bg-zinc-900` |
-| `text-primary-foreground` | `text-white` (on primary bg) |
-| `text-error` | `text-red-600` |
-| `bg-error-light` | `bg-red-50` |
-| `bg-muted` | `bg-zinc-100` |
+| Use this                  | Not this                             |
+| ------------------------- | ------------------------------------ |
+| `bg-background`           | `bg-white`                           |
+| `bg-surface`              | `bg-zinc-50`                         |
+| `text-foreground`         | `text-zinc-900`                      |
+| `text-muted-foreground`   | `text-zinc-500`, `text-zinc-600`     |
+| `border-border`           | `border-zinc-200`, `border-zinc-300` |
+| `bg-primary`              | `bg-zinc-900`                        |
+| `text-primary-foreground` | `text-white` (on primary bg)         |
+| `text-error`              | `text-red-600`                       |
+| `bg-error-light`          | `bg-red-50`                          |
+| `bg-muted`                | `bg-zinc-100`                        |
 
 ### Adding a Tenant Theme in Firestore
 
 ```json
 // tenant_registry/{hostname}
 {
-  "tenantId": "abc123",
-  "theme": {
-    "primary": "#4f46e5",
-    "primaryForeground": "#ffffff",
-    "background": "#fafafa",
-    "foreground": "#1e1e2e",
-    "accent": "#4f46e5",
-    "border": "#d1d1d6"
-  }
+	"tenantId": "abc123", // firebase tenant id
+	"theme": {
+		"primary": "#4f46e5",
+		"primaryForeground": "#ffffff",
+		"background": "#fafafa",
+		"foreground": "#1e1e2e",
+		"accent": "#4f46e5",
+		"border": "#d1d1d6"
+	}
 }
 ```
 
@@ -106,14 +108,14 @@ Only set the keys you want to override — omitted keys keep `@theme` defaults.
 
 Defined in `src/permissions/plans.ts`. Three plans: `free`, `pro`, `team`.
 
-| Permission | free | pro | team |
-|---|---|---|---|
-| LINKS_EDIT | yes | yes | yes |
-| THEME_CUSTOMIZE | - | yes | yes |
-| CONTACT_FORM | - | yes | yes |
-| CALENDAR | - | yes | yes |
-| LEADS_VIEW | - | yes | yes |
-| ANALYTICS_VIEW | - | - | yes |
+| Permission      | free | pro | team |
+| --------------- | ---- | --- | ---- |
+| LINKS_EDIT      | yes  | yes | yes  |
+| THEME_CUSTOMIZE | -    | yes | yes  |
+| CONTACT_FORM    | -    | yes | yes  |
+| CALENDAR        | -    | yes | yes  |
+| LEADS_VIEW      | -    | yes | yes  |
+| ANALYTICS_VIEW  | -    | -   | yes  |
 
 Gated in UI via `<RequirePermission>` wrapper component. Public pages check permissions inline with `hasPermission()`.
 

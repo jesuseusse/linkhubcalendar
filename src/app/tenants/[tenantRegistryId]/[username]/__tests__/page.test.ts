@@ -195,20 +195,25 @@ describe('GetPublicProfileUseCase', () => {
 
 describe('PublicProfilePage integration', () => {
 	let mockExecute: ReturnType<typeof vi.fn>;
+	let mockGetByHostname: ReturnType<typeof vi.fn>;
 
 	beforeEach(() => {
 		vi.resetModules();
 		mockExecute = vi.fn();
+		mockGetByHostname = vi.fn();
 	});
 
 	async function loadPage() {
 		vi.doMock('@/infrastructure/container', () => ({
 			container: {
-				getPublicProfileUseCase: { execute: mockExecute }
+				getPublicProfileUseCase: { execute: mockExecute },
+				tenantRegistryRepo: { getByHostname: mockGetByHostname }
 			}
 		}));
-		vi.doMock('@/lib/auth/resolveTenantId', () => ({
-			resolveTenantIdFromHeaders: vi.fn().mockResolvedValue('tenant-123')
+		vi.doMock('next/navigation', () => ({
+			notFound: vi.fn(() => {
+				throw new Error('NEXT_NOT_FOUND');
+			})
 		}));
 		vi.doMock('./PublicProfileClient', () => ({
 			PublicProfileClient: ({ profile }: { profile: unknown }) => profile
@@ -227,54 +232,52 @@ describe('PublicProfilePage integration', () => {
 			contactFormEnabled: false,
 			calendarEnabled: false
 		};
+		mockGetByHostname.mockResolvedValue({ tenantId: 'tenant-123' });
 		mockExecute.mockResolvedValue(expectedProfile);
 
 		const PublicProfilePage = await loadPage();
 		const result = await PublicProfilePage({
-			params: Promise.resolve({ username: 'juanperez' })
+			params: Promise.resolve({
+				username: 'juanperez',
+				tenantRegistryId: 'example.com'
+			})
 		});
 
+		expect(mockGetByHostname).toHaveBeenCalledWith('example.com');
 		expect(mockExecute).toHaveBeenCalledWith('tenant-123', 'juanperez');
 		expect(result.props.profile).toEqual(expectedProfile);
 	});
 
-	it('muestra "Profile not found" cuando el use case falla', async () => {
-		mockExecute.mockRejectedValue(new Error('Profile not found'));
+	it('muestra "Profile not found" cuando el perfil es null', async () => {
+		mockGetByHostname.mockResolvedValue({ tenantId: 'tenant-123' });
+		mockExecute.mockResolvedValue(null);
 
 		const PublicProfilePage = await loadPage();
 		const result = await PublicProfilePage({
-			params: Promise.resolve({ username: 'noexiste' })
+			params: Promise.resolve({
+				username: 'noexiste',
+				tenantRegistryId: 'example.com'
+			})
 		});
 
 		expect(result).toBeTruthy();
 		expect(result.props.children.props.children).toBe('Profile not found');
 	});
 
-	it('muestra "Profile not found" cuando la resolución de tenant falla', async () => {
-		vi.resetModules();
-		mockExecute = vi.fn();
+	it('llama notFound cuando el tenant registry no existe', async () => {
+		mockGetByHostname.mockResolvedValue(null);
 
-		vi.doMock('@/infrastructure/container', () => ({
-			container: {
-				getPublicProfileUseCase: { execute: mockExecute }
-			}
-		}));
-		vi.doMock('@/lib/auth/resolveTenantId', () => ({
-			resolveTenantIdFromHeaders: vi
-				.fn()
-				.mockRejectedValue(new Error('Domain not authorized'))
-		}));
-		vi.doMock('./PublicProfileClient', () => ({
-			PublicProfileClient: ({ profile }: { profile: unknown }) => profile
-		}));
+		const PublicProfilePage = await loadPage();
 
-		const mod = await import('../page');
-		const PublicProfilePage = mod.default;
-		const result = await PublicProfilePage({
-			params: Promise.resolve({ username: 'juanperez' })
-		});
+		await expect(
+			PublicProfilePage({
+				params: Promise.resolve({
+					username: 'juanperez',
+					tenantRegistryId: 'unknown.com'
+				})
+			})
+		).rejects.toThrow('NEXT_NOT_FOUND');
 
 		expect(mockExecute).not.toHaveBeenCalled();
-		expect(result.props.children.props.children).toBe('Profile not found');
 	});
 });
