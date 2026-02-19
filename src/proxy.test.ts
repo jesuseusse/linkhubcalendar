@@ -104,14 +104,23 @@ describe('proxy', () => {
 		expect(rewrittenUrl.pathname).toBe('/tenants/127/dashboard');
 	});
 
-	it('does NOT use default tenant for my-app.amplifyapp.com (tenantId becomes "my-app" after split)', async () => {
+	it('uses default tenant hostname for any amplifyapp.com host', async () => {
 		process.env.NEXT_PUBLIC_DEFAULT_TENANT_HOSTNAME = 'demo-tenant';
 		const req = createMockRequest('my-app.amplifyapp.com', '/');
 		await proxy(req);
 
-		// BUG: checks tenantId (split result "my-app") instead of original host
 		expect(mockRewrite).toHaveBeenCalledTimes(1);
 		const rewrittenUrl: URL = mockRewrite.mock.calls[0][0];
-		expect(rewrittenUrl.pathname).toBe('/tenants/my-app/');
+		expect(rewrittenUrl.pathname).toBe('/tenants/demo-tenant/');
+	});
+
+	it('uses default tenant hostname for Amplify preview URL (main.d3rdv7nxcenp6y.amplifyapp.com)', async () => {
+		process.env.NEXT_PUBLIC_DEFAULT_TENANT_HOSTNAME = 'demo-tenant';
+		const req = createMockRequest('main.d3rdv7nxcenp6y.amplifyapp.com', '/tenant');
+		await proxy(req);
+
+		expect(mockRewrite).toHaveBeenCalledTimes(1);
+		const rewrittenUrl: URL = mockRewrite.mock.calls[0][0];
+		expect(rewrittenUrl.pathname).toBe('/tenants/demo-tenant/tenant');
 	});
 });

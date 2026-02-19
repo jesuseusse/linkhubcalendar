@@ -26,12 +26,12 @@ export async function proxy(req: NextRequest) {
 	try {
 		let tenantRegistryId = host.split('.')[0]; // O tu lógica de resolveTenant simplificada
 
-		console.log(`Proxy: TenantId found ${tenantRegistryId}`);
+		console.log(`Proxy: TenantRegistryId found ${tenantRegistryId}`);
 
 		if (
 			tenantRegistryId.includes('localhost') ||
 			tenantRegistryId === '127.0.0.1' ||
-			tenantRegistryId.includes('amplifyapp.com') // Para testing en AWS Amplify
+			host.includes('amplifyapp.com')
 		) {
 			console.log(
 				'Host is localhost or testing domain, using default tenant hostname'

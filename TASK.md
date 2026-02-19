@@ -6,7 +6,7 @@
 - [ ] Button Verify Email
 - [ ] Conect with stripe according tenantId
 - [x] verify email
-- [ ] update tenant collection to accept stripe config, proPriceId
+- [x] update tenant collection to accept stripe config, proPriceId
 - [ ] crate collections tenant/{tenant}
 
 ---

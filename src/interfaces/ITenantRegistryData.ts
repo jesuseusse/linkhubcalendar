@@ -1,4 +1,6 @@
 import { TenantTheme } from './ITenantTheme';
+import { StripeConfig } from './IStripeConfig';
+import { SeoConfig } from './ISeoConfig';
 
 export interface TenantRegistryData {
 	tenantId: string;
@@ -8,4 +10,6 @@ export interface TenantRegistryData {
 	domain: string | null;
 	resendApiKey?: string | null;
 	resendFromEmail?: string | null;
+	stripeConfig?: StripeConfig | null;
+	seoConfig?: SeoConfig | null;
 }

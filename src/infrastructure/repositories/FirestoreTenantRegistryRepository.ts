@@ -20,7 +20,9 @@ function docToTenantRegistry(
 		companyName: data.companyName ?? null,
 		logoUrl: data.logoUrl ?? null,
 		resendApiKey: data.resendApiKey ?? null,
-		resendFromEmail: data.resendFromEmail ?? null
+		resendFromEmail: data.resendFromEmail ?? null,
+		stripeConfig: data.stripeConfig ?? null,
+		seoConfig: data.seoConfig ?? null
 	};
 }
 
