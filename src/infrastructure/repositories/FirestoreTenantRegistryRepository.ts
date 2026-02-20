@@ -98,4 +98,16 @@ export class FirestoreTenantRegistryRepository implements ITenantRegistryReposit
 
 		return docToTenantRegistry(hostname, { ...data, createdAt: now });
 	}
+
+	async saveStripeEvent(
+		hostname: string,
+		eventId: string,
+		data: Record<string, unknown>
+	): Promise<void> {
+		await this.col()
+			.doc(hostname)
+			.collection('stripe_events')
+			.doc(eventId)
+			.set(data);
+	}
 }

@@ -99,6 +99,46 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ user
 }
 ```
 
+### 3. Webhook Routes (no auth, verified by signature)
+
+Used for third-party callbacks (Stripe, etc.). Never use `adminDb` directly — use the container repos.
+
+```ts
+// src/app/api/stripe/webhook/route.ts
+import { NextRequest, NextResponse } from 'next/server';
+import Stripe from 'stripe';
+import { container } from '@/infrastructure/container';
+
+export async function POST(req: NextRequest) {
+  const domain = req.nextUrl.searchParams.get('domain');
+  if (!domain) return NextResponse.json({ error: 'Missing domain param' }, { status: 400 });
+
+  // Resolve tenant via repo (never call adminDb directly)
+  const tenantRegistry = await container.tenantRegistryRepo.getByHostname(domain);
+  if (!tenantRegistry) return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
+
+  // Verify signature, persist event, process business logic through container repos
+  const { stripeConfig } = tenantRegistry;
+  const stripe = new Stripe(stripeConfig.secretKey);
+  const event = stripe.webhooks.constructEvent(await req.text(), req.headers.get('stripe-signature')!, stripeConfig.webhookSecret);
+
+  await container.tenantRegistryRepo.saveStripeEvent(domain, event.id, { ...event, receivedAt: Date.now() });
+
+  // Use container.userRepo for domain operations — never adminDb
+  const user = await container.userRepo.findByEmail(tenantId, email);
+  await container.userRepo.updatePlan(tenantId, user.id, 'pro', planExpiredAt);
+
+  // Always return 200 — swallow processing errors so the provider does not retry
+  return NextResponse.json({ received: true });
+}
+```
+
+**Webhook rules:**
+- Verify the external signature **before** any business logic
+- Persist the raw event immediately after signature verification (idempotent by event ID)
+- Swallow processing errors inside the event handler — return 200 so the provider doesn't retry a duplicate
+- Use `?domain=` query param so each tenant registers their own webhook URL with their own credentials
+
 ## Rules
 
 1. **Always destructure `tenantId`** — authenticated routes get it from `checkAuth(req)`, public routes from `resolveTenantId(req)`
@@ -108,6 +148,7 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ user
 5. Return `201` for creation, `200` for reads/updates, `400` for errors, `404` for not found
 6. Never import repositories directly in routes — always go through `container`
    - Exception: `userRepo` is exported from container for the signup route
+7. **Never call `adminDb` directly in route files** — use `container` repos and use cases
 
 ## Existing Routes Reference
 
@@ -142,3 +183,8 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ user
 | `/api/u/[username]/calendar` | GET | `u/[username]/calendar/route.ts` |
 | `/api/u/[username]/appointments` | POST | `u/[username]/appointments/route.ts` |
 | `/api/u/[username]/contact` | POST | `u/[username]/contact/route.ts` |
+
+### Webhook (signature verification)
+| Route | Methods | File |
+|-------|---------|------|
+| `/api/stripe/webhook?domain=` | POST | `stripe/webhook/route.ts` |
