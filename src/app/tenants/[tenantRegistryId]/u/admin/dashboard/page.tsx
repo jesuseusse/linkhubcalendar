@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useProfile } from '@/hooks/useProfile';
 import { useLinks } from '@/hooks/useLinks';
@@ -23,9 +24,23 @@ import { LeadList } from '@/components/Leads/LeadList';
 import { RequirePermission } from '@/components/Common/RequirePermission';
 import { PERMISSIONS } from '@/permissions/plans';
 import { InfoVerifyEmail } from '@/components/Profile/InfoVerifyEmail';
+import { StripeResultModal } from '@/components/Common/StripeResultModal';
 
 export default function DashboardPage() {
 	const { logout } = useAuth(authService);
+	const searchParams = useSearchParams();
+	const router = useRouter();
+	const pathname = usePathname();
+
+	const stripeParam = searchParams.get('successStripe');
+	const stripeModal = stripeParam === 'true' ? 'success' : stripeParam === 'false' ? 'failure' : null;
+
+	function handleCloseStripeModal() {
+		const params = new URLSearchParams(searchParams.toString());
+		params.delete('successStripe');
+		const query = params.toString();
+		router.replace(pathname + (query ? `?${query}` : ''));
+	}
 	const {
 		profile,
 		loading,
@@ -56,6 +71,12 @@ export default function DashboardPage() {
 
 	return (
 		<div className='min-h-screen bg-background'>
+			{stripeModal && (
+				<StripeResultModal
+					success={stripeModal === 'success'}
+					onClose={handleCloseStripeModal}
+				/>
+			)}
 			<Header userName={profile.name} isAuthenticated onLogout={logout} />
 			<main className='max-w-5xl mx-auto py-8 px-4 space-y-6'>
 				{profile.emailVerified === false && (
