@@ -4,10 +4,20 @@ import { container } from '@/infrastructure/container';
 import { StripeConfig } from '@/interfaces/IStripeConfig';
 
 export async function POST(req: NextRequest) {
-	// 1. Identify tenant via ?domain= query param (each tenant registers their own webhook URL)
-	const domain = req.nextUrl.searchParams.get('domain');
+	const rawBody = await req.text();
+
+	// 1. Parse body without verification to extract domain from event metadata.
+	//    Domain identifies which tenant's Stripe config to use for signature verification.
+	let parsedBody: { data?: { object?: { metadata?: Record<string, string> } } } | undefined;
+	try {
+		parsedBody = JSON.parse(rawBody);
+	} catch {
+		return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+	}
+
+	const domain = parsedBody?.data?.object?.metadata?.domain;
 	if (!domain) {
-		return NextResponse.json({ error: 'Missing domain param' }, { status: 400 });
+		return NextResponse.json({ error: 'Missing domain in event metadata' }, { status: 400 });
 	}
 
 	// 2. Resolve tenant registry — reads stripeConfig and tenantId
@@ -28,7 +38,6 @@ export async function POST(req: NextRequest) {
 	// 3. Verify Stripe webhook signature with tenant-specific secret
 	const stripe = new Stripe(stripeConfig.secretKey);
 	const sig = req.headers.get('stripe-signature');
-	const rawBody = await req.text();
 
 	let event: Stripe.Event;
 	try {
@@ -89,10 +98,10 @@ export async function POST(req: NextRequest) {
 async function handleCheckoutCompleted(
 	stripe: Stripe,
 	session: Stripe.Checkout.Session,
-	hostname: string,
+	domain: string,
 	stripeConfig: StripeConfig
 ) {
-	const { email, tenantId, domain } = session.metadata ?? {};
+	const { email, tenantId } = session.metadata ?? {};
 	if (!email || !tenantId) {
 		console.warn('[stripe-webhook] checkout.session.completed: missing metadata');
 		return;
@@ -111,7 +120,7 @@ async function handleCheckoutCompleted(
 
 	// Propagate metadata to the subscription so future renewal events can resolve the tenant
 	await stripe.subscriptions.update(subscriptionId, {
-		metadata: { tenantId, domain: domain ?? hostname, email }
+		metadata: { tenantId, domain, email }
 	});
 
 	if (priceId !== stripeConfig.proPriceId) {

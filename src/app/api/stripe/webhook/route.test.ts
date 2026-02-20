@@ -1,8 +1,9 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { NextRequest } from 'next/server';
+import checkoutSessionData from './checkout.session.completed.mock.json';
 
 // ---------------------------------------------------------------------------
-// Constants from the real event provided for testing
+// Constants derived from the real Stripe event fixture
 // ---------------------------------------------------------------------------
 const TENANT_DOMAIN = 'linkhubcalendar.com.dev';
 const TENANT_ID = 'linkhubcalendar-8pe2p';
@@ -69,56 +70,27 @@ vi.mock('stripe', () => ({
 import { POST } from './route';
 
 // ---------------------------------------------------------------------------
-// Fixtures — built from the real checkout.session.completed event
+// Fixtures — data field comes from the real checkout.session.completed payload
 // ---------------------------------------------------------------------------
-const SESSION_OBJECT = {
-	id: 'cs_test_a1n0WR0G6hmlPp3JJRqV3J0qLq0flbQ7EPq765hNNxqfJfGwmnadXkWpod',
-	object: 'checkout.session',
-	subscription: SUBSCRIPTION_ID,
-	mode: 'subscription',
-	status: 'complete',
-	payment_status: 'paid',
-	customer: 'cus_U0kMppwVLTzzFE',
-	customer_email: USER_EMAIL,
-	customer_details: { email: USER_EMAIL, name: 'Jesus' },
-	metadata: {
-		domain: TENANT_DOMAIN,
-		email: USER_EMAIL,
-		tenantId: TENANT_ID
-	},
-	cancel_url: `https://${TENANT_DOMAIN}/admin/dashboard?successStripe=false`,
-	success_url: `https://${TENANT_DOMAIN}/admin/dashboard?successStripe=true`,
-	amount_subtotal: 20000,
-	amount_total: 20000,
-	currency: 'mxn',
-	livemode: false,
-	created: 1771552254,
-	invoice: 'in_1T2is68gTI2M8y3RPEQSwesT'
-};
-
 const STRIPE_EVENT = {
 	id: EVENT_ID,
 	object: 'event',
 	type: 'checkout.session.completed',
 	created: 1771552254,
 	livemode: false,
-	data: { object: SESSION_OBJECT, previous_attributes: null }
+	data: checkoutSessionData
 };
 
-function makeRequest(overrides: { domain?: string; body?: string } = {}) {
-	const domain = overrides.domain ?? TENANT_DOMAIN;
+function makeRequest(overrides: { body?: string } = {}) {
 	const body = overrides.body ?? JSON.stringify(STRIPE_EVENT);
-	return new NextRequest(
-		`http://localhost/api/stripe/webhook?domain=${domain}`,
-		{
-			method: 'POST',
-			headers: {
-				'stripe-signature': 'whsec_test_sig_abc123',
-				'content-type': 'application/json'
-			},
-			body
-		}
-	);
+	return new NextRequest('http://localhost/api/stripe/webhook', {
+		method: 'POST',
+		headers: {
+			'stripe-signature': 'whsec_test_sig_abc123',
+			'content-type': 'application/json'
+		},
+		body
+	});
 }
 
 function makeTenantRegistry(proPriceId = PRO_PRICE_ID) {
@@ -165,12 +137,9 @@ describe('POST /api/stripe/webhook — checkout.session.completed', () => {
 		mockUpdatePlan.mockResolvedValue(undefined);
 	});
 
-	it('returns 400 when domain query param is missing', async () => {
-		const req = new NextRequest('http://localhost/api/stripe/webhook', {
-			method: 'POST',
-			body: 'body'
-		});
-		const res = await POST(req);
+	it('returns 400 when domain is missing in event metadata', async () => {
+		const body = JSON.stringify({ data: { object: { metadata: {} } } });
+		const res = await POST(makeRequest({ body }));
 		expect(res.status).toBe(400);
 		const json = await res.json();
 		expect(json.error).toMatch(/domain/i);
@@ -232,6 +201,7 @@ describe('POST /api/stripe/webhook — checkout.session.completed', () => {
 			expect.objectContaining({
 				metadata: expect.objectContaining({
 					tenantId: TENANT_ID,
+					domain: TENANT_DOMAIN,
 					email: USER_EMAIL
 				})
 			})
