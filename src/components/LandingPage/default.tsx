@@ -213,7 +213,7 @@ export default function DefaultLandingPage() {
 					</p>
 
 					<Link
-						href='/admin/login'
+						href='u/admin/login'
 						prefetch
 						className='mt-6 inline-block bg-primary text-primaryForeground px-10 py-4 rounded-xl font-semibold hover:scale-105 transition'
 					>
@@ -246,7 +246,7 @@ export default function DefaultLandingPage() {
 				</p>
 
 				<Link
-					href='/admin/login'
+					href='u/admin/login'
 					prefetch
 					className='mt-8 inline-block bg-primary text-primaryForeground px-12 py-5 rounded-xl text-lg font-semibold shadow-lg hover:scale-105 transition'
 				>

@@ -28,11 +28,11 @@ nex/
 │   │   ├── globals.css                   # Tailwind CSS
 │   │   ├── page.tsx                      # / (Landing)
 │   │   ├── admin/
-│   │   │   ├── login/page.tsx            # /admin/login
+│   │   │   ├── login/page.tsx            # u/admin/login
 │   │   │   └── dashboard/
 │   │   │       ├── layout.tsx            # Auth guard
-│   │   │       ├── page.tsx              # /admin/dashboard
-│   │   │       └── dates/page.tsx        # /admin/dashboard/dates
+│   │   │       ├── page.tsx              # u/admin/dashboard
+│   │   │       └── dates/page.tsx        # u/admin/dashboard/dates
 │   │   ├── [username]/
 │   │   │   ├── page.tsx                  # /:username (public profile, SSR)
 │   │   │   └── calendar/page.tsx         # /:username/calendar (SSR)
@@ -493,15 +493,15 @@ Copy all components from `frontend/src/components/`. For **each component**:
 
 ### Step 10: Pages
 
-| Route                    | Type          | Source                          | Notes                                                            |
-| ------------------------ | ------------- | ------------------------------- | ---------------------------------------------------------------- |
-| `/`                      | Client        | `LandingPage.tsx`               | Replace `useNavigate` with `useRouter`                           |
-| `/admin/login`           | Client        | `AuthPage.tsx`                  | Redirect to dashboard if authenticated                           |
-| `/admin/dashboard`       | Client        | `DashboardPage.tsx`             | Protected via layout auth guard                                  |
-| `/admin/dashboard/dates` | Client        | `AppointmentsDashboardPage.tsx` | Protected                                                        |
-| `/[username]`            | Server+Client | `PublicProfilePage.tsx`         | SSR: fetch profile server-side for SEO, pass to client component |
-| `/[username]/calendar`   | Server+Client | `PublicCalendarPage.tsx`        | SSR: fetch data, client handles booking                          |
-| `/t` & `/t/calendar`     | Server+Client | Reuse `[username]` components   | Username from `searchParams` (set by middleware)                 |
+| Route                     | Type          | Source                          | Notes                                                            |
+| ------------------------- | ------------- | ------------------------------- | ---------------------------------------------------------------- |
+| `/`                       | Client        | `LandingPage.tsx`               | Replace `useNavigate` with `useRouter`                           |
+| `u/admin/login`           | Client        | `AuthPage.tsx`                  | Redirect to dashboard if authenticated                           |
+| `u/admin/dashboard`       | Client        | `DashboardPage.tsx`             | Protected via layout auth guard                                  |
+| `u/admin/dashboard/dates` | Client        | `AppointmentsDashboardPage.tsx` | Protected                                                        |
+| `/[username]`             | Server+Client | `PublicProfilePage.tsx`         | SSR: fetch profile server-side for SEO, pass to client component |
+| `/[username]/calendar`    | Server+Client | `PublicCalendarPage.tsx`        | SSR: fetch data, client handles booking                          |
+| `/t` & `/t/calendar`      | Server+Client | Reuse `[username]` components   | Username from `searchParams` (set by middleware)                 |
 
 **Root layout** (`layout.tsx`):
 
@@ -523,7 +523,7 @@ export default function RootLayout({ children }) {
 **Dashboard layout** (`/admin/dashboard/layout.tsx`):
 
 - Client component that checks auth context
-- Redirects to `/admin/login` if unauthenticated
+- Redirects to `u/admin/login` if unauthenticated
 - Shows loading indicator while checking auth state
 
 ---

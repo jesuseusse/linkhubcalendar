@@ -6,6 +6,7 @@ import { TenantRegistryData } from '@/interfaces/ITenantRegistryData';
 export interface AuthResult {
 	userId: string;
 	tenantId: string;
+	email: string | null;
 	emailVerified: boolean;
 	tenantRegistry: TenantRegistryData;
 }
@@ -35,6 +36,7 @@ export async function checkAuth(req: NextRequest): Promise<AuthResult> {
 	return {
 		userId: decoded.uid,
 		tenantId: tokenTenantId,
+		email: decoded.email ?? null,
 		emailVerified: decoded.email_verified ?? false,
 		tenantRegistry: {
 			tenantId: validTenantId,
@@ -43,7 +45,8 @@ export async function checkAuth(req: NextRequest): Promise<AuthResult> {
 			companyName: data?.companyName ?? null,
 			logoUrl: data?.logoUrl ?? null,
 			resendApiKey: data?.resendApiKey ?? null,
-			resendFromEmail: data?.resendFromEmail ?? null
+			resendFromEmail: data?.resendFromEmail ?? null,
+			stripeConfig: data?.stripeConfig ?? null
 		}
 	};
 }

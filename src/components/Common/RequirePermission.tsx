@@ -8,10 +8,9 @@ interface Props {
 	plan?: Plan;
 	permission: Permission;
 	children: ReactNode;
-	email?: string;
 }
 
-export function RequirePermission({ plan, permission, children, email }: Props) {
+export function RequirePermission({ plan, permission, children }: Props) {
 	const [showModal, setShowModal] = useState(false);
 	const allowed = plan ? hasPermission(plan, permission) : false;
 
@@ -27,7 +26,7 @@ export function RequirePermission({ plan, permission, children, email }: Props) 
 			<div className={!allowed ? 'pointer-events-none opacity-50' : ''}>
 				{children}
 			</div>
-			{showModal && <UpgradeModal onClose={() => setShowModal(false)} email={email} />}
+			{showModal && <UpgradeModal onClose={() => setShowModal(false)} />}
 		</div>
 	);
 }

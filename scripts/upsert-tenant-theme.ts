@@ -132,7 +132,22 @@ async function main() {
 	const companyName = await ask(`  companyName [${existingData?.companyName ?? ''}]: `);
 	const logoUrl = await ask(`  logoUrl [${existingData?.logoUrl ?? ''}]: `);
 
-	// 5. Choose theme input mode
+	// 5. Prompt for Stripe config
+	const existingStripe = existingData?.stripeConfig ?? {};
+	console.log('\n  Stripe config (press Enter to skip / keep current):');
+
+	const stripeSecretKey = await ask(`  secretKey [${existingStripe.secretKey ? '***' : ''}]: `);
+	const stripePublishableKey = await ask(`  publishableKey [${existingStripe.publishableKey ?? ''}]: `);
+	const stripeProPriceId = await ask(`  proPriceId [${existingStripe.proPriceId ?? ''}]: `);
+	const stripeWebhookSecret = await ask(`  webhookSecret [${existingStripe.webhookSecret ? '***' : ''}]: `);
+
+	const newStripe: Record<string, string> = { ...existingStripe };
+	if (stripeSecretKey) newStripe.secretKey = stripeSecretKey;
+	if (stripePublishableKey) newStripe.publishableKey = stripePublishableKey;
+	if (stripeProPriceId) newStripe.proPriceId = stripeProPriceId;
+	if (stripeWebhookSecret) newStripe.webhookSecret = stripeWebhookSecret;
+
+	// 6. Choose theme input mode
 	console.log('\n  How do you want to set the theme?');
 	console.log('    1) Paste JSON');
 	console.log('    2) Load from .json file');
@@ -244,7 +259,7 @@ async function main() {
 
 	const hasThemeValues = Object.keys(newTheme).length > 0;
 
-	// 6. Build update payload
+	// 7. Build update payload
 	const payload: Record<string, unknown> = {
 		tenantId,
 		domain,
@@ -257,7 +272,9 @@ async function main() {
 	if (logoUrl) payload.logoUrl = logoUrl;
 	else if (existingData?.logoUrl) payload.logoUrl = existingData.logoUrl;
 
-	// 7. Preview and confirm
+	if (Object.keys(newStripe).length > 0) payload.stripeConfig = newStripe;
+
+	// 8. Preview and confirm
 	printDivider();
 	console.log('\n  Preview:\n');
 	console.log(JSON.stringify(payload, null, 2));
@@ -271,7 +288,7 @@ async function main() {
 		process.exit(0);
 	}
 
-	// 8. Upsert
+	// 9. Upsert
 	await docRef.set(payload, { merge: true });
 	console.log(`\n  Done! tenant_registry/${domain} updated.\n`);
 

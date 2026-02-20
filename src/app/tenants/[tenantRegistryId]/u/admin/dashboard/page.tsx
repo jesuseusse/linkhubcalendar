@@ -13,7 +13,6 @@ import { Header } from '@/components/Common/Header';
 import { ProfileCard } from '@/components/Profile/ProfileCard';
 import { EditProfileForm } from '@/components/Profile/EditProfileForm';
 import { UsernameForm } from '@/components/Profile/UsernameForm';
-import { PublicProfileLink } from '@/components/Profile/PublicProfileLink';
 import { ContactFormToggle } from '@/components/Profile/ContactFormToggle';
 import { AddLinkForm } from '@/components/Links/AddLinkForm';
 import { LinkList } from '@/components/Links/LinkList';
@@ -112,7 +111,6 @@ export default function DashboardPage() {
 				<RequirePermission
 					plan={profile.plan}
 					permission={PERMISSIONS.THEME_CUSTOMIZE}
-					email={profile.email}
 				>
 					<section className='bg-surface border border-border p-6 rounded'>
 						<h2 className='text-sm font-semibold text-foreground mb-4 uppercase tracking-wider'>
@@ -129,7 +127,6 @@ export default function DashboardPage() {
 				<RequirePermission
 					plan={profile.plan}
 					permission={PERMISSIONS.CONTACT_FORM}
-					email={profile.email}
 				>
 					<section className='bg-surface border border-border p-6 rounded'>
 						<h2 className='text-sm font-semibold text-foreground mb-4 uppercase tracking-wider'>
@@ -146,7 +143,6 @@ export default function DashboardPage() {
 				<RequirePermission
 					plan={profile.plan}
 					permission={PERMISSIONS.CALENDAR}
-					email={profile.email}
 				>
 					<section className='bg-surface border border-border p-6 rounded'>
 						<h2 className='text-sm font-semibold text-foreground mb-4 uppercase tracking-wider'>
@@ -167,7 +163,7 @@ export default function DashboardPage() {
 							/>
 						)}
 						<Link
-							href='/admin/dashboard/dates'
+							href='u/admin/dashboard/dates'
 							className='inline-block mt-4 text-sm text-muted-foreground hover:text-foreground underline'
 						>
 							Ver Citas
@@ -178,7 +174,6 @@ export default function DashboardPage() {
 				<RequirePermission
 					plan={profile.plan}
 					permission={PERMISSIONS.LEADS_VIEW}
-					email={profile.email}
 				>
 					<section className='bg-surface border border-border p-6 rounded'>
 						<h2 className='text-sm font-semibold text-foreground mb-4 uppercase tracking-wider'>

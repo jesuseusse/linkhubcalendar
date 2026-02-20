@@ -35,7 +35,7 @@ export default function AppointmentsDashboardPage() {
 			<main className='max-w-5xl mx-auto py-8 px-4'>
 				<div className='flex items-center gap-4 mb-6'>
 					<Link
-						href='/admin/dashboard'
+						href='u/admin/dashboard'
 						className='text-sm text-muted-foreground hover:text-foreground transition-colors'
 					>
 						&larr; Dashboard

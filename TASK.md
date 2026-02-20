@@ -8,6 +8,7 @@
 - [x] verify email
 - [x] update tenant collection to accept stripe config, proPriceId
 - [ ] crate collections tenant/{tenant}
+- [ ] reserved names in username
 
 ---
 

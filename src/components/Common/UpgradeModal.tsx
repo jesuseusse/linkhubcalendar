@@ -1,20 +1,15 @@
 'use client';
 
 import { useState } from 'react';
+import { useStripeCheckout } from '@/hooks/useStripeCheckout';
 
 interface Props {
 	onClose: () => void;
-	email?: string;
 }
 
-export function UpgradeModal({ onClose, email }: Props) {
+export function UpgradeModal({ onClose }: Props) {
 	const [billing, setBilling] = useState<'monthly' | 'yearly'>('monthly');
-
-	const openWhatsApp = (plan: string) => {
-		const message = `Hola, quiero actualizar al plan ${plan}.${email ? ` Mi correo es: ${email}` : ''}`;
-		const url = `https://wa.me/525513746423?text=${encodeURIComponent(message)}`;
-		window.open(url, '_blank');
-	};
+	const { checkout, loading, error } = useStripeCheckout();
 
 	return (
 		<div className='fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4'>
@@ -49,34 +44,21 @@ export function UpgradeModal({ onClose, email }: Props) {
 					<div className='border border-border p-4'>
 						<h3 className='text-sm font-semibold text-foreground'>Pro</h3>
 						<p className='text-lg font-bold text-foreground my-2'>
-							{billing === 'monthly' ? '$19 USD / mes' : '$190 USD / año'}
+							{billing === 'monthly' ? '200 MXN / mes' : '2000 MXN / año'}
 						</p>
 						<ul className='text-xs text-muted-foreground space-y-1 mb-4'>
 							<li>Acceso a funciones avanzadas</li>
-							<li>Soporte prioritario</li>
+							<li>Soporte</li>
 						</ul>
+						{error && (
+							<p className='text-xs text-error mb-2'>{error}</p>
+						)}
 						<button
-							onClick={() => openWhatsApp('Pro')}
-							className='w-full py-1.5 text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors'
+							onClick={checkout}
+							disabled={loading}
+							className='w-full py-1.5 text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed'
 						>
-							Seleccionar
-						</button>
-					</div>
-					<div className='border border-border p-4'>
-						<h3 className='text-sm font-semibold text-foreground'>Team</h3>
-						<p className='text-lg font-bold text-foreground my-2'>
-							{billing === 'monthly' ? '$49 USD / mes' : '$490 USD / año'}
-						</p>
-						<ul className='text-xs text-muted-foreground space-y-1 mb-4'>
-							<li>Todo lo incluido en Pro</li>
-							<li>Gestión de múltiples usuarios</li>
-							<li>Soporte dedicado</li>
-						</ul>
-						<button
-							onClick={() => openWhatsApp('Team')}
-							className='w-full py-1.5 text-xs font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors'
-						>
-							Seleccionar
+							{loading ? 'Redirigiendo...' : 'Seleccionar'}
 						</button>
 					</div>
 				</div>
