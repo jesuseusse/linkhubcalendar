@@ -32,8 +32,8 @@ export async function POST(req: NextRequest) {
 				tenantId,
 				domain
 			},
-			success_url: `https://${domain}/u/admin/dashboard?successStripe=true`,
-			cancel_url: `https://${domain}/u/admin/dashboard?successStripe=false`
+			success_url: `${req.nextUrl.origin}/u/admin/dashboard?successStripe=true`,
+			cancel_url: `${req.nextUrl.origin}/u/admin/dashboard?successStripe=false`
 		});
 
 		return NextResponse.json({ url: session.url }, { status: 201 });
