@@ -24,7 +24,11 @@ export async function proxy(req: NextRequest) {
 	// Si puedes, usa Vercel Edge Config o una llamada a Redis aquí.
 	// Evita importar librerías que traigan DB drivers (como Prisma) al middleware.
 	try {
-		let tenantRegistryId = host.split('.')[0]; // O tu lógica de resolveTenant simplificada
+		// Subdomains of main domain → use subdomain part only (e.g. acme.linkhub.dev → acme)
+		// Custom domains → use full host (e.g. unterapeuta.com → unterapeuta.com)
+		let tenantRegistryId = host.endsWith(`.${mainDomain}`)
+			? host.slice(0, host.length - mainDomain.length - 1)
+			: host;
 
 		console.log(`Proxy: TenantRegistryId found ${tenantRegistryId}`);
 

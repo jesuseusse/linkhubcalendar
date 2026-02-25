@@ -67,13 +67,13 @@ describe('proxy', () => {
 		expect(rewrittenUrl.pathname).toBe('/tenants/acme/about');
 	});
 
-	it('rewrites custom domain to /tenants/{domain}{pathname}', async () => {
+	it('rewrites custom domain to /tenants/{full-host}{pathname}', async () => {
 		const req = createMockRequest('mysite.com', '/contact');
 		await proxy(req);
 
 		expect(mockRewrite).toHaveBeenCalledTimes(1);
 		const rewrittenUrl: URL = mockRewrite.mock.calls[0][0];
-		expect(rewrittenUrl.pathname).toBe('/tenants/mysite/contact');
+		expect(rewrittenUrl.pathname).toBe('/tenants/mysite.com/contact');
 	});
 
 	it('sets x-tenant-id header on rewrite response', async () => {
@@ -93,15 +93,14 @@ describe('proxy', () => {
 		expect(rewrittenUrl.pathname).toBe('/tenants/demo-tenant/');
 	});
 
-	it('does NOT use default tenant for 127.0.0.1 (tenantId becomes "127" after split)', async () => {
+	it('uses default tenant for 127.0.0.1 (full host matches === check)', async () => {
 		process.env.NEXT_PUBLIC_DEFAULT_TENANT_HOSTNAME = 'demo-tenant';
 		const req = createMockRequest('127.0.0.1', '/dashboard');
 		await proxy(req);
 
-		// BUG: checks tenantId (split result "127") instead of original host
 		expect(mockRewrite).toHaveBeenCalledTimes(1);
 		const rewrittenUrl: URL = mockRewrite.mock.calls[0][0];
-		expect(rewrittenUrl.pathname).toBe('/tenants/127/dashboard');
+		expect(rewrittenUrl.pathname).toBe('/tenants/demo-tenant/dashboard');
 	});
 
 	it('uses default tenant hostname for any amplifyapp.com host', async () => {
@@ -112,6 +111,16 @@ describe('proxy', () => {
 		expect(mockRewrite).toHaveBeenCalledTimes(1);
 		const rewrittenUrl: URL = mockRewrite.mock.calls[0][0];
 		expect(rewrittenUrl.pathname).toBe('/tenants/demo-tenant/');
+	});
+
+	it('rewrites unterapeuta.com to /tenants/unterapeuta.com{pathname} (UnterapeutaCom landing)', async () => {
+		const req = createMockRequest('unterapeuta.com', '/');
+		const response = await proxy(req);
+
+		expect(mockRewrite).toHaveBeenCalledTimes(1);
+		const rewrittenUrl: URL = mockRewrite.mock.calls[0][0];
+		expect(rewrittenUrl.pathname).toBe('/tenants/unterapeuta.com/');
+		expect(response.headers.get('x-tenant-id')).toBe('unterapeuta.com');
 	});
 
 	it('uses default tenant hostname for Amplify preview URL (main.d3rdv7nxcenp6y.amplifyapp.com)', async () => {
