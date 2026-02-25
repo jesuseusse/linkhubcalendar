@@ -19,9 +19,14 @@ export async function generateMetadata({
 	const siteName = seo?.siteName ?? tenantConfig.companyName ?? undefined;
 	const title = seo?.title ?? tenantConfig.companyName ?? undefined;
 	const description = seo?.description ?? undefined;
-	const canonicalUrl = seo?.canonicalUrl ?? tenantConfig.domain
-		? `https://${seo?.canonicalUrl ?? tenantConfig.domain}`
-		: undefined;
+	const canonicalUrl =
+		(seo?.canonicalUrl ?? tenantConfig.domain)
+			? `https://${seo?.canonicalUrl ?? tenantConfig.domain}`
+			: undefined;
+
+	const faviconUrl = seo?.favicon ?? tenantConfig.logoUrl ?? undefined;
+
+	console.log(tenantConfig.logoUrl);
 
 	return {
 		title,
@@ -29,6 +34,7 @@ export async function generateMetadata({
 		keywords: seo?.keywords,
 		metadataBase: canonicalUrl ? new URL(canonicalUrl) : undefined,
 		alternates: canonicalUrl ? { canonical: canonicalUrl } : undefined,
+		icons: faviconUrl ? { icon: faviconUrl, shortcut: faviconUrl } : undefined,
 		openGraph: {
 			siteName,
 			title: title ?? undefined,
