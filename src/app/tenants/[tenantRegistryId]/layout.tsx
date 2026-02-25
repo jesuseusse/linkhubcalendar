@@ -1,7 +1,60 @@
 // app/_tenants/[tenantId]/layout.tsx
 import { notFound } from 'next/navigation';
+import type { Metadata } from 'next';
 import { tenantThemeToCssVars } from '@/lib/tenant/tenantTheme';
 import { container } from '@/infrastructure/container';
+
+export async function generateMetadata({
+	params
+}: {
+	params: Promise<{ tenantRegistryId: string }>;
+}): Promise<Metadata> {
+	const { tenantRegistryId } = await params;
+	const tenantConfig =
+		await container.tenantRegistryRepo.getByHostname(tenantRegistryId);
+
+	if (!tenantConfig) return {};
+
+	const seo = tenantConfig.seoConfig;
+	const siteName = seo?.siteName ?? tenantConfig.companyName ?? undefined;
+	const title = seo?.title ?? tenantConfig.companyName ?? undefined;
+	const description = seo?.description ?? undefined;
+	const canonicalUrl = seo?.canonicalUrl ?? tenantConfig.domain
+		? `https://${seo?.canonicalUrl ?? tenantConfig.domain}`
+		: undefined;
+
+	return {
+		title,
+		description,
+		keywords: seo?.keywords,
+		metadataBase: canonicalUrl ? new URL(canonicalUrl) : undefined,
+		alternates: canonicalUrl ? { canonical: canonicalUrl } : undefined,
+		openGraph: {
+			siteName,
+			title: title ?? undefined,
+			description: description ?? undefined,
+			locale: seo?.locale ?? 'es_ES',
+			type: 'website',
+			url: canonicalUrl ?? undefined,
+			images: seo?.ogImage
+				? [{ url: seo.ogImage }]
+				: tenantConfig.logoUrl
+					? [{ url: tenantConfig.logoUrl }]
+					: undefined
+		},
+		twitter: {
+			card: 'summary_large_image',
+			title: title ?? undefined,
+			description: description ?? undefined,
+			site: seo?.twitterHandle ?? undefined,
+			images: seo?.ogImage
+				? [seo.ogImage]
+				: tenantConfig.logoUrl
+					? [tenantConfig.logoUrl]
+					: undefined
+		}
+	};
+}
 
 export default async function TenantLayout({
 	children,
