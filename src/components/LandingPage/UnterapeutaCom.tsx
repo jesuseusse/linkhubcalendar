@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import HeroSection from './DefaultHeroSection';
+import HeroSection from './UnterapeutaHeroSection';
 
 type Testimonial = {
 	name: string;

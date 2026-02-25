@@ -58,7 +58,7 @@ export default function HeroSection() {
 					/>
 
 					{/* Floating Card — Appointment */}
-					<div className='hidden md:block absolute -left-10 top-10 bg-background border border-border rounded-xl shadow-xl p-4 w-52 animate-float'>
+					<div className='ml-8 md:ml-0 lg:ml-2 absolute -left-10 top-10 bg-background border border-border rounded-xl shadow-xl p-4 w-52 animate-float z-20'>
 						<p className='text-sm font-semibold'>Nueva cita</p>
 						<p className='text-xs text-mutedForeground mt-1'>
 							María G. reservó sesión
@@ -69,7 +69,7 @@ export default function HeroSection() {
 					</div>
 
 					{/* Floating Card — Contact */}
-					<div className='hidden md:block absolute -right-10 bottom-10 bg-background border border-border rounded-xl shadow-xl p-4 w-52 animate-float delay-200'>
+					<div className='mr-8 md:mr-0 absolute -right-10 bottom-0 bg-background border border-border rounded-xl shadow-xl p-4 w-52 animate-float delay-200 z-20'>
 						<p className='text-sm font-semibold'>Nuevo contacto</p>
 						<p className='text-xs text-mutedForeground mt-1'>
 							“Quisiera información”
