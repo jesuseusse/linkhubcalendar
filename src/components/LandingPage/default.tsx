@@ -1,6 +1,6 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import HeroSection from './UnterapeutaHeroSection';
+import HeroSection from './DefaultHero';
 
 type Testimonial = {
 	name: string;
@@ -12,23 +12,23 @@ type Testimonial = {
 
 const testimonials: Testimonial[] = [
 	{
-		name: 'Dra. Mariana López',
-		role: 'Psicóloga Clínica',
-		text: 'En menos de 10 minutos ya tenía mi página profesional funcionando y empecé a recibir contactos.',
+		name: 'María González',
+		role: 'Emprendedora',
+		text: 'En minutos tenía mi página lista y comencé a recibir contactos.',
 		rating: 5,
-		image: '/default/testimonials/mariana.png'
+		image: '/default/testimonials/maria.png'
 	},
 	{
-		name: 'Carlos Hernández',
-		role: 'Terapeuta Holístico',
-		text: 'Ahora mis pacientes pueden agendar solos. Me ahorra muchísimo tiempo.',
+		name: 'Carlos Méndez',
+		role: 'Dueño de negocio',
+		text: 'Automatizó mi proceso de contacto y ahora ahorro mucho tiempo.',
 		rating: 5,
 		image: '/default/testimonials/carlos.png'
 	},
 	{
-		name: 'Lic. Andrea Ruiz',
-		role: 'Psicoterapeuta',
-		text: 'Aparecer en Google cambió todo. Nuevos pacientes cada semana.',
+		name: 'Andrea Ruiz',
+		role: 'Freelancer',
+		text: 'Ahora tengo presencia online profesional sin complicaciones.',
 		rating: 5,
 		image: '/default/testimonials/andrea.png'
 	}
@@ -36,24 +36,24 @@ const testimonials: Testimonial[] = [
 
 const features = [
 	{
-		title: 'Tu tarjeta profesional personalizada',
-		desc: 'Comparte un solo link con tu foto, descripción y toda tu información profesional.'
+		title: 'Página profesional personalizada',
+		desc: 'Comparte un solo link con tu información, servicios y datos de contacto.'
 	},
 	{
 		title: 'Links y contacto directo',
-		desc: 'Agrega WhatsApp, redes sociales y ubicación para que te contacten fácilmente.'
+		desc: 'Agrega WhatsApp, redes sociales o cualquier canal para conectar fácilmente.'
 	},
 	{
-		title: 'Formulario de contacto',
+		title: 'Formulario integrado',
 		desc: 'Recibe mensajes desde tu página y adminístralos desde tu panel.'
 	},
 	{
-		title: 'Agenda citas automáticamente',
-		desc: 'Tus pacientes reservan sin llamadas ni mensajes innecesarios.'
+		title: 'Automatización básica',
+		desc: 'Permite que tus clientes interactúen contigo sin procesos manuales.'
 	},
 	{
-		title: 'Aparece en Google (SEO)',
-		desc: 'Tu perfil está optimizado para que personas que buscan terapia puedan encontrarte fácilmente.'
+		title: 'Optimizado para buscadores',
+		desc: 'Tu página está preparada para aparecer en Google y atraer nuevos clientes.'
 	}
 ];
 
@@ -61,27 +61,27 @@ const comparison = [
 	{
 		item: 'Diseño profesional',
 		traditional: '$5,000 – $12,000 MXN',
-		tuterapeuta: 'Incluido'
+		platform: 'Incluido'
 	},
 	{
-		item: 'Programación',
+		item: 'Desarrollo web',
 		traditional: '$8,000 – $20,000 MXN',
-		tuterapeuta: 'Incluido'
+		platform: 'Incluido'
 	},
 	{
 		item: 'Base de datos',
 		traditional: '$3,000+ MXN',
-		tuterapeuta: 'Incluido'
+		platform: 'Incluido'
 	},
 	{
-		item: 'Sistema de citas',
+		item: 'Automatizaciones',
 		traditional: '$5,000+ MXN',
-		tuterapeuta: 'Incluido'
+		platform: 'Incluido'
 	},
 	{
 		item: 'Mantenimiento',
 		traditional: 'Mensual',
-		tuterapeuta: 'Incluido'
+		platform: 'Incluido'
 	}
 ];
 
@@ -121,9 +121,9 @@ export default function DefaultLandingPage() {
 				<div className='grid md:grid-cols-4 gap-6 text-left'>
 					{[
 						'Crea tu cuenta',
-						'Agrega tu perfil profesional',
-						'Activa contacto o citas',
-						'Comparte tu link y recibe pacientes'
+						'Configura tu perfil',
+						'Activa tus herramientas',
+						'Comparte tu link y recibe contactos'
 					].map((step, i) => (
 						<div
 							key={step}
@@ -140,7 +140,7 @@ export default function DefaultLandingPage() {
 			<section className='bg-surfaceAlt py-20'>
 				<div className='max-w-6xl mx-auto px-6 text-center'>
 					<h2 className='text-3xl font-bold mb-12'>
-						Profesionales que ya crecieron su consulta
+						Usuarios que ya están creciendo online
 					</h2>
 
 					<div className='grid md:grid-cols-3 gap-8'>
@@ -178,7 +178,7 @@ export default function DefaultLandingPage() {
 			{/* PRICE COMPARISON */}
 			<section className='max-w-6xl mx-auto px-6 py-20'>
 				<h2 className='text-3xl font-bold text-center mb-12'>
-					Crear una página tradicional vs tuterapeuta
+					Crear una web tradicional vs nuestra plataforma
 				</h2>
 
 				<div className='overflow-x-auto'>
@@ -187,7 +187,7 @@ export default function DefaultLandingPage() {
 							<tr>
 								<th className='p-4 text-left'>Servicio</th>
 								<th className='p-4'>Con programador</th>
-								<th className='p-4 text-primary'>tuterapeuta</th>
+								<th className='p-4 text-primary'>Plataforma</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -198,7 +198,7 @@ export default function DefaultLandingPage() {
 										{row.traditional}
 									</td>
 									<td className='p-4 text-center font-semibold text-success'>
-										{row.tuterapeuta}
+										{row.platform}
 									</td>
 								</tr>
 							))}
@@ -225,24 +225,21 @@ export default function DefaultLandingPage() {
 			{/* SEO EXPLANATION */}
 			<section className='bg-surface py-16 text-center px-6'>
 				<h2 className='text-2xl font-bold mb-4'>
-					Te encuentran en Google automáticamente
+					Mejora tu visibilidad online
 				</h2>
 
 				<p className='max-w-2xl mx-auto text-mutedForeground'>
-					Cuando alguien busca “terapeuta cerca de mí” o tu especialidad, Google
-					puede mostrar tu página. Esto significa más personas encontrándote sin
-					pagar publicidad.
+					Tu página está optimizada para buscadores, ayudando a que más personas
+					encuentren tus servicios sin necesidad de publicidad pagada.
 				</p>
 			</section>
 
 			{/* CTA FINAL */}
 			<section className='py-20 text-center'>
-				<h2 className='text-4xl font-bold'>
-					Empieza hoy tu presencia profesional
-				</h2>
+				<h2 className='text-4xl font-bold'>Crea tu presencia digital hoy</h2>
 
 				<p className='mt-4 text-mutedForeground'>
-					Sin diseño complicado. Sin programadores. Sin estrés.
+					Sin diseño complicado. Sin desarrollo complejo.
 				</p>
 
 				<Link
@@ -250,13 +247,13 @@ export default function DefaultLandingPage() {
 					prefetch
 					className='mt-8 inline-block bg-primary text-primaryForeground px-12 py-5 rounded-xl text-lg font-semibold shadow-lg hover:scale-105 transition'
 				>
-					Crear mi página en minutos
+					Empezar ahora
 				</Link>
 			</section>
 
 			{/* FOOTER */}
 			<footer className='border-t border-border py-8 text-center text-sm text-mutedForeground'>
-				© {new Date().getFullYear()} tuterapeuta.com.mx — Todos los derechos
+				© {new Date().getFullYear()} template.com — Todos los derechos
 				reservados
 			</footer>
 		</div>
