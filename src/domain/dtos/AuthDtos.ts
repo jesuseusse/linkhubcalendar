@@ -11,6 +11,7 @@ export interface ThemeResponseDto {
 export interface UserResponseDto {
   id: string;
   name: string;
+  description?: string;
   email: string;
   emailVerified: boolean;
   username?: string;
@@ -57,6 +58,7 @@ export interface UpdateLinkDto {
 
 export interface UpdateProfileDto {
   name?: string;
+  description?: string;
   email?: string;
 }
 
@@ -88,6 +90,7 @@ export interface UpdateThemeDto {
 
 export interface PublicProfileDto {
   name: string;
+  description?: string;
   username: string;
   profilePhoto?: string;
   plan?: Plan;

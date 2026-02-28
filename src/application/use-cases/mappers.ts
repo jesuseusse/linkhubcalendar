@@ -5,6 +5,7 @@ export function toUserResponse(user: User): UserResponseDto {
   return {
     id: user.id,
     name: user.name,
+    description: user.description,
     email: user.email,
     emailVerified: user.emailVerified ?? false,
     username: user.username,

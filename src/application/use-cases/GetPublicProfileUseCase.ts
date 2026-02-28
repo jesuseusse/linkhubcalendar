@@ -12,6 +12,7 @@ export class GetPublicProfileUseCase {
 
     return {
       name: user.name,
+      description: user.description,
       username: user.username,
       profilePhoto: user.profilePhoto,
       plan: user.plan ?? "free",

@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { ThemeDto } from '@/dtos/user.dto';
+import { ProfilePreview } from './ProfilePreview';
 
 const DEFAULT_THEME: ThemeDto = {
 	backgroundColor: '#ffffff',
@@ -68,26 +69,7 @@ export function ThemeCustomizer({ theme, onSave, loading }: Props) {
 					</div>
 				))}
 			</div>
-			<div
-				className='p-4 border border-border'
-				style={{ backgroundColor: current.backgroundColor }}
-			>
-				<p
-					className='text-sm font-medium mb-2'
-					style={{ color: current.textColor }}
-				>
-					Vista previa
-				</p>
-				<button
-					className='px-3 py-1.5 text-xs font-medium'
-					style={{
-						backgroundColor: current.buttonColor,
-						color: current.buttonTextColor
-					}}
-				>
-					Button
-				</button>
-			</div>
+			<ProfilePreview theme={current} />
 			<div className='flex gap-2'>
 				<button
 					onClick={handleSave}

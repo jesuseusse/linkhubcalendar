@@ -6,7 +6,7 @@ export interface IUserRepository {
   findByEmail(tenantId: string, email: string): Promise<User | null>;
   findById(tenantId: string, id: string): Promise<User | null>;
   findByUsername(tenantId: string, username: string): Promise<User | null>;
-  updateProfile(tenantId: string, id: string, data: Partial<Pick<User, "name" | "email" | "profilePhoto">>): Promise<User | null>;
+  updateProfile(tenantId: string, id: string, data: Partial<Pick<User, "name" | "email" | "profilePhoto" | "description">>): Promise<User | null>;
   updateContactFormEnabled(tenantId: string, id: string, enabled: boolean): Promise<User | null>;
   updateCalendarEnabled(tenantId: string, id: string, enabled: boolean): Promise<User | null>;
   updateUsername(tenantId: string, id: string, username: string): Promise<User | null>;

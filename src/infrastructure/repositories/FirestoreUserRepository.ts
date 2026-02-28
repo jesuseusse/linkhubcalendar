@@ -17,6 +17,7 @@ function docToUser(id: string, data: FirebaseFirestore.DocumentData): User {
 		email: data.email ?? '',
 		emailVerified: data.emailVerified ?? false,
 		name: data.name ?? '',
+		description: data.description,
 		username: data.username,
 		usernameChangedAt: toMillis(data.usernameChangedAt),
 		profilePhoto: data.profilePhoto,
@@ -100,7 +101,7 @@ export class FirestoreUserRepository implements IUserRepository {
 	async updateProfile(
 		tenantId: string,
 		id: string,
-		data: Partial<Pick<User, 'name' | 'email' | 'profilePhoto'>>
+		data: Partial<Pick<User, 'name' | 'email' | 'profilePhoto' | 'description'>>
 	): Promise<User | null> {
 		const ref = this.col(tenantId).doc(id);
 		const doc = await ref.get();

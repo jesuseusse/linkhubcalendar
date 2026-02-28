@@ -94,6 +94,7 @@ export default function DashboardPage() {
 				<section className='bg-surface border border-border p-6 rounded'>
 					<ProfileCard
 						name={profile.name}
+						description={profile.description}
 						email={profile.email}
 						profilePhoto={profile.profilePhoto}
 						onPhotoUpload={uploadPhoto}
@@ -101,6 +102,7 @@ export default function DashboardPage() {
 					/>
 					<EditProfileForm
 						name={profile.name}
+						description={profile.description}
 						email={profile.email}
 						onSubmit={updateProfile}
 						loading={loading}

@@ -28,6 +28,7 @@ export interface User {
   emailVerified?: boolean;
   password?: string;
   name: string;
+  description?: string;
   username?: string;
   usernameChangedAt?: number;
   profilePhoto?: string;
