@@ -6,5 +6,8 @@ export const LANDING_COMPONENTS: Record<string, any> = {
 	default: dynamic(() => import('@/components/LandingPage/default')),
 	'unterapeuta.com': dynamic(
 		() => import('@/components/LandingPage/UnterapeutaCom')
+	),
+	'unamujerbonita.com': dynamic(
+		() => import('@/components/LandingPage/UnaMujerBonitaCom')
 	)
 };

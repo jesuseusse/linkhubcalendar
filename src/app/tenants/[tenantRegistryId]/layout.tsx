@@ -77,6 +77,8 @@ export default async function TenantLayout({
 	const tenantConfig =
 		await container.tenantRegistryRepo.getByHostname(tenantRegistryId);
 
+	console.log(`tenantConfig for ${tenantRegistryId}:`, tenantConfig);
+
 	if (!tenantConfig) {
 		notFound(); // Tenant config no found, render 404
 	}
