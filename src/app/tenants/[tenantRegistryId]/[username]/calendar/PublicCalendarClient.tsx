@@ -77,6 +77,8 @@ export function PublicCalendarClient({
 						<Image
 							src={getProfilePhotoUrl(calendar.profilePhoto)}
 							alt={calendar.name}
+							width={64}
+							height={64}
 							className='w-16 h-16 object-cover mx-auto mb-3'
 						/>
 					) : (
