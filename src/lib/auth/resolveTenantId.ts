@@ -78,7 +78,8 @@ async function resolveTenantRegistryByHost(
 		companyName: data?.companyName ?? null,
 		logoUrl: data?.logoUrl ?? null,
 		resendApiKey: data?.resendApiKey ?? null,
-		resendFromEmail: data?.resendFromEmail ?? null
+		resendFromEmail: data?.resendFromEmail ?? null,
+		sesConfig: data?.sesConfig ?? null
 	};
 }
 

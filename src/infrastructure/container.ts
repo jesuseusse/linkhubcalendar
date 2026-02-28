@@ -4,7 +4,6 @@ import { FirestoreAppointmentRepository } from './repositories/FirestoreAppointm
 import { FirestoreLeadRepository } from './repositories/FirestoreLeadRepository';
 import { FirebaseStorageService } from './services/FirebaseStorageService';
 import { FirebaseEmailVerificationService } from './services/FirebaseEmailVerificationService';
-import { ResendEmailSenderService } from './services/ResendEmailSenderService';
 import { GetProfileUseCase } from '@/application/use-cases/GetProfileUseCase';
 import { UpdateProfileUseCase } from '@/application/use-cases/UpdateProfileUseCase';
 import { UploadPhotoUseCase } from '@/application/use-cases/UploadPhotoUseCase';
@@ -33,15 +32,13 @@ import {
 } from '@/application/use-cases/ManageAppointmentsUseCase';
 import { SubmitLeadUseCase } from '@/application/use-cases/SubmitLeadUseCase';
 import { GetLeadsUseCase } from '@/application/use-cases/GetLeadsUseCase';
-import { SendEmailVerificationUseCase } from '@/application/use-cases/SendEmailVerificationUseCase';
 
 export const tenantRegistryRepo = new FirestoreTenantRegistryRepository();
 export const userRepo = new FirestoreUserRepository();
 const appointmentRepo = new FirestoreAppointmentRepository();
 const leadRepo = new FirestoreLeadRepository();
 const storageService = new FirebaseStorageService();
-const emailVerificationService = new FirebaseEmailVerificationService();
-const emailSenderService = new ResendEmailSenderService();
+export const emailVerificationService = new FirebaseEmailVerificationService();
 
 export const container = {
   tenantRegistryRepo,
@@ -68,5 +65,4 @@ export const container = {
   releaseAppointmentSlotUseCase: new ReleaseAppointmentSlotUseCase(appointmentRepo, userRepo),
   submitLeadUseCase: new SubmitLeadUseCase(userRepo, leadRepo),
   getLeadsUseCase: new GetLeadsUseCase(leadRepo),
-  sendEmailVerificationUseCase: new SendEmailVerificationUseCase(userRepo, emailVerificationService, emailSenderService),
 };

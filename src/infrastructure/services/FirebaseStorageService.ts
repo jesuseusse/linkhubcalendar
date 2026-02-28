@@ -4,7 +4,7 @@ import { IFileStorageService, FileInput } from '@/domain/interfaces/IFileStorage
 export class FirebaseStorageService implements IFileStorageService {
   async saveFile(tenantId: string, file: FileInput): Promise<string> {
     const bucket = adminStorage.bucket();
-    const filename = `tenants/${tenantId}/profilePhotos/${Date.now()}-${file.originalName}`;
+    const filename = `${tenantId}/profile/${Date.now()}-${file.originalName}`;
     const fileRef = bucket.file(filename);
 
     await fileRef.save(file.buffer, {

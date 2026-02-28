@@ -8,10 +8,12 @@
     "start": "next start",
     "lint": "eslint",
     "upsert-tenant-theme": "tsx scripts/upsert-tenant-theme.ts",
+    "upsert-tenant": "tsx scripts/upsert-tenant-theme.ts",
     "test": "vitest run",
     "test:watch": "vitest"
   },
   "dependencies": {
+    "@aws-sdk/client-ses": "^3.1000.0",
     "date-fns": "^4.1.0",
     "firebase": "^12.9.0",
     "firebase-admin": "^13.6.1",

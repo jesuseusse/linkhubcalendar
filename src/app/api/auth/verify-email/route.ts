@@ -1,25 +1,39 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { checkAuth } from '@/lib/auth/checkAuth';
-import { container } from '@/infrastructure/container';
+import { userRepo, emailVerificationService } from '@/infrastructure/container';
+import { SendEmailVerificationUseCase } from '@/application/use-cases/SendEmailVerificationUseCase';
+import { createEmailSenderService } from '@/infrastructure/services/emailSenderFactory';
 
 export async function POST(req: NextRequest) {
 	try {
 		const { userId, tenantId, tenantRegistry } = await checkAuth(req);
 
-		if (!tenantRegistry.resendApiKey || !tenantRegistry.resendFromEmail) {
+		let emailSenderService;
+		try {
+			emailSenderService = createEmailSenderService(tenantRegistry);
+		} catch {
 			return NextResponse.json(
 				{ error: 'Servicio de correo no configurado para este tenant' },
 				{ status: 500 }
 			);
 		}
 
-		const result = await container.sendEmailVerificationUseCase.execute({
+		const fromEmail =
+			tenantRegistry.sesConfig?.fromEmail ?? tenantRegistry.resendFromEmail!;
+
+		const sendEmailVerificationUseCase = new SendEmailVerificationUseCase(
+			userRepo,
+			emailVerificationService,
+			emailSenderService
+		);
+
+		const result = await sendEmailVerificationUseCase.execute({
 			tenantId,
 			userId,
 			emailConfig: {
 				tenantId,
-				apiKey: tenantRegistry.resendApiKey,
-				fromEmail: tenantRegistry.resendFromEmail
+				apiKey: tenantRegistry.resendApiKey ?? '',
+				fromEmail
 			},
 			companyName: tenantRegistry.companyName ?? undefined
 		});

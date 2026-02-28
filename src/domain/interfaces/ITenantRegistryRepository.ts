@@ -1,6 +1,7 @@
 import { TenantRegistryData } from '@/interfaces/ITenantRegistryData';
 import { StripeConfig } from '@/interfaces/IStripeConfig';
 import { SeoConfig } from '@/interfaces/ISeoConfig';
+import { SesConfig } from '@/interfaces/ISesConfig';
 
 export interface CreateTenantRegistryData {
   tenantId: string;
@@ -9,6 +10,7 @@ export interface CreateTenantRegistryData {
   logoUrl?: string | null;
   resendApiKey?: string | null;
   resendFromEmail?: string | null;
+  sesConfig?: SesConfig | null;
   theme?: Record<string, string> | null;
   stripeConfig?: StripeConfig | null;
   seoConfig?: SeoConfig | null;

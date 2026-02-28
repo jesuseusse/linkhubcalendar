@@ -72,7 +72,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 	}, []);
 
 	const updateUser = useCallback((user: UserDto) => {
-		setState(prev => ({ ...prev, user }));
+		setState(prev => ({
+			...prev,
+			user: { ...user, emailVerified: prev.user?.emailVerified ?? user.emailVerified }
+		}));
 	}, []);
 
 	const logout = useCallback(async () => {

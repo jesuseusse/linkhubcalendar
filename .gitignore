@@ -45,3 +45,6 @@ next-env.d.ts
 
 # aws deployment
 .aws/
+
+# tenants config
+scripts/.tenants/

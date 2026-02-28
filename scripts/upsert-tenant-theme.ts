@@ -1,3 +1,11 @@
+/**
+ * Upsert a tenant's full configuration into Firestore.
+ *
+ * Usage:
+ *   yarn upsert-tenant ./scripts/tenants/clinica.json
+ *   yarn upsert-tenant ./scripts/tenants/clinica.json --yes   (skip confirmation)
+ */
+
 import { resolve, dirname } from 'path';
 import { fileURLToPath } from 'url';
 import { readFileSync } from 'fs';
@@ -8,7 +16,6 @@ import { getFirestore } from 'firebase-admin/firestore';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 
-// .env.local first (higher priority), then .env as fallback
 config({ path: resolve(__dirname, '../.env.local') });
 config({ path: resolve(__dirname, '../.env') });
 
@@ -22,282 +29,196 @@ if (!projectId || !clientEmail || !privateKey) {
 	process.exit(1);
 }
 
-const app = initializeApp({
-	credential: cert({ projectId, clientEmail, privateKey })
-});
-const db = getFirestore(app);
+initializeApp({ credential: cert({ projectId, clientEmail, privateKey }) });
+const db = getFirestore();
 
-// --- Theme fields config ---
-interface ThemeField {
-	key: string;
-	label: string;
-	group: string;
+// --- Types ---
+interface SesConfig {
+	accessKeyId: string;
+	secretAccessKey: string;
+	region: string;
+	fromEmail: string;
 }
 
-const THEME_FIELDS: ThemeField[] = [
-	{ key: 'primary', label: 'Primary', group: 'Brand' },
-	{ key: 'primaryForeground', label: 'Primary Foreground', group: 'Brand' },
-	{ key: 'secondary', label: 'Secondary', group: 'Brand' },
-	{ key: 'secondaryForeground', label: 'Secondary Foreground', group: 'Brand' },
-	{ key: 'background', label: 'Background', group: 'Surfaces' },
-	{ key: 'foreground', label: 'Foreground', group: 'Surfaces' },
-	{ key: 'surface', label: 'Surface', group: 'Surfaces' },
-	{ key: 'surfaceAlt', label: 'Surface Alt', group: 'Surfaces' },
-	{ key: 'muted', label: 'Muted', group: 'Muted' },
-	{ key: 'mutedForeground', label: 'Muted Foreground', group: 'Muted' },
-	{ key: 'border', label: 'Border', group: 'Borders' },
-	{ key: 'ring', label: 'Ring', group: 'Borders' },
-	{ key: 'accent', label: 'Accent', group: 'Accent' },
-	{ key: 'accentForeground', label: 'Accent Foreground', group: 'Accent' },
-	{ key: 'success', label: 'Success', group: 'Status' },
-	{ key: 'successLight', label: 'Success Light', group: 'Status' },
-	{ key: 'warning', label: 'Warning', group: 'Status' },
-	{ key: 'warningLight', label: 'Warning Light', group: 'Status' },
-	{ key: 'error', label: 'Error', group: 'Status' },
-	{ key: 'errorLight', label: 'Error Light', group: 'Status' },
-	{ key: 'info', label: 'Info', group: 'Status' },
-	{ key: 'infoLight', label: 'Info Light', group: 'Status' },
-	{ key: 'radiusSm', label: 'Radius SM', group: 'Radius' },
-	{ key: 'radiusMd', label: 'Radius MD', group: 'Radius' },
-	{ key: 'radiusLg', label: 'Radius LG', group: 'Radius' },
-	{ key: 'radiusXl', label: 'Radius XL', group: 'Radius' },
-];
+interface StripeConfig {
+	secretKey: string;
+	publishableKey: string;
+	proPriceId: string;
+	webhookSecret: string;
+}
 
-// --- Readline helpers ---
-const rl = readline.createInterface({
-	input: process.stdin,
-	output: process.stdout
-});
+interface SeoConfig {
+	title?: string;
+	description?: string;
+	ogImage?: string;
+}
 
+interface TenantConfig {
+	// Required
+	domain: string;
+	tenantId: string;
+	// Optional registry fields
+	companyName?: string;
+	logoUrl?: string;
+	// Email providers (at least one recommended)
+	sesConfig?: SesConfig;
+	resendApiKey?: string;
+	resendFromEmail?: string;
+	// Other configs
+	stripeConfig?: StripeConfig;
+	seoConfig?: SeoConfig;
+	// Theme
+	theme?: Record<string, string>;
+}
+
+// --- Readline helper ---
+const rl = readline.createInterface({ input: process.stdin, output: process.stdout });
 function ask(question: string): Promise<string> {
-	return new Promise((resolve) => {
-		rl.question(question, (answer) => resolve(answer.trim()));
-	});
+	return new Promise((res) => rl.question(question, (a) => res(a.trim())));
 }
 
 function printDivider() {
-	console.log('─'.repeat(50));
+	console.log('─'.repeat(60));
+}
+
+// --- Validation ---
+const VALID_THEME_KEYS = new Set([
+	'primary', 'primaryForeground', 'secondary', 'secondaryForeground',
+	'background', 'foreground', 'surface', 'surfaceAlt',
+	'muted', 'mutedForeground', 'border', 'ring',
+	'accent', 'accentForeground',
+	'success', 'successLight', 'warning', 'warningLight',
+	'error', 'errorLight', 'info', 'infoLight',
+	'radiusSm', 'radiusMd', 'radiusLg', 'radiusXl',
+]);
+
+function validateConfig(cfg: TenantConfig): string[] {
+	const errors: string[] = [];
+	if (!cfg.domain) errors.push('"domain" is required');
+	if (!cfg.tenantId) errors.push('"tenantId" is required');
+
+	if (cfg.sesConfig) {
+		const s = cfg.sesConfig;
+		if (!s.accessKeyId) errors.push('sesConfig.accessKeyId is required');
+		if (!s.secretAccessKey) errors.push('sesConfig.secretAccessKey is required');
+		if (!s.region) errors.push('sesConfig.region is required');
+		if (!s.fromEmail) errors.push('sesConfig.fromEmail is required');
+	}
+
+	if (cfg.theme) {
+		const unknownKeys = Object.keys(cfg.theme).filter(k => !VALID_THEME_KEYS.has(k));
+		if (unknownKeys.length > 0) {
+			errors.push(`Unknown theme keys: ${unknownKeys.join(', ')}`);
+		}
+	}
+
+	return errors;
 }
 
 // --- Main ---
 async function main() {
-	console.log('\n  Tenant Theme Upsert Script');
-	console.log('  Insert or update theme in tenant_registry\n');
-	printDivider();
+	const args = process.argv.slice(2);
+	const filePath = args.find(a => !a.startsWith('--'));
+	const autoConfirm = args.includes('--yes') || args.includes('-y');
 
-	// 1. Prompt for domain (document ID in tenant_registry)
-	const domain = await ask('Domain (tenant_registry doc ID): ');
-	if (!domain) {
-		console.error('Domain is required.');
+	if (!filePath) {
+		console.error('\nUsage: yarn upsert-tenant <path-to-config.json> [--yes]\n');
+		console.error('  Example: yarn upsert-tenant ./scripts/tenants/clinica.json\n');
 		process.exit(1);
 	}
 
-	// 2. Check if document exists
-	const docRef = db.collection('tenant_registry').doc(domain);
-	const doc = await docRef.get();
-	const existingData = doc.exists ? doc.data() : null;
-	const existingTheme = existingData?.theme ?? {};
+	// Read and parse the JSON file
+	let cfg: TenantConfig;
+	try {
+		const absPath = resolve(process.cwd(), filePath);
+		const raw = readFileSync(absPath, 'utf-8');
+		cfg = JSON.parse(raw);
+	} catch (err) {
+		console.error(`\nFailed to read "${filePath}": ${err instanceof Error ? err.message : err}\n`);
+		process.exit(1);
+	}
 
-	if (doc.exists) {
-		console.log(`\n  Document found for "${domain}"`);
-		console.log(`  tenantId: ${existingData?.tenantId ?? '(not set)'}`);
-		console.log(`  companyName: ${existingData?.companyName ?? '(not set)'}`);
-		console.log(`  logoUrl: ${existingData?.logoUrl ?? '(not set)'}`);
-		if (Object.keys(existingTheme).length > 0) {
-			console.log('\n  Current theme:');
-			for (const [k, v] of Object.entries(existingTheme)) {
-				console.log(`    ${k}: ${v}`);
-			}
-		} else {
-			console.log('\n  No theme set yet.');
-		}
+	// Validate
+	const errors = validateConfig(cfg);
+	if (errors.length > 0) {
+		console.error('\nValidation errors:');
+		errors.forEach(e => console.error(`  ✗ ${e}`));
+		console.error('');
+		process.exit(1);
+	}
+
+	// Check existing document
+	const docRef = db.collection('tenant_registry').doc(cfg.domain);
+	const existing = await docRef.get();
+
+	console.log('');
+	printDivider();
+	console.log(`  Tenant Upsert — ${cfg.domain}`);
+	printDivider();
+
+	if (existing.exists) {
+		console.log(`  Status    : UPDATE (document exists)`);
 	} else {
-		console.log(`\n  No document found for "${domain}". Will create a new one.`);
+		console.log(`  Status    : INSERT (new document)`);
 	}
 
-	printDivider();
-
-	// 3. If new document, prompt for tenantId
-	let tenantId = existingData?.tenantId;
-	if (!tenantId) {
-		tenantId = await ask('tenantId (required for new docs): ');
-		if (!tenantId) {
-			console.error('tenantId is required.');
-			process.exit(1);
-		}
+	console.log(`  tenantId  : ${cfg.tenantId}`);
+	if (cfg.companyName) console.log(`  company   : ${cfg.companyName}`);
+	if (cfg.sesConfig) {
+		console.log(`  email     : SES (${cfg.sesConfig.region}) → ${cfg.sesConfig.fromEmail}`);
+	} else if (cfg.resendApiKey) {
+		console.log(`  email     : Resend → ${cfg.resendFromEmail ?? '(fromEmail not set)'}`);
+	} else {
+		console.log(`  email     : (none configured)`);
 	}
+	if (cfg.stripeConfig) console.log(`  stripe    : configured`);
+	if (cfg.seoConfig) console.log(`  seo       : configured`);
+	if (cfg.theme) console.log(`  theme     : ${Object.keys(cfg.theme).length} keys`);
 
-	// 4. Prompt for optional registry fields
-	console.log('\n  Registry fields (press Enter to skip / keep current):');
-	const companyName = await ask(`  companyName [${existingData?.companyName ?? ''}]: `);
-	const logoUrl = await ask(`  logoUrl [${existingData?.logoUrl ?? ''}]: `);
-
-	// 5. Prompt for Stripe config
-	const existingStripe = existingData?.stripeConfig ?? {};
-	console.log('\n  Stripe config (press Enter to skip / keep current):');
-
-	const stripeSecretKey = await ask(`  secretKey [${existingStripe.secretKey ? '***' : ''}]: `);
-	const stripePublishableKey = await ask(`  publishableKey [${existingStripe.publishableKey ?? ''}]: `);
-	const stripeProPriceId = await ask(`  proPriceId [${existingStripe.proPriceId ?? ''}]: `);
-	const stripeWebhookSecret = await ask(`  webhookSecret [${existingStripe.webhookSecret ? '***' : ''}]: `);
-
-	const newStripe: Record<string, string> = { ...existingStripe };
-	if (stripeSecretKey) newStripe.secretKey = stripeSecretKey;
-	if (stripePublishableKey) newStripe.publishableKey = stripePublishableKey;
-	if (stripeProPriceId) newStripe.proPriceId = stripeProPriceId;
-	if (stripeWebhookSecret) newStripe.webhookSecret = stripeWebhookSecret;
-
-	// 6. Choose theme input mode
-	console.log('\n  How do you want to set the theme?');
-	console.log('    1) Paste JSON');
-	console.log('    2) Load from .json file');
-	console.log('    3) Field by field');
-	console.log('    4) Skip (keep current theme)\n');
-
-	const mode = await ask('  Choose (1/2/3/4): ');
-
-	const newTheme: Record<string, string> = { ...existingTheme };
-	const validKeys = new Set(THEME_FIELDS.map(f => f.key));
-
-	if (mode === '1' || mode === '2') {
-		let parsed: Record<string, unknown>;
-
-		if (mode === '1') {
-			// --- Paste JSON mode ---
-			console.log('\n  Paste theme JSON (single line or multi-line, end with empty line):');
-			console.log('  Example: { "primary": "#4f46e5", "background": "#fafafa" }\n');
-
-			let jsonInput = '';
-			while (true) {
-				const line = await ask('  ');
-				if (line === '') break;
-				jsonInput += line;
-			}
-
-			if (!jsonInput) {
-				console.log('  No input. Theme not modified.');
-				parsed = {};
-			} else {
-				try {
-					parsed = JSON.parse(jsonInput);
-				} catch {
-					console.error('\n  Invalid JSON. Theme not modified.');
-					parsed = {};
-				}
-			}
-		} else {
-			// --- File mode ---
-			const filePath = await ask('  Path to .json file: ');
-			if (!filePath) {
-				console.log('  No path provided. Theme not modified.');
-				parsed = {};
-			} else {
-				try {
-					const absPath = resolve(process.cwd(), filePath);
-					const raw = readFileSync(absPath, 'utf-8');
-					parsed = JSON.parse(raw);
-				} catch (err) {
-					console.error(`\n  Failed to read file: ${err instanceof Error ? err.message : err}`);
-					parsed = {};
-				}
-			}
-		}
-
-		// Unwrap if nested under "tenantTheme" or "theme"
-		if (parsed.tenantTheme && typeof parsed.tenantTheme === 'object') {
-			parsed = parsed.tenantTheme as Record<string, unknown>;
-		} else if (parsed.theme && typeof parsed.theme === 'object') {
-			parsed = parsed.theme as Record<string, unknown>;
-		}
-
-		const invalidKeys: string[] = [];
-		let merged = 0;
-
-		for (const [key, value] of Object.entries(parsed)) {
-			if (!validKeys.has(key)) {
-				invalidKeys.push(key);
-			} else if (typeof value === 'string' && value !== '') {
-				newTheme[key] = value;
-				merged++;
-			} else if (value === null) {
-				delete newTheme[key];
-				merged++;
-			}
-		}
-
-		if (invalidKeys.length > 0) {
-			console.log(`\n  Warning: ignored unknown keys: ${invalidKeys.join(', ')}`);
-		}
-		if (merged > 0) {
-			console.log(`  Merged ${merged} theme values.`);
-		}
-	} else if (mode === '3') {
-		// --- Field by field mode ---
-		console.log('\n  Theme colors (hex, e.g. #4f46e5). Press Enter to skip / keep current.');
-		console.log('  Type "clear" to remove a value.\n');
-
-		let lastGroup = '';
-
-		for (const field of THEME_FIELDS) {
-			if (field.group !== lastGroup) {
-				console.log(`\n  [${field.group}]`);
-				lastGroup = field.group;
-			}
-
-			const current = existingTheme[field.key] ?? '';
-			const display = current ? ` [${current}]` : '';
-			const value = await ask(`    ${field.label}${display}: `);
-
-			if (value.toLowerCase() === 'clear') {
-				delete newTheme[field.key];
-			} else if (value) {
-				newTheme[field.key] = value;
-			}
-		}
-	}
-	// mode === '4' or anything else: keep newTheme as-is (existing values)
-
-	const hasThemeValues = Object.keys(newTheme).length > 0;
-
-	// 7. Build update payload
-	const payload: Record<string, unknown> = {
-		tenantId,
-		domain,
-		theme: hasThemeValues ? newTheme : null,
-	};
-
-	if (companyName) payload.companyName = companyName;
-	else if (existingData?.companyName) payload.companyName = existingData.companyName;
-
-	if (logoUrl) payload.logoUrl = logoUrl;
-	else if (existingData?.logoUrl) payload.logoUrl = existingData.logoUrl;
-
-	if (Object.keys(newStripe).length > 0) payload.stripeConfig = newStripe;
-
-	// 8. Preview and confirm
-	printDivider();
-	console.log('\n  Preview:\n');
-	console.log(JSON.stringify(payload, null, 2));
+	console.log('\n  Full payload:\n');
+	// Mask secrets in preview
+	const preview = JSON.parse(JSON.stringify(cfg));
+	if (preview.sesConfig?.secretAccessKey) preview.sesConfig.secretAccessKey = '***';
+	if (preview.stripeConfig?.secretKey) preview.stripeConfig.secretKey = '***';
+	if (preview.stripeConfig?.webhookSecret) preview.stripeConfig.webhookSecret = '***';
+	if (preview.resendApiKey) preview.resendApiKey = '***';
+	console.log(JSON.stringify(preview, null, 2));
 	console.log('');
 	printDivider();
 
-	const confirm = await ask('Save to Firestore? (y/N): ');
-	if (confirm.toLowerCase() !== 'y') {
-		console.log('Aborted.');
-		rl.close();
-		process.exit(0);
+	if (!autoConfirm) {
+		const answer = await ask('  Save to Firestore? (y/N): ');
+		if (answer.toLowerCase() !== 'y') {
+			console.log('\n  Aborted.\n');
+			rl.close();
+			process.exit(0);
+		}
 	}
 
-	// 9. Upsert
-	await docRef.set(payload, { merge: true });
-	console.log(`\n  Done! tenant_registry/${domain} updated.\n`);
+	// Build payload — only include keys present in the file
+	const payload: Record<string, unknown> = {
+		tenantId: cfg.tenantId,
+		domain: cfg.domain,
+	};
 
+	if (cfg.companyName !== undefined) payload.companyName = cfg.companyName;
+	if (cfg.logoUrl !== undefined) payload.logoUrl = cfg.logoUrl;
+	if (cfg.sesConfig !== undefined) payload.sesConfig = cfg.sesConfig;
+	if (cfg.resendApiKey !== undefined) payload.resendApiKey = cfg.resendApiKey;
+	if (cfg.resendFromEmail !== undefined) payload.resendFromEmail = cfg.resendFromEmail;
+	if (cfg.stripeConfig !== undefined) payload.stripeConfig = cfg.stripeConfig;
+	if (cfg.seoConfig !== undefined) payload.seoConfig = cfg.seoConfig;
+	if (cfg.theme !== undefined) payload.theme = cfg.theme;
+
+	await docRef.set(payload, { merge: true });
+
+	console.log(`\n  ✓ tenant_registry/${cfg.domain} saved.\n`);
 	rl.close();
 	process.exit(0);
 }
 
 main().catch((err) => {
-	console.error('Error:', err);
+	console.error('\nError:', err);
 	rl.close();
 	process.exit(1);
 });

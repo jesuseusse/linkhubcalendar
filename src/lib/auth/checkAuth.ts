@@ -46,6 +46,7 @@ export async function checkAuth(req: NextRequest): Promise<AuthResult> {
 			logoUrl: data?.logoUrl ?? null,
 			resendApiKey: data?.resendApiKey ?? null,
 			resendFromEmail: data?.resendFromEmail ?? null,
+			sesConfig: data?.sesConfig ?? null,
 			stripeConfig: data?.stripeConfig ?? null
 		}
 	};

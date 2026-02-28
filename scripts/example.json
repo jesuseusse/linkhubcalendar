@@ -1,0 +1,62 @@
+{
+	"_comment": "Copy this file, rename it to your domain (e.g. clinica.json), fill in the fields and run: yarn upsert-tenant ./scripts/tenants/clinica.json",
+
+	"domain": "clinica.com",
+	"tenantId": "YOUR_FIREBASE_TENANT_ID",
+
+	"companyName": "Clínica Ejemplo",
+	"logoUrl": "https://clinica.com/logo.png",
+
+	"sesConfig": {
+		"accessKeyId": "A*************E",
+		"secretAccessKey": "wJal************EY",
+		"region": "us-east-1",
+		"fromEmail": "noreply@clinica.com"
+	},
+
+	"_commentResend": "Use resendApiKey instead of sesConfig if you prefer Resend. Remove the one you don't use.",
+	"resendApiKey": "re_xxxxxxxxxxxxxxxxxxxxxxxxxx",
+	"resendFromEmail": "noreply@clinica.com",
+
+	"stripeConfig": {
+		"secretKey": "sk_live******************",
+		"publishableKey": "pk_live***************",
+		"proPriceId": "price***************",
+		"webhookSecret": "whsec***************"
+	},
+
+	"seoConfig": {
+		"title": "Clínica Ejemplo",
+		"description": "Reserva tu cita en línea.",
+		"ogImage": "https://clinica.com/og.png"
+	},
+
+	"theme": {
+		"primary": "#4f46e5",
+		"primaryForeground": "#ffffff",
+		"secondary": "#e0e7ff",
+		"secondaryForeground": "#3730a3",
+		"background": "#fafafa",
+		"foreground": "#1e1e2e",
+		"surface": "#ffffff",
+		"surfaceAlt": "#f4f4f5",
+		"muted": "#f4f4f5",
+		"mutedForeground": "#71717a",
+		"border": "#e4e4e7",
+		"ring": "#4f46e5",
+		"accent": "#4f46e5",
+		"accentForeground": "#ffffff",
+		"success": "#16a34a",
+		"successLight": "#dcfce7",
+		"warning": "#d97706",
+		"warningLight": "#fef3c7",
+		"error": "#dc2626",
+		"errorLight": "#fee2e2",
+		"info": "#2563eb",
+		"infoLight": "#dbeafe",
+		"radiusSm": "0.25rem",
+		"radiusMd": "0.5rem",
+		"radiusLg": "0.75rem",
+		"radiusXl": "1rem"
+	}
+}
