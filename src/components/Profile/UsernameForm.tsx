@@ -62,34 +62,34 @@ export function UsernameForm({
 					Nombre de usuario actualizado correctamente.
 				</p>
 			)}
-			{isLocked && username ? (
+			{isLocked && username && (
 				<p className='text-xs text-warning'>
 					Podrás cambiar tu usuario nuevamente en ${daysLeft} día(s).
 				</p>
-			) : (
-				<form onSubmit={handleSubmit} className='flex gap-2'>
-					<div className='flex items-center border border-border'>
-						<span className='px-2 text-sm text-muted-foreground'>/</span>
-						<input
-							type='text'
-							value={value}
-							onChange={e => setValue(e.target.value)}
-							placeholder='usuario'
-							pattern='[a-zA-Z0-9_-]{3,30}'
-							title='Solo letras, números, guiones y guiones bajos (3-30 caracteres)'
-							required
-							className='px-1 py-2 text-sm focus:outline-none'
-						/>
-					</div>
-					<button
-						type='submit'
-						disabled={loading}
-						className='px-4 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors rounded'
-					>
-						{loading ? 'Guardando...' : username ? 'Cambiar' : 'Establecer'}
-					</button>
-				</form>
 			)}
+			<form onSubmit={handleSubmit} className='flex gap-2'>
+				<div className='flex items-center border border-border'>
+					<span className='px-2 text-sm text-muted-foreground'>/</span>
+					<input
+						type='text'
+						value={value}
+						onChange={e => setValue(e.target.value)}
+						placeholder='usuario'
+						pattern='[a-zA-Z0-9_-]{3,30}'
+						title='Solo letras, números, guiones y guiones bajos (3-30 caracteres)'
+						required
+						disabled={isLocked}
+						className='px-1 py-2 text-sm focus:outline-none'
+					/>
+				</div>
+				<button
+					type='submit'
+					disabled={loading || isLocked}
+					className='px-4 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors rounded'
+				>
+					{loading ? 'Guardando...' : username ? 'Cambiar' : 'Establecer'}
+				</button>
+			</form>
 		</div>
 	);
 }

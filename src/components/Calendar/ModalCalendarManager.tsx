@@ -292,7 +292,7 @@ export function ModalCalendarManager({
 					{/* ── Date range ── */}
 					<section>
 						<p className='text-sm font-medium text-foreground mb-3'>
-							Rango de fechas
+							Seleccion una fecha inicial y una final (rango)
 						</p>
 						<div className='flex justify-center'>
 							<DayPicker
