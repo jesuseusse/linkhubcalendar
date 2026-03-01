@@ -45,7 +45,8 @@ export class AwsSesEmailSenderService implements IEmailSenderService {
 			await this.client.send(command);
 		} catch (err: unknown) {
 			const message = err instanceof Error ? err.message : 'SES send error';
-			throw new Error(`Error al enviar correo via SES: ${message}`);
+			console.error(message);
+			throw new Error(`Error al enviar correo`);
 		}
 	}
 }
