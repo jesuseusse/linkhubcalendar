@@ -9,7 +9,7 @@ export class DeleteAppointmentUseCase {
   ) {}
 
   async execute(tenantId: string, userId: string, appointmentId: string): Promise<void> {
-    const appointment = await this.appointmentRepository.findById(tenantId, appointmentId);
+    const appointment = await this.appointmentRepository.findById(tenantId, userId, appointmentId);
     if (!appointment) {
       throw new Error("Appointment not found");
     }
@@ -18,7 +18,7 @@ export class DeleteAppointmentUseCase {
     }
 
     await this.userRepository.updateCalendarSlotBooked(tenantId, userId, appointment.slotId, false);
-    await this.appointmentRepository.deleteById(tenantId, appointmentId);
+    await this.appointmentRepository.deleteById(tenantId, userId, appointmentId);
   }
 }
 
@@ -26,7 +26,7 @@ export class ConfirmAppointmentUseCase {
   constructor(private appointmentRepository: IAppointmentRepository) {}
 
   async execute(tenantId: string, userId: string, appointmentId: string): Promise<AppointmentResponseDto> {
-    const appointment = await this.appointmentRepository.findById(tenantId, appointmentId);
+    const appointment = await this.appointmentRepository.findById(tenantId, userId, appointmentId);
     if (!appointment) {
       throw new Error("Appointment not found");
     }
@@ -34,7 +34,7 @@ export class ConfirmAppointmentUseCase {
       throw new Error("Appointment not found");
     }
 
-    const updated = await this.appointmentRepository.updateStatus(tenantId, appointmentId, "confirmed");
+    const updated = await this.appointmentRepository.updateStatus(tenantId, userId, appointmentId, "confirmed");
     if (!updated) {
       throw new Error("Failed to confirm appointment");
     }
@@ -62,7 +62,7 @@ export class ReleaseAppointmentSlotUseCase {
   ) {}
 
   async execute(tenantId: string, userId: string, appointmentId: string): Promise<void> {
-    const appointment = await this.appointmentRepository.findById(tenantId, appointmentId);
+    const appointment = await this.appointmentRepository.findById(tenantId, userId, appointmentId);
     if (!appointment) {
       throw new Error("Appointment not found");
     }
@@ -71,6 +71,6 @@ export class ReleaseAppointmentSlotUseCase {
     }
 
     await this.userRepository.updateCalendarSlotBooked(tenantId, userId, appointment.slotId, false);
-    await this.appointmentRepository.deleteById(tenantId, appointmentId);
+    await this.appointmentRepository.deleteById(tenantId, userId, appointmentId);
   }
 }

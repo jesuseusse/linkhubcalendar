@@ -3,8 +3,6 @@ import { adminDb } from '@/lib/firebase/admin';
 import { ILeadRepository, LeadQueryOptions, PaginatedLeads } from '@/domain/interfaces/ILeadRepository';
 import { Lead, LeadStatus } from '@/domain/entities/Lead';
 
-const COLLECTION = 'leads';
-
 function docToLead(id: string, data: FirebaseFirestore.DocumentData): Lead {
   return {
     id,
@@ -19,21 +17,20 @@ function docToLead(id: string, data: FirebaseFirestore.DocumentData): Lead {
 }
 
 export class FirestoreLeadRepository implements ILeadRepository {
-  private col(tenantId: string) {
-    return adminDb.collection(`tenants/${tenantId}/${COLLECTION}`);
+  private col(tenantId: string, userId: string) {
+    return adminDb.collection(`tenants/${tenantId}/users/${userId}/leads`);
   }
 
   async create(tenantId: string, lead: Omit<Lead, 'id' | 'createdAt'>): Promise<Lead> {
     const now = Date.now();
-    const ref = this.col(tenantId).doc();
+    const ref = this.col(tenantId, lead.userId).doc();
     const data = { ...lead, createdAt: now };
     await ref.set(data);
     return { ...data, id: ref.id, createdAt: now };
   }
 
   async findByUserId(tenantId: string, userId: string): Promise<Lead[]> {
-    const snap = await this.col(tenantId)
-      .where('userId', '==', userId)
+    const snap = await this.col(tenantId, userId)
       .orderBy('createdAt', 'desc')
       .get();
     return snap.docs.map((doc) => docToLead(doc.id, doc.data()));
@@ -46,7 +43,7 @@ export class FirestoreLeadRepository implements ILeadRepository {
   ): Promise<PaginatedLeads> {
     const direction = opts.order === 'older' ? 'asc' : 'desc';
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    let query: FirebaseFirestore.Query<FirebaseFirestore.DocumentData> = this.col(tenantId).where('userId', '==', userId);
+    let query: FirebaseFirestore.Query<FirebaseFirestore.DocumentData> = this.col(tenantId, userId);
 
     if (opts.status) {
       query = query.where('status', '==', opts.status);
@@ -65,7 +62,7 @@ export class FirestoreLeadRepository implements ILeadRepository {
     query = query.orderBy('createdAt', direction);
 
     if (opts.cursor) {
-      const cursorDoc = await this.col(tenantId).doc(opts.cursor).get();
+      const cursorDoc = await this.col(tenantId, userId).doc(opts.cursor).get();
       if (cursorDoc.exists) {
         query = query.startAfter(cursorDoc);
       }
@@ -86,11 +83,9 @@ export class FirestoreLeadRepository implements ILeadRepository {
     userId: string,
     status: LeadStatus | null
   ): Promise<Lead> {
-    const ref = this.col(tenantId).doc(leadId);
+    const ref = this.col(tenantId, userId).doc(leadId);
     const snap = await ref.get();
     if (!snap.exists) throw new Error('Lead not found');
-    const data = snap.data()!;
-    if (data.userId !== userId) throw new Error('Forbidden');
 
     if (status === null) {
       await ref.update({ status: FieldValue.delete() });

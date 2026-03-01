@@ -65,7 +65,7 @@ export function EditProfileForm({
 					{description.length}/160
 				</p>
 			</div>
-			<div>
+			{/* <div>
 				<label className='block text-xs font-medium text-muted-foreground mb-1'>
 					Correo electrónico
 				</label>
@@ -76,7 +76,7 @@ export function EditProfileForm({
 					onChange={e => setEmail(e.target.value)}
 					className='w-full px-3 py-2 text-sm border border-border focus:outline-none focus:border-foreground rounded disabled:bg-muted/90'
 				/>
-			</div>
+			</div> */}
 			<button
 				type='submit'
 				disabled={loading}

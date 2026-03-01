@@ -20,7 +20,7 @@ export function PublicProfileLink({ username }: Props) {
 	return (
 		<div className='flex items-center gap-2'>
 			<p className='text-xs text-muted-foreground'>
-				Perfil público:{' '}
+				Comparte este enlace:{' '}
 				<span className='text-foreground font-medium'>{url}</span>
 			</p>
 			<button
