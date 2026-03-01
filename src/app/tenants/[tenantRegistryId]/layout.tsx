@@ -71,13 +71,9 @@ export default async function TenantLayout({
 }) {
 	const { tenantRegistryId } = await params;
 
-	console.log(`tenants/${tenantRegistryId}/layout`);
-
 	// 1. Resolem el tenantId dels params de la URL (gràcies al rewrite del middleware)
 	const tenantConfig =
 		await container.tenantRegistryRepo.getByHostname(tenantRegistryId);
-
-	console.log(`tenantConfig for ${tenantRegistryId}:`, tenantConfig);
 
 	if (!tenantConfig) {
 		notFound(); // Tenant config no found, render 404

@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { useSearchParams, useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
@@ -19,7 +20,7 @@ import { AddLinkForm } from '@/components/Links/AddLinkForm';
 import { LinkList } from '@/components/Links/LinkList';
 import { ThemeCustomizer } from '@/components/Theme/ThemeCustomizer';
 import { CalendarToggle } from '@/components/Calendar/CalendarToggle';
-import { CalendarManager } from '@/components/Calendar/CalendarManager';
+import { ModalCalendarManager } from '@/components/Calendar/ModalCalendarManager';
 import { LeadList } from '@/components/Leads/LeadList';
 import { RequirePermission } from '@/components/Common/RequirePermission';
 import { PERMISSIONS } from '@/permissions/plans';
@@ -31,6 +32,7 @@ export default function DashboardPage() {
 	const searchParams = useSearchParams();
 	const router = useRouter();
 	const pathname = usePathname();
+	const [calendarModalOpen, setCalendarModalOpen] = useState(false);
 
 	const stripeParam = searchParams.get('successStripe');
 	const stripeModal = stripeParam === 'true' ? 'success' : stripeParam === 'false' ? 'failure' : null;
@@ -177,16 +179,28 @@ export default function DashboardPage() {
 							loading={loading}
 						/>
 						{profile.calendarEnabled && (
-							<CalendarManager
-								slots={profile.calendarSlots}
-								onAddSlot={addCalendarSlot}
-								onDeleteSlot={deleteCalendarSlot}
-								onReleaseSlot={releaseCalendarSlot}
-								loading={loading}
-							/>
+							<>
+								<button
+									type='button'
+									onClick={() => setCalendarModalOpen(true)}
+									className='mt-4 px-4 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors'
+								>
+									Gestionar horarios
+								</button>
+								{calendarModalOpen && (
+									<ModalCalendarManager
+										slots={profile.calendarSlots}
+										onAddSlot={addCalendarSlot}
+										onDeleteSlot={deleteCalendarSlot}
+										onReleaseSlot={releaseCalendarSlot}
+										onClose={() => setCalendarModalOpen(false)}
+										loading={loading}
+									/>
+								)}
+							</>
 						)}
 						<Link
-							href='u/admin/dashboard/dates'
+							href='/u/admin/dashboard/dates'
 							className='inline-block mt-4 text-sm text-muted-foreground hover:text-foreground underline'
 						>
 							Ver Citas

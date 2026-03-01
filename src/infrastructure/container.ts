@@ -13,6 +13,7 @@ import { ToggleContactFormUseCase } from '@/application/use-cases/ToggleContactF
 import { ToggleCalendarUseCase } from '@/application/use-cases/ToggleCalendarUseCase';
 import {
   AddCalendarSlotUseCase,
+  UpsertCalendarSlotsUseCase,
   DeleteCalendarSlotUseCase,
   ReleaseCalendarSlotUseCase,
   GetPublicCalendarUseCase,
@@ -51,6 +52,7 @@ export const container = {
   toggleContactFormUseCase: new ToggleContactFormUseCase(userRepo),
   toggleCalendarUseCase: new ToggleCalendarUseCase(userRepo),
   addCalendarSlotUseCase: new AddCalendarSlotUseCase(userRepo),
+  upsertCalendarSlotsUseCase: new UpsertCalendarSlotsUseCase(userRepo),
   deleteCalendarSlotUseCase: new DeleteCalendarSlotUseCase(userRepo),
   releaseCalendarSlotUseCase: new ReleaseCalendarSlotUseCase(userRepo),
   getPublicCalendarUseCase: new GetPublicCalendarUseCase(userRepo),

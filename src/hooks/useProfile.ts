@@ -148,7 +148,7 @@ export function useProfile(profileService: IProfileService) {
 	);
 
 	const addCalendarSlot = useCallback(
-		async (dto: CreateCalendarSlotDto) => {
+		async (dto: CreateCalendarSlotDto | CreateCalendarSlotDto[]) => {
 			if (!token) return;
 			setLoading(true);
 			setError(null);

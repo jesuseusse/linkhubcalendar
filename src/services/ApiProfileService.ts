@@ -46,8 +46,9 @@ export class ApiProfileService implements IProfileService {
     return apiClient('/api/calendar/toggle', { method: 'PUT', body: JSON.stringify({ enabled }) });
   }
 
-  async addCalendarSlot(_token: string, dto: CreateCalendarSlotDto): Promise<UserDto> {
-    return apiClient('/api/calendar/slots', { method: 'POST', body: JSON.stringify(dto) });
+  async addCalendarSlot(_token: string, dto: CreateCalendarSlotDto | CreateCalendarSlotDto[]): Promise<UserDto> {
+    const body = Array.isArray(dto) ? dto : [dto];
+    return apiClient('/api/calendar/slots', { method: 'POST', body: JSON.stringify(body) });
   }
 
   async deleteCalendarSlot(_token: string, slotId: string): Promise<UserDto> {

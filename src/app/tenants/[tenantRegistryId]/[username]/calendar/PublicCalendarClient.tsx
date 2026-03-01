@@ -126,7 +126,7 @@ export function PublicCalendarClient({
 																selectedSlot?.id === slot.id ? null : slot
 															)
 														}
-														className={`w-full text-left px-4 py-3 text-sm border transition-colors ${selectedSlot?.id === slot.id ? 'bg-success-light border-success text-success' : 'bg-success-light border-success text-success hover:bg-success-light'}`}
+														className={`cursor-pointer w-full text-left px-4 py-3 text-sm border transition-colors ${selectedSlot?.id === slot.id ? 'bg-success-light border-success text-success' : 'bg-success-light border-success text-success hover:bg-success-light'}`}
 													>
 														{slot.startTime} - {slot.endTime}
 													</button>
@@ -173,7 +173,7 @@ export function PublicCalendarClient({
 						</div>
 					</div>
 
-					{Object.keys(groupedSlots).length > 0 && (
+					{/* {Object.keys(groupedSlots).length > 0 && (
 						<div className='mt-6 border-t border-border pt-4'>
 							<h3 className='text-xs font-semibold text-muted-foreground mb-3 uppercase tracking-wider'>
 								All Available Slots
@@ -198,7 +198,7 @@ export function PublicCalendarClient({
 								))}
 							</div>
 						</div>
-					)}
+					)} */}
 
 					{calendar.calendarSlots.length === 0 && (
 						<p className='text-sm text-muted-foreground text-center py-8'>

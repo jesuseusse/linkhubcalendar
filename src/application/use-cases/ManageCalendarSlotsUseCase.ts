@@ -29,6 +29,33 @@ export class AddCalendarSlotUseCase {
   }
 }
 
+export class UpsertCalendarSlotsUseCase {
+  constructor(private userRepository: IUserRepository) {}
+
+  async execute(tenantId: string, userId: string, dtos: CreateCalendarSlotDto[]): Promise<UserResponseDto> {
+    for (const dto of dtos) {
+      if (!dto.date || !dto.startTime || !dto.endTime) {
+        throw new Error("Date, start time, and end time are required");
+      }
+      if (dto.startTime >= dto.endTime) {
+        throw new Error("Start time must be before end time");
+      }
+    }
+
+    const user = await this.userRepository.upsertCalendarSlots(
+      tenantId,
+      userId,
+      dtos.map((dto) => ({ date: dto.date, startTime: dto.startTime, endTime: dto.endTime, booked: false }))
+    );
+
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    return toUserResponse(user);
+  }
+}
+
 export class DeleteCalendarSlotUseCase {
   constructor(private userRepository: IUserRepository) {}
 

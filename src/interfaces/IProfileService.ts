@@ -8,7 +8,7 @@ export interface IProfileService {
   toggleContactForm(token: string, enabled: boolean): Promise<UserDto>;
   updateTheme(token: string, theme: ThemeDto): Promise<UserDto>;
   toggleCalendar(token: string, enabled: boolean): Promise<UserDto>;
-  addCalendarSlot(token: string, dto: CreateCalendarSlotDto): Promise<UserDto>;
+  addCalendarSlot(token: string, dto: CreateCalendarSlotDto | CreateCalendarSlotDto[]): Promise<UserDto>;
   deleteCalendarSlot(token: string, slotId: string): Promise<UserDto>;
   releaseCalendarSlot(token: string, slotId: string): Promise<UserDto>;
   getPublicProfile(username: string): Promise<PublicProfileDto>;

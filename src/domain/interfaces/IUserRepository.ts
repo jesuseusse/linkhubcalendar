@@ -14,6 +14,7 @@ export interface IUserRepository {
   updateLink(tenantId: string, userId: string, linkId: string, link: Omit<Link, "id">): Promise<User | null>;
   deleteLink(tenantId: string, userId: string, linkId: string): Promise<User | null>;
   addCalendarSlot(tenantId: string, userId: string, slot: Omit<CalendarSlot, "id">): Promise<User | null>;
+  upsertCalendarSlots(tenantId: string, userId: string, slots: Omit<CalendarSlot, "id">[]): Promise<User | null>;
   updateCalendarSlotBooked(tenantId: string, userId: string, slotId: string, booked: boolean): Promise<User | null>;
   deleteCalendarSlot(tenantId: string, userId: string, slotId: string): Promise<User | null>;
   updateTheme(tenantId: string, id: string, theme: ThemeConfig): Promise<User | null>;

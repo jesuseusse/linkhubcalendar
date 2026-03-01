@@ -221,6 +221,35 @@ export class FirestoreUserRepository implements IUserRepository {
 		return docToUser(userId, updated.data()!);
 	}
 
+	async upsertCalendarSlots(
+		tenantId: string,
+		userId: string,
+		slots: Omit<CalendarSlot, 'id'>[]
+	): Promise<User | null> {
+		const ref = this.col(tenantId).doc(userId);
+		const doc = await ref.get();
+		if (!doc.exists) return null;
+		const data = doc.data()!;
+		let calendarSlots: CalendarSlot[] = data.calendarSlots ?? [];
+
+		for (const slot of slots) {
+			const existing = calendarSlots.find(
+				(s) => s.date === slot.date && s.startTime === slot.startTime && s.endTime === slot.endTime
+			);
+			if (existing) {
+				calendarSlots = calendarSlots.map((s) =>
+					s.id === existing.id ? { ...s, ...slot } : s
+				);
+			} else {
+				calendarSlots.push({ ...slot, id: crypto.randomUUID() });
+			}
+		}
+
+		await ref.update({ calendarSlots, updatedAt: Date.now() });
+		const updated = await ref.get();
+		return docToUser(userId, updated.data()!);
+	}
+
 	async updateCalendarSlotBooked(
 		tenantId: string,
 		userId: string,
