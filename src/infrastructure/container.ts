@@ -33,6 +33,8 @@ import {
 } from '@/application/use-cases/ManageAppointmentsUseCase';
 import { SubmitLeadUseCase } from '@/application/use-cases/SubmitLeadUseCase';
 import { GetLeadsUseCase } from '@/application/use-cases/GetLeadsUseCase';
+import { UpdateLeadStatusUseCase } from '@/application/use-cases/UpdateLeadStatusUseCase';
+import { GetLeadsPaginatedUseCase } from '@/application/use-cases/GetLeadsPaginatedUseCase';
 
 export const tenantRegistryRepo = new FirestoreTenantRegistryRepository();
 export const userRepo = new FirestoreUserRepository();
@@ -67,4 +69,6 @@ export const container = {
   releaseAppointmentSlotUseCase: new ReleaseAppointmentSlotUseCase(appointmentRepo, userRepo),
   submitLeadUseCase: new SubmitLeadUseCase(userRepo, leadRepo),
   getLeadsUseCase: new GetLeadsUseCase(leadRepo),
+  updateLeadStatusUseCase: new UpdateLeadStatusUseCase(leadRepo),
+  getLeadsPaginatedUseCase: new GetLeadsPaginatedUseCase(leadRepo),
 };

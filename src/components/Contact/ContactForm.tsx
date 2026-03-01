@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { profileService } from '@/services/serviceFactory';
 import { ThemeDto } from '@/dtos/user.dto';
+import { InputPhone } from '@/components/Common/InputPhone';
 
 interface Props {
 	username: string;
@@ -12,6 +13,7 @@ interface Props {
 export function ContactForm({ username, theme }: Props) {
 	const [name, setName] = useState('');
 	const [email, setEmail] = useState('');
+	const [phone, setPhone] = useState('');
 	const [message, setMessage] = useState('');
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
@@ -23,10 +25,11 @@ export function ContactForm({ username, theme }: Props) {
 		setError(null);
 		setSuccess(false);
 		try {
-			await profileService.submitLead(username, { name, email, message });
+			await profileService.submitLead(username, { name, email, phone, message });
 			setSuccess(true);
 			setName('');
 			setEmail('');
+			setPhone('');
 			setMessage('');
 		} catch {
 			setError('Ocurrió un error al enviar el mensaje. Inténtalo nuevamente.');
@@ -75,6 +78,12 @@ export function ContactForm({ username, theme }: Props) {
 					required
 					className='w-full px-3 py-2 text-sm border border-border focus:outline-none focus:border-foreground rounded'
 					style={borderStyle}
+				/>
+				<InputPhone
+					value={phone}
+					onChange={setPhone}
+					required
+					borderStyle={borderStyle}
 				/>
 				<textarea
 					placeholder='Mensaje'

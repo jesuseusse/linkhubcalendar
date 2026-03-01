@@ -69,15 +69,26 @@ export interface UpdateUsernameDto {
 export interface CreateLeadDto {
   name: string;
   email: string;
+  phone: string;
   message: string;
 }
+
+export type LeadStatus = 'attended' | 'canceled' | 'contacted';
 
 export interface LeadResponseDto {
   id: string;
   name: string;
   email: string;
+  phone: string;
   message: string;
+  status?: LeadStatus;
   createdAt: number;
+}
+
+export interface PaginatedLeadsResponseDto {
+  leads: LeadResponseDto[];
+  cursor: string | null;
+  hasMore: boolean;
 }
 
 export interface UpdateThemeDto {

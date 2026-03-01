@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { CalendarSlotDto, CreateAppointmentDto } from '@/dtos/user.dto';
+import { InputPhone } from '@/components/Common/InputPhone';
 
 interface Props {
 	slot: CalendarSlotDto;
@@ -58,13 +59,10 @@ export function AppointmentBookingForm({ slot, loading, onSubmit }: Props) {
 				required
 				className='w-full px-2 py-1.5 text-sm border border-border focus:outline-none focus:border-foreground'
 			/>
-			<input
-				type='tel'
-				placeholder={'Teléfono'}
+			<InputPhone
 				value={phone}
-				onChange={e => setPhone(e.target.value)}
+				onChange={setPhone}
 				required
-				className='w-full px-2 py-1.5 text-sm border border-border focus:outline-none focus:border-foreground'
 			/>
 			<textarea
 				placeholder={'Motivo de la cita'}

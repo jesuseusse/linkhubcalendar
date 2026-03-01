@@ -25,7 +25,7 @@ export default function AuthPage() {
 		<div className='min-h-screen bg-background flex items-center justify-center p-4'>
 			<div className='w-full max-w-sm'>
 				<h1 className='text-2xl font-bold text-foreground text-center mb-6'>
-					LinkHub
+					Bienvenido
 				</h1>
 				{mode === 'login' ? (
 					<LoginForm

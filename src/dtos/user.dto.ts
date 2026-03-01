@@ -72,18 +72,29 @@ export interface PublicCalendarDto {
 	calendarSlots: CalendarSlotDto[];
 }
 
+export type LeadStatus = 'attended' | 'canceled' | 'contacted';
+
 export interface LeadDto {
 	id: string;
 	name: string;
 	email: string;
+	phone: string;
 	message: string;
+	status?: LeadStatus;
 	createdAt: number;
 }
 
 export interface CreateLeadDto {
 	name: string;
 	email: string;
+	phone: string;
 	message: string;
+}
+
+export interface PaginatedLeadsDto {
+	leads: LeadDto[];
+	cursor: string | null;
+	hasMore: boolean;
 }
 
 export interface AppointmentDto {

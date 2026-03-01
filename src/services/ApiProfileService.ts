@@ -12,8 +12,11 @@ import {
   CreateAppointmentDto,
   PaginatedAppointmentsDto,
   LeadDto,
+  LeadStatus,
   CreateLeadDto,
+  PaginatedLeadsDto,
 } from '@/dtos/user.dto';
+import type { GetLeadsPaginatedParams } from '@/interfaces/IProfileService';
 
 export class ApiProfileService implements IProfileService {
   async getProfile(): Promise<UserDto> {
@@ -93,6 +96,19 @@ export class ApiProfileService implements IProfileService {
 
   async getLeads(): Promise<LeadDto[]> {
     return apiClient('/api/leads');
+  }
+
+  async getLeadsPaginated(_token: string, params: GetLeadsPaginatedParams): Promise<PaginatedLeadsDto> {
+    const qs = new URLSearchParams();
+    qs.set('order', params.order);
+    if (params.status) qs.set('status', params.status);
+    if (params.cursor) qs.set('cursor', params.cursor);
+    qs.set('limit', String(params.limit ?? 25));
+    return apiClient(`/api/leads?${qs.toString()}`);
+  }
+
+  async updateLeadStatus(_token: string, leadId: string, status: LeadStatus | null): Promise<LeadDto> {
+    return apiClient(`/api/leads/${leadId}`, { method: 'PATCH', body: JSON.stringify({ status }) });
   }
 
   async downgradePlan(): Promise<UserDto> {

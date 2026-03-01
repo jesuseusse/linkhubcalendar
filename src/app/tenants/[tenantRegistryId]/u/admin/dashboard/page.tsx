@@ -159,9 +159,12 @@ export default function DashboardPage() {
 					permission={PERMISSIONS.CONTACT_FORM}
 				>
 					<section className='bg-surface border border-border p-6 rounded'>
-						<h2 className='text-sm font-semibold text-foreground mb-4 uppercase tracking-wider'>
+						<h2 className='text-sm font-semibold text-foreground uppercase tracking-wider'>
 							Formulario de Contacto
 						</h2>
+						<span className='text-xs text-muted-foreground'>
+							(para que tus clientes dejen sus datos y su interés)
+						</span>
 						<ContactFormToggle
 							enabled={profile.contactFormEnabled}
 							onToggle={toggleContactForm}

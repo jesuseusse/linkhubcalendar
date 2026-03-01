@@ -1,4 +1,12 @@
-import { AppointmentDto, CreateAppointmentDto, CreateCalendarSlotDto, CreateLeadDto, LeadDto, PaginatedAppointmentsDto, PublicCalendarDto, PublicProfileDto, ThemeDto, UpdateProfileDto, UpdateUsernameDto, UserDto } from "../dtos/user.dto";
+import { AppointmentDto, CreateAppointmentDto, CreateCalendarSlotDto, CreateLeadDto, LeadDto, LeadStatus, PaginatedAppointmentsDto, PaginatedLeadsDto, PublicCalendarDto, PublicProfileDto, ThemeDto, UpdateProfileDto, UpdateUsernameDto, UserDto } from "../dtos/user.dto";
+import type { LeadOrder } from "../domain/interfaces/ILeadRepository";
+
+export interface GetLeadsPaginatedParams {
+  order: LeadOrder;
+  status?: LeadStatus;
+  cursor?: string;
+  limit?: number;
+}
 
 export interface IProfileService {
   getProfile(token: string): Promise<UserDto>;
@@ -20,6 +28,8 @@ export interface IProfileService {
   releaseAppointmentSlot(token: string, appointmentId: string): Promise<void>;
   submitLead(username: string, dto: CreateLeadDto): Promise<LeadDto>;
   getLeads(token: string): Promise<LeadDto[]>;
+  getLeadsPaginated(token: string, params: GetLeadsPaginatedParams): Promise<PaginatedLeadsDto>;
+  updateLeadStatus(token: string, leadId: string, status: LeadStatus | null): Promise<LeadDto>;
   downgradePlan(token: string): Promise<UserDto>;
   sendVerificationEmail(token: string): Promise<void>;
 }

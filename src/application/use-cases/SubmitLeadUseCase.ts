@@ -11,7 +11,7 @@ export class SubmitLeadUseCase {
   async execute(
     tenantId: string,
     username: string,
-    data: { name: string; email: string; message: string }
+    data: { name: string; email: string; phone: string; message: string }
   ): Promise<LeadResponseDto> {
     const user = await this.userRepository.findByUsername(tenantId, username);
     if (!user || !user.username) {
@@ -25,6 +25,7 @@ export class SubmitLeadUseCase {
       userId: user.id,
       name: data.name,
       email: data.email,
+      phone: data.phone,
       message: data.message,
     });
 
@@ -32,6 +33,7 @@ export class SubmitLeadUseCase {
       id: lead.id,
       name: lead.name,
       email: lead.email,
+      phone: lead.phone,
       message: lead.message,
       createdAt: lead.createdAt,
     };
