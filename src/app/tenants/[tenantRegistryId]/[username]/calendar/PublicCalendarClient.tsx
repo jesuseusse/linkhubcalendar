@@ -1,15 +1,44 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { DayPicker } from 'react-day-picker';
 import { format } from 'date-fns';
 import { CalendarSlotDto, PublicCalendarDto } from '@/dtos/user.dto';
 import { profileService } from '@/services/serviceFactory';
 import { AppointmentBookingForm } from '@/components/Appointments/AppointmentBookingForm';
+import { ReservedAppointmentModal, StoredAppointment } from '@/components/Calendar/ReservedAppointmentModal';
 import { getProfilePhotoUrl } from '@/utils/profilePhoto';
 import 'react-day-picker/style.css';
 import Image from 'next/image';
+
+function storageKey(username: string) {
+	return `linkhub_appointment_${username}`;
+}
+
+function loadStoredAppointment(username: string): StoredAppointment | null {
+	try {
+		const raw = localStorage.getItem(storageKey(username));
+		if (!raw) return null;
+		const stored: StoredAppointment = JSON.parse(raw);
+		const today = format(new Date(), 'yyyy-MM-dd');
+		if (stored.date < today) {
+			localStorage.removeItem(storageKey(username));
+			return null;
+		}
+		return stored;
+	} catch {
+		return null;
+	}
+}
+
+function saveAppointment(username: string, data: StoredAppointment) {
+	try {
+		localStorage.setItem(storageKey(username), JSON.stringify(data));
+	} catch {
+		// ignore
+	}
+}
 
 interface Props {
 	calendar: PublicCalendarDto;
@@ -26,6 +55,13 @@ export function PublicCalendarClient({
 		null
 	);
 	const [bookingLoading, setBookingLoading] = useState(false);
+	const [reservedAppointment, setReservedAppointment] =
+		useState<StoredAppointment | null>(null);
+
+	useEffect(() => {
+		const stored = loadStoredAppointment(username);
+		if (stored) setReservedAppointment(stored);
+	}, [username]);
 
 	const selectedDateStr = selectedDate
 		? format(selectedDate, 'yyyy-MM-dd')
@@ -62,6 +98,12 @@ export function PublicCalendarClient({
 
 	return (
 		<div className='min-h-screen bg-surface flex flex-col items-center p-4'>
+			{reservedAppointment && (
+				<ReservedAppointmentModal
+					appointment={reservedAppointment}
+					onClose={() => setReservedAppointment(null)}
+				/>
+			)}
 			<div className='w-full max-w-2xl'>
 				<div className='flex justify-between items-center mb-6'>
 					<Link
@@ -141,6 +183,14 @@ export function PublicCalendarClient({
 																		username,
 																		data
 																	);
+																	const stored: StoredAppointment = {
+																		name: data.name,
+																		date: slot.date,
+																		startTime: slot.startTime,
+																		endTime: slot.endTime,
+																	};
+																	saveAppointment(username, stored);
+																	setReservedAppointment(stored);
 																	setCalendar(prev => ({
 																		...prev,
 																		calendarSlots: prev.calendarSlots.filter(

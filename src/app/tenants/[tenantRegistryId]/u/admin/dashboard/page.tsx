@@ -35,7 +35,12 @@ export default function DashboardPage() {
 	const [calendarModalOpen, setCalendarModalOpen] = useState(false);
 
 	const stripeParam = searchParams.get('successStripe');
-	const stripeModal = stripeParam === 'true' ? 'success' : stripeParam === 'false' ? 'failure' : null;
+	const stripeModal =
+		stripeParam === 'true'
+			? 'success'
+			: stripeParam === 'false'
+				? 'failure'
+				: null;
 
 	function handleCloseStripeModal() {
 		const params = new URLSearchParams(searchParams.toString());
@@ -201,7 +206,7 @@ export default function DashboardPage() {
 						)}
 						<Link
 							href='/u/admin/dashboard/dates'
-							className='inline-block mt-4 text-sm text-muted-foreground hover:text-foreground underline'
+							className='inline-block ml-4 mt-4 text-sm text-muted-foreground hover:text-foreground underline'
 						>
 							Ver Citas
 						</Link>
