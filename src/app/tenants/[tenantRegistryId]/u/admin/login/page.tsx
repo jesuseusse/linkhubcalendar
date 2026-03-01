@@ -1,14 +1,16 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { LoginForm } from '@/components/Auth/LoginForm';
 import { SignUpForm } from '@/components/Auth/SignUpForm';
 import { useAuth } from '@/hooks/useAuth';
 import { authService, profileService } from '@/services/serviceFactory';
 
 export default function AuthPage() {
-	const [mode, setMode] = useState<'login' | 'signup'>('login');
+	const searchParams = useSearchParams();
+	const initialMode = searchParams.get('mode') === 'signup' ? 'signup' : 'login';
+	const [mode, setMode] = useState<'login' | 'signup'>(initialMode);
 	const { login, signUp, loading, error, isAuthenticated } = useAuth(
 		authService,
 		profileService
@@ -32,14 +34,14 @@ export default function AuthPage() {
 						onSubmit={login}
 						loading={loading}
 						error={error}
-						onSwitchToSignUp={() => setMode('signup')}
+						onSwitchToSignUp={() => { setMode('signup'); router.replace('?mode=signup'); }}
 					/>
 				) : (
 					<SignUpForm
 						onSubmit={signUp}
 						loading={loading}
 						error={error}
-						onSwitchToLogin={() => setMode('login')}
+						onSwitchToLogin={() => { setMode('login'); router.replace('?mode=login'); }}
 					/>
 				)}
 			</div>

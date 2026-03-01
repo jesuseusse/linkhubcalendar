@@ -31,7 +31,7 @@ export default function UnMujerBonitaHeroSection() {
 					{/* CTA */}
 					<div className='mt-8 flex flex-col sm:flex-row gap-4'>
 						<Link
-							href='u/admin/login'
+							href='u/admin/login?mode=signup'
 							className='bg-primary text-primaryForeground px-8 py-4 rounded-xl font-semibold text-center hover:scale-105 transition shadow-lg'
 						>
 							Crear mi página ahora

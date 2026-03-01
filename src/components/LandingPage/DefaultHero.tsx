@@ -32,7 +32,7 @@ export default function HeroSection() {
 					{/* CTA */}
 					<div className='mt-8 flex gap-4 flex-wrap'>
 						<Link
-							href='u/admin/login'
+							href='u/admin/login?mode=signup'
 							className='bg-primary text-primaryForeground px-8 py-4 rounded-xl font-semibold shadow-lg hover:scale-105 transition'
 						>
 							Crear mi página ahora

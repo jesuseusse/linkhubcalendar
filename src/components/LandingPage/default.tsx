@@ -213,7 +213,7 @@ export default function DefaultLandingPage() {
 					</p>
 
 					<Link
-						href='u/admin/login'
+						href='u/admin/login?mode=signup'
 						prefetch
 						className='mt-6 inline-block bg-primary text-primaryForeground px-10 py-4 rounded-xl font-semibold hover:scale-105 transition'
 					>
