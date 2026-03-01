@@ -13,6 +13,9 @@ export function toUserResponse(user: User): UserResponseDto {
     profilePhoto: user.profilePhoto,
     plan: user.plan ?? "free",
     planExpiredAt: user.planExpiredAt ?? null,
+    subscriptionCancelAtPeriodEnd: user.subscriptionCancelAtPeriodEnd,
+    subscriptionStatus: user.subscriptionStatus,
+    stripeSubscriptionId: user.stripeSubscriptionId,
     contactFormEnabled: user.contactFormEnabled,
     calendarEnabled: user.calendarEnabled,
     theme: user.theme

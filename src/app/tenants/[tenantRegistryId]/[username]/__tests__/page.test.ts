@@ -45,6 +45,8 @@ function createMockUserRepository(
 		deleteCalendarSlot: vi.fn(),
 		updateTheme: vi.fn(),
 		updatePlan: vi.fn(),
+		upsertCalendarSlots: vi.fn(),
+		updateSubscriptionFlags: vi.fn(),
 		updateLastVerificationEmailSentAt: vi.fn()
 	};
 }

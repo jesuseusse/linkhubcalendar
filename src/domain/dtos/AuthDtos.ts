@@ -19,6 +19,9 @@ export interface UserResponseDto {
   profilePhoto?: string;
   plan?: Plan;
   planExpiredAt?: number | null;
+  subscriptionCancelAtPeriodEnd?: boolean;
+  subscriptionStatus?: string;
+  stripeSubscriptionId?: string;
   contactFormEnabled: boolean;
   calendarEnabled: boolean;
   theme?: ThemeResponseDto;

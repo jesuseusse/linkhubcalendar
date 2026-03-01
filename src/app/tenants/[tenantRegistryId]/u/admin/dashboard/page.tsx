@@ -227,6 +227,28 @@ export default function DashboardPage() {
 						<LeadList leads={leads} loading={leadsLoading} />
 					</section>
 				</RequirePermission>
+
+				<section className='bg-surface border border-border p-6 rounded'>
+					<div className='flex items-center justify-between'>
+						<div>
+							<h2 className='text-sm font-semibold text-foreground uppercase tracking-wider'>
+								Suscripción
+							</h2>
+							<p className='text-xs text-muted-foreground mt-1'>
+								Plan actual:{' '}
+								<span className='font-medium capitalize'>
+									{profile.plan ?? 'free'}
+								</span>
+							</p>
+						</div>
+						<Link
+							href='/u/admin/dashboard/billing'
+							className='text-sm text-muted-foreground hover:text-foreground underline transition-colors'
+						>
+							Gestionar suscripción
+						</Link>
+					</div>
+				</section>
 			</main>
 		</div>
 	);

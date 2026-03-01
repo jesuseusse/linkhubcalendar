@@ -22,6 +22,7 @@ const {
 	mockSaveStripeEvent,
 	mockFindByEmail,
 	mockUpdatePlan,
+	mockUpdateSubscriptionFlags,
 	mockConstructEvent,
 	mockSubscriptionsRetrieve,
 	mockSubscriptionsUpdate
@@ -30,6 +31,7 @@ const {
 	mockSaveStripeEvent: vi.fn(),
 	mockFindByEmail: vi.fn(),
 	mockUpdatePlan: vi.fn(),
+	mockUpdateSubscriptionFlags: vi.fn(),
 	mockConstructEvent: vi.fn(),
 	mockSubscriptionsRetrieve: vi.fn(),
 	mockSubscriptionsUpdate: vi.fn()
@@ -46,7 +48,8 @@ vi.mock('@/infrastructure/container', () => ({
 		},
 		userRepo: {
 			findByEmail: mockFindByEmail,
-			updatePlan: mockUpdatePlan
+			updatePlan: mockUpdatePlan,
+			updateSubscriptionFlags: mockUpdateSubscriptionFlags
 		}
 	}
 }));
@@ -135,6 +138,7 @@ describe('POST /api/stripe/webhook — checkout.session.completed', () => {
 		mockSubscriptionsUpdate.mockResolvedValue({});
 		mockFindByEmail.mockResolvedValue(makeUser());
 		mockUpdatePlan.mockResolvedValue(undefined);
+		mockUpdateSubscriptionFlags.mockResolvedValue(undefined);
 	});
 
 	it('returns 400 when domain is missing in event metadata', async () => {
@@ -213,13 +217,14 @@ describe('POST /api/stripe/webhook — checkout.session.completed', () => {
 		expect(mockFindByEmail).toHaveBeenCalledWith(TENANT_ID, USER_EMAIL);
 	});
 
-	it('upgrades user to pro with correct planExpiredAt when priceId matches proPriceId', async () => {
+	it('upgrades user to pro with correct planExpiredAt and subscriptionId when priceId matches proPriceId', async () => {
 		await POST(makeRequest());
 		expect(mockUpdatePlan).toHaveBeenCalledWith(
 			TENANT_ID,
 			USER_ID,
 			'pro',
-			CURRENT_PERIOD_END * 1000 // Stripe seconds → JS milliseconds
+			CURRENT_PERIOD_END * 1000, // Stripe seconds → JS milliseconds
+			SUBSCRIPTION_ID
 		);
 	});
 
@@ -248,5 +253,184 @@ describe('POST /api/stripe/webhook — checkout.session.completed', () => {
 		const res = await POST(makeRequest());
 		expect(res.status).toBe(200);
 		expect(mockUpdatePlan).not.toHaveBeenCalled();
+	});
+});
+
+// ---------------------------------------------------------------------------
+// Helpers for subscription update / delete events
+// ---------------------------------------------------------------------------
+function makeSubscriptionObject(overrides: Record<string, unknown> = {}) {
+	return {
+		id: SUBSCRIPTION_ID,
+		status: 'active',
+		cancel_at_period_end: false,
+		metadata: { tenantId: TENANT_ID, email: USER_EMAIL, domain: TENANT_DOMAIN },
+		items: {
+			data: [{ price: { id: PRO_PRICE_ID }, current_period_end: CURRENT_PERIOD_END }]
+		},
+		...overrides
+	};
+}
+
+function makeSubscriptionEvent(
+	type: 'customer.subscription.updated' | 'customer.subscription.deleted',
+	subscriptionOverrides: Record<string, unknown> = {}
+) {
+	const subscriptionObject = makeSubscriptionObject(subscriptionOverrides);
+	return {
+		id: `evt_test_${type.replace(/\./g, '_')}`,
+		object: 'event',
+		type,
+		created: 1771552254,
+		livemode: false,
+		data: { object: subscriptionObject }
+	};
+}
+
+function makeSubscriptionRequest(
+	type: 'customer.subscription.updated' | 'customer.subscription.deleted',
+	subscriptionOverrides: Record<string, unknown> = {}
+) {
+	const event = makeSubscriptionEvent(type, subscriptionOverrides);
+	return makeRequest({ body: JSON.stringify(event) });
+}
+
+// ---------------------------------------------------------------------------
+// customer.subscription.updated
+// ---------------------------------------------------------------------------
+describe('POST /api/stripe/webhook — customer.subscription.updated', () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		mockGetByHostname.mockResolvedValue(makeTenantRegistry());
+		mockSaveStripeEvent.mockResolvedValue(undefined);
+		mockFindByEmail.mockResolvedValue(makeUser());
+		mockUpdatePlan.mockResolvedValue(undefined);
+		mockUpdateSubscriptionFlags.mockResolvedValue(undefined);
+	});
+
+	it('flags cancel_at_period_end without changing the plan', async () => {
+		const event = makeSubscriptionEvent('customer.subscription.updated', {
+			cancel_at_period_end: true
+		});
+		mockConstructEvent.mockReturnValue(event);
+		const res = await POST(makeSubscriptionRequest('customer.subscription.updated', { cancel_at_period_end: true }));
+
+		expect(res.status).toBe(200);
+		expect(mockUpdateSubscriptionFlags).toHaveBeenCalledWith(TENANT_ID, USER_ID, {
+			subscriptionCancelAtPeriodEnd: true
+		});
+		expect(mockUpdatePlan).not.toHaveBeenCalled();
+	});
+
+	it('flags past_due status without downgrading the plan', async () => {
+		const event = makeSubscriptionEvent('customer.subscription.updated', { status: 'past_due' });
+		mockConstructEvent.mockReturnValue(event);
+		const res = await POST(makeSubscriptionRequest('customer.subscription.updated', { status: 'past_due' }));
+
+		expect(res.status).toBe(200);
+		expect(mockUpdateSubscriptionFlags).toHaveBeenCalledWith(TENANT_ID, USER_ID, {
+			subscriptionStatus: 'past_due'
+		});
+		expect(mockUpdatePlan).not.toHaveBeenCalled();
+	});
+
+	it('downgrades to free and clears flags on unpaid status', async () => {
+		const event = makeSubscriptionEvent('customer.subscription.updated', { status: 'unpaid' });
+		mockConstructEvent.mockReturnValue(event);
+		const res = await POST(makeSubscriptionRequest('customer.subscription.updated', { status: 'unpaid' }));
+
+		expect(res.status).toBe(200);
+		expect(mockUpdatePlan).toHaveBeenCalledWith(TENANT_ID, USER_ID, 'free', null);
+		expect(mockUpdateSubscriptionFlags).toHaveBeenCalledWith(TENANT_ID, USER_ID, {
+			subscriptionCancelAtPeriodEnd: null,
+			subscriptionStatus: null
+		});
+	});
+
+	it('upgrades plan on active renewal when priceId matches', async () => {
+		const event = makeSubscriptionEvent('customer.subscription.updated');
+		mockConstructEvent.mockReturnValue(event);
+		const res = await POST(makeSubscriptionRequest('customer.subscription.updated'));
+
+		expect(res.status).toBe(200);
+		expect(mockUpdatePlan).toHaveBeenCalledWith(
+			TENANT_ID,
+			USER_ID,
+			'pro',
+			CURRENT_PERIOD_END * 1000
+		);
+	});
+
+	it('returns 200 and skips updates when tenantId/email are missing from metadata', async () => {
+		// domain must be present for the route to resolve the tenant; tenantId/email missing → early return in handler
+		const partialMeta = { domain: TENANT_DOMAIN };
+		const event = makeSubscriptionEvent('customer.subscription.updated', { metadata: partialMeta });
+		mockConstructEvent.mockReturnValue(event);
+		const res = await POST(makeSubscriptionRequest('customer.subscription.updated', { metadata: partialMeta }));
+
+		expect(res.status).toBe(200);
+		expect(mockFindByEmail).not.toHaveBeenCalled();
+		expect(mockUpdatePlan).not.toHaveBeenCalled();
+	});
+
+	it('returns 200 when user is not found (safe degradation)', async () => {
+		mockFindByEmail.mockResolvedValue(null);
+		const event = makeSubscriptionEvent('customer.subscription.updated', { cancel_at_period_end: true });
+		mockConstructEvent.mockReturnValue(event);
+		const res = await POST(makeSubscriptionRequest('customer.subscription.updated', { cancel_at_period_end: true }));
+
+		expect(res.status).toBe(200);
+		expect(mockUpdateSubscriptionFlags).not.toHaveBeenCalled();
+	});
+});
+
+// ---------------------------------------------------------------------------
+// customer.subscription.deleted
+// ---------------------------------------------------------------------------
+describe('POST /api/stripe/webhook — customer.subscription.deleted', () => {
+	beforeEach(() => {
+		vi.clearAllMocks();
+		mockGetByHostname.mockResolvedValue(makeTenantRegistry());
+		mockSaveStripeEvent.mockResolvedValue(undefined);
+		mockFindByEmail.mockResolvedValue(makeUser());
+		mockUpdatePlan.mockResolvedValue(undefined);
+		mockUpdateSubscriptionFlags.mockResolvedValue(undefined);
+	});
+
+	it('downgrades user to free and clears subscription flags', async () => {
+		const event = makeSubscriptionEvent('customer.subscription.deleted');
+		mockConstructEvent.mockReturnValue(event);
+		const res = await POST(makeSubscriptionRequest('customer.subscription.deleted'));
+
+		expect(res.status).toBe(200);
+		expect(mockFindByEmail).toHaveBeenCalledWith(TENANT_ID, USER_EMAIL);
+		expect(mockUpdatePlan).toHaveBeenCalledWith(TENANT_ID, USER_ID, 'free', null);
+		expect(mockUpdateSubscriptionFlags).toHaveBeenCalledWith(TENANT_ID, USER_ID, {
+			subscriptionCancelAtPeriodEnd: null,
+			subscriptionStatus: null
+		});
+	});
+
+	it('returns 200 and skips updates when tenantId/email are missing from metadata', async () => {
+		// domain must be present for the route to resolve the tenant; tenantId/email missing → early return in handler
+		const partialMeta = { domain: TENANT_DOMAIN };
+		const event = makeSubscriptionEvent('customer.subscription.deleted', { metadata: partialMeta });
+		mockConstructEvent.mockReturnValue(event);
+		const res = await POST(makeSubscriptionRequest('customer.subscription.deleted', { metadata: partialMeta }));
+
+		expect(res.status).toBe(200);
+		expect(mockFindByEmail).not.toHaveBeenCalled();
+		expect(mockUpdatePlan).not.toHaveBeenCalled();
+	});
+
+	it('returns 200 when user is not found (safe degradation)', async () => {
+		mockFindByEmail.mockResolvedValue(null);
+		const event = makeSubscriptionEvent('customer.subscription.deleted');
+		mockConstructEvent.mockReturnValue(event);
+		const res = await POST(makeSubscriptionRequest('customer.subscription.deleted'));
+
+		expect(res.status).toBe(200);
+		expect(mockUpdatePlan).not.toHaveBeenCalled();
+		expect(mockUpdateSubscriptionFlags).not.toHaveBeenCalled();
 	});
 });

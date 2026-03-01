@@ -56,7 +56,9 @@ describe('SendEmailVerificationUseCase', () => {
 			updateCalendarSlotBooked: vi.fn(),
 			deleteCalendarSlot: vi.fn(),
 			updateTheme: vi.fn(),
-			updatePlan: vi.fn()
+			updatePlan: vi.fn(),
+			upsertCalendarSlots: vi.fn(),
+			updateSubscriptionFlags: vi.fn()
 		};
 
 		emailVerificationService = {

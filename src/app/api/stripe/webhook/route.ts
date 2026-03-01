@@ -75,6 +75,10 @@ export async function POST(req: NextRequest) {
 				);
 				break;
 
+			case 'customer.subscription.deleted':
+				await handleSubscriptionDeleted(event.data.object as Stripe.Subscription);
+				break;
+
 			case 'invoice.payment_succeeded':
 				await handleInvoicePaymentSucceeded(
 					stripe,
@@ -132,7 +136,7 @@ async function handleCheckoutCompleted(
 
 	if (!currentPeriodEnd) return;
 
-	await updateUserPlan(tenantId, email, 'pro', currentPeriodEnd * 1000);
+	await updateUserPlan(tenantId, email, 'pro', currentPeriodEnd * 1000, subscriptionId);
 }
 
 // ---------------------------------------------------------------------------
@@ -147,6 +151,46 @@ async function handleSubscriptionUpdated(
 	const { tenantId, email } = subscription.metadata ?? {};
 	if (!tenantId || !email) return; // metadata not yet set (handled in checkout.session.completed)
 
+	const user = await container.userRepo.findByEmail(tenantId, email);
+	if (!user) {
+		console.warn(`[stripe-webhook] No user found — tenantId: ${tenantId}, email: ${email}`);
+		return;
+	}
+
+	// Scheduled cancellation: keep plan active, flag it
+	if (subscription.cancel_at_period_end) {
+		await container.userRepo.updateSubscriptionFlags(tenantId, user.id, {
+			subscriptionCancelAtPeriodEnd: true
+		});
+		console.log(
+			`[stripe-webhook] Subscription scheduled for cancellation — ${email} (tenant ${tenantId})`
+		);
+		return;
+	}
+
+	// Immediate downgrade on unpaid (multiple payment retries exhausted)
+	if (subscription.status === 'unpaid') {
+		await container.userRepo.updatePlan(tenantId, user.id, 'free', null);
+		await container.userRepo.updateSubscriptionFlags(tenantId, user.id, {
+			subscriptionCancelAtPeriodEnd: null,
+			subscriptionStatus: null
+		});
+		console.log(
+			`[stripe-webhook] Subscription unpaid — downgraded ${email} (tenant ${tenantId}) to free`
+		);
+		return;
+	}
+
+	// Flag past_due without downgrading (payment failed, retrying)
+	if (subscription.status === 'past_due') {
+		await container.userRepo.updateSubscriptionFlags(tenantId, user.id, {
+			subscriptionStatus: 'past_due'
+		});
+		console.log(`[stripe-webhook] Subscription past_due — flagged ${email} (tenant ${tenantId})`);
+		return;
+	}
+
+	// Renewal / plan change — existing logic
 	// In Stripe v20, current_period_end is on SubscriptionItem, not Subscription
 	const item = subscription.items.data[0];
 	const priceId = item?.price?.id;
@@ -154,7 +198,35 @@ async function handleSubscriptionUpdated(
 
 	if (priceId !== stripeConfig.proPriceId || !currentPeriodEnd) return;
 
-	await updateUserPlan(tenantId, email, 'pro', currentPeriodEnd * 1000);
+	await container.userRepo.updatePlan(tenantId, user.id, 'pro', currentPeriodEnd * 1000);
+	console.log(
+		`[stripe-webhook] Updated user ${email} (tenant ${tenantId}) → plan: pro, expires: ${new Date(currentPeriodEnd * 1000).toISOString()}`
+	);
+}
+
+// ---------------------------------------------------------------------------
+// customer.subscription.deleted
+// Fired when a subscription is fully cancelled (period ends or immediate cancel).
+// Downgrades the user to free and clears any subscription flags.
+// ---------------------------------------------------------------------------
+async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
+	const { tenantId, email } = subscription.metadata ?? {};
+	if (!tenantId || !email) return;
+
+	const user = await container.userRepo.findByEmail(tenantId, email);
+	if (!user) {
+		console.warn(`[stripe-webhook] No user found — tenantId: ${tenantId}, email: ${email}`);
+		return;
+	}
+
+	await container.userRepo.updatePlan(tenantId, user.id, 'free', null);
+	await container.userRepo.updateSubscriptionFlags(tenantId, user.id, {
+		subscriptionCancelAtPeriodEnd: null,
+		subscriptionStatus: null
+	});
+	console.log(
+		`[stripe-webhook] Subscription deleted — downgraded ${email} (tenant ${tenantId}) to free`
+	);
 }
 
 // ---------------------------------------------------------------------------
@@ -199,7 +271,8 @@ async function updateUserPlan(
 	tenantId: string,
 	email: string,
 	plan: string,
-	planExpiredAt: number
+	planExpiredAt: number,
+	stripeSubscriptionId?: string | null
 ) {
 	const user = await container.userRepo.findByEmail(tenantId, email);
 	if (!user) {
@@ -209,7 +282,7 @@ async function updateUserPlan(
 		return;
 	}
 
-	await container.userRepo.updatePlan(tenantId, user.id, plan, planExpiredAt);
+	await container.userRepo.updatePlan(tenantId, user.id, plan, planExpiredAt, stripeSubscriptionId);
 	console.log(
 		`[stripe-webhook] Updated user ${email} (tenant ${tenantId}) → plan: ${plan}, expires: ${new Date(planExpiredAt).toISOString()}`
 	);

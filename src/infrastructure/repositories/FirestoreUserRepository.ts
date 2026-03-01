@@ -23,6 +23,9 @@ function docToUser(id: string, data: FirebaseFirestore.DocumentData): User {
 		profilePhoto: data.profilePhoto,
 		plan: data.plan,
 		planExpiredAt: toMillis(data.planExpiredAt) ?? null,
+		subscriptionCancelAtPeriodEnd: data.subscriptionCancelAtPeriodEnd === true ? true : undefined,
+		subscriptionStatus: typeof data.subscriptionStatus === 'string' ? data.subscriptionStatus : undefined,
+		stripeSubscriptionId: typeof data.stripeSubscriptionId === 'string' ? data.stripeSubscriptionId : undefined,
 		contactFormEnabled: data.contactFormEnabled ?? false,
 		calendarEnabled: data.calendarEnabled ?? false,
 		theme: data.theme,
@@ -302,7 +305,8 @@ export class FirestoreUserRepository implements IUserRepository {
 		tenantId: string,
 		id: string,
 		plan: string,
-		planExpiredAt?: number | null
+		planExpiredAt?: number | null,
+		stripeSubscriptionId?: string | null
 	): Promise<User | null> {
 		const ref = this.col(tenantId).doc(id);
 		const doc = await ref.get();
@@ -310,6 +314,9 @@ export class FirestoreUserRepository implements IUserRepository {
 		const updateData: Record<string, unknown> = { plan, updatedAt: Date.now() };
 		if (planExpiredAt !== undefined) {
 			updateData.planExpiredAt = planExpiredAt ?? null;
+		}
+		if (stripeSubscriptionId !== undefined) {
+			updateData.stripeSubscriptionId = stripeSubscriptionId ?? null;
 		}
 		await ref.update(updateData);
 		const updated = await ref.get();
@@ -327,6 +334,26 @@ export class FirestoreUserRepository implements IUserRepository {
 			lastVerificationEmailSentAt: Date.now(),
 			updatedAt: Date.now()
 		});
+		const updated = await ref.get();
+		return docToUser(id, updated.data()!);
+	}
+
+	async updateSubscriptionFlags(
+		tenantId: string,
+		id: string,
+		flags: { subscriptionCancelAtPeriodEnd?: boolean | null; subscriptionStatus?: string | null }
+	): Promise<User | null> {
+		const ref = this.col(tenantId).doc(id);
+		const doc = await ref.get();
+		if (!doc.exists) return null;
+		const updateData: Record<string, unknown> = { updatedAt: Date.now() };
+		if (flags.subscriptionCancelAtPeriodEnd !== undefined) {
+			updateData.subscriptionCancelAtPeriodEnd = flags.subscriptionCancelAtPeriodEnd ?? null;
+		}
+		if (flags.subscriptionStatus !== undefined) {
+			updateData.subscriptionStatus = flags.subscriptionStatus ?? null;
+		}
+		await ref.update(updateData);
 		const updated = await ref.get();
 		return docToUser(id, updated.data()!);
 	}
