@@ -26,6 +26,7 @@ import { RequirePermission } from '@/components/Common/RequirePermission';
 import { PERMISSIONS } from '@/permissions/plans';
 import { InfoVerifyEmail } from '@/components/Profile/InfoVerifyEmail';
 import { StripeResultModal } from '@/components/Common/StripeResultModal';
+import { QRDownloadButton } from '@/components/QR/QRDownloadButton';
 
 export default function DashboardPage() {
 	const { logout } = useAuth(authService);
@@ -67,6 +68,9 @@ export default function DashboardPage() {
 		leadsLoading
 	} = useProfile(profileService);
 	const { addLink, updateLink, deleteLink } = useLinks(linkService);
+
+	const domain = window.location.host.replace(/^www\./, '');
+	const url = `${domain}/${profile?.username}`;
 
 	if (!fetched || !profile) {
 		return (
@@ -137,6 +141,19 @@ export default function DashboardPage() {
 						onDelete={deleteLink}
 					/>
 				</section>
+
+				{profile.username && (
+					<RequirePermission
+						plan={profile.plan}
+						permission={PERMISSIONS.THEME_CUSTOMIZE}
+					>
+						<QRDownloadButton
+							theme={profile.theme}
+							username={profile.username}
+							profileUrl={url}
+						/>
+					</RequirePermission>
+				)}
 
 				<RequirePermission
 					plan={profile.plan}
