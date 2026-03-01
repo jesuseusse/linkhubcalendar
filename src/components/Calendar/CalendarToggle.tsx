@@ -7,6 +7,8 @@ interface Props {
 }
 
 export function CalendarToggle({ enabled, onToggle, loading }: Props) {
+	const buttonName = enabled ? 'está activado' : 'está desactivado';
+	const loadingStatus = enabled ? 'desactivando...' : 'activando...';
 	return (
 		<div className='flex items-center justify-between'>
 			<div>
@@ -21,7 +23,7 @@ export function CalendarToggle({ enabled, onToggle, loading }: Props) {
 				disabled={loading}
 				className={`px-3 py-1.5 text-xs font-medium transition-colors ${enabled ? 'bg-success-light text-success' : 'bg-muted text-muted-foreground'}`}
 			>
-				{enabled ? 'Activado' : 'Desactivado'}
+				{loading ? loadingStatus : buttonName}
 			</button>
 		</div>
 	);
