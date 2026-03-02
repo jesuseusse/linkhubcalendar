@@ -11,17 +11,17 @@ const COUNTRY_CODES = [
 	{ code: '+51', label: 'PE +51' },
 	{ code: '+58', label: 'VE +58' },
 	{ code: '+34', label: 'ES +34' },
-	{ code: '+55', label: 'BR +55' },
+	{ code: '+55', label: 'BR +55' }
 ];
 
 interface Props {
 	value: string;
 	onChange: (value: string) => void;
 	required?: boolean;
-	borderStyle?: React.CSSProperties;
+	style?: React.CSSProperties;
 }
 
-export function InputPhone({ value, onChange, required, borderStyle }: Props) {
+export function InputPhone({ value, onChange, required, style }: Props) {
 	const [countryCode, setCountryCode] = useState('+52');
 
 	const phoneNumber = value.startsWith(countryCode)
@@ -42,8 +42,8 @@ export function InputPhone({ value, onChange, required, borderStyle }: Props) {
 			<select
 				value={countryCode}
 				onChange={e => handleCodeChange(e.target.value)}
-				className='px-2 py-2 text-sm border border-border focus:outline-none focus:border-foreground rounded bg-background text-foreground'
-				style={borderStyle}
+				className='bg-transparent px-2 py-2 text-sm border border-border focus:outline-none focus:border-foreground rounded'
+				style={style}
 			>
 				{COUNTRY_CODES.map(c => (
 					<option key={c.code} value={c.code}>
@@ -57,8 +57,8 @@ export function InputPhone({ value, onChange, required, borderStyle }: Props) {
 				value={phoneNumber}
 				onChange={e => handleNumberChange(e.target.value)}
 				required={required}
-				className='flex-1 px-3 py-2 text-sm border border-border focus:outline-none focus:border-foreground rounded'
-				style={borderStyle}
+				className='bg-transparent flex-1 px-3 py-2 text-sm border border-border focus:outline-none focus:border-foreground rounded'
+				style={style}
 			/>
 		</div>
 	);

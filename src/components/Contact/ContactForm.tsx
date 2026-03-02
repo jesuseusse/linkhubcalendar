@@ -25,7 +25,12 @@ export function ContactForm({ username, theme }: Props) {
 		setError(null);
 		setSuccess(false);
 		try {
-			await profileService.submitLead(username, { name, email, phone, message });
+			await profileService.submitLead(username, {
+				name,
+				email,
+				phone,
+				message
+			});
 			setSuccess(true);
 			setName('');
 			setEmail('');
@@ -68,7 +73,7 @@ export function ContactForm({ username, theme }: Props) {
 					onChange={e => setName(e.target.value)}
 					required
 					className='w-full px-3 py-2 text-sm border border-border focus:outline-none focus:border-foreground rounded'
-					style={borderStyle}
+					style={{ ...borderStyle, ...textStyle }}
 				/>
 				<input
 					type='email'
@@ -77,13 +82,13 @@ export function ContactForm({ username, theme }: Props) {
 					onChange={e => setEmail(e.target.value)}
 					required
 					className='w-full px-3 py-2 text-sm border border-border focus:outline-none focus:border-foreground rounded'
-					style={borderStyle}
+					style={{ ...borderStyle, ...textStyle }}
 				/>
 				<InputPhone
 					value={phone}
 					onChange={setPhone}
 					required
-					borderStyle={borderStyle}
+					style={{ ...borderStyle, ...textStyle }}
 				/>
 				<textarea
 					placeholder='Mensaje'
@@ -92,13 +97,13 @@ export function ContactForm({ username, theme }: Props) {
 					required
 					rows={3}
 					className='w-full px-3 py-2 text-sm border border-border focus:outline-none focus:border-foreground rounded resize-none'
-					style={borderStyle}
+					style={{ ...borderStyle, ...textStyle }}
 				/>
 				<button
 					type='submit'
 					disabled={loading || success}
-					className='w-full py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors'
-					style={buttonStyle}
+					className='rounded-md w-full py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors'
+					style={{ ...borderStyle, ...textStyle, ...buttonStyle }}
 				>
 					{loading ? 'Enviando...' : 'Enviar'}
 				</button>
