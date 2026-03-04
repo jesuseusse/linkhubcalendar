@@ -1,7 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { PublicProfileLink } from './PublicProfileLink';
+import { getFirebaseErrorMessage } from '@/utils/firebaseErrors';
 
 interface Props {
 	username?: string;
@@ -19,17 +20,19 @@ export function UsernameForm({
 	const [value, setValue] = useState(username || '');
 	const [error, setError] = useState<string | null>(null);
 	const [success, setSuccess] = useState(false);
+	const [now] = useState<number>(() => Date.now());
+
+	const userNameLabel = username ? 'cambiar' : 'guardar';
 
 	const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
-	const isLocked = usernameChangedAt
-		? Date.now() - usernameChangedAt < THIRTY_DAYS_MS
-		: false;
-	const daysLeft = usernameChangedAt
-		? Math.ceil(
-				(THIRTY_DAYS_MS - (Date.now() - usernameChangedAt)) /
-					(24 * 60 * 60 * 1000)
-			)
-		: 0;
+	const { isLocked, daysLeft } = useMemo(() => {
+		if (!usernameChangedAt) return { isLocked: false, daysLeft: 0 };
+		const elapsed = now - usernameChangedAt;
+		return {
+			isLocked: elapsed < THIRTY_DAYS_MS,
+			daysLeft: Math.ceil((THIRTY_DAYS_MS - elapsed) / (24 * 60 * 60 * 1000))
+		};
+	}, [usernameChangedAt, THIRTY_DAYS_MS, now]);
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -39,9 +42,7 @@ export function UsernameForm({
 			await onSubmit(value);
 			setSuccess(true);
 		} catch (err: unknown) {
-			setError(
-				err instanceof Error ? err.message : 'Error al actualizar el usuario'
-			);
+			setError(getFirebaseErrorMessage(err, 'Error al actualizar el usuario'));
 		}
 	};
 
@@ -64,7 +65,7 @@ export function UsernameForm({
 			)}
 			{isLocked && username && (
 				<p className='text-xs text-warning'>
-					Podrás cambiar tu usuario nuevamente en ${daysLeft} día(s).
+					Podrás cambiar tu usuario nuevamente en {daysLeft} día(s).
 				</p>
 			)}
 			<form onSubmit={handleSubmit} className='flex gap-2'>
@@ -87,7 +88,7 @@ export function UsernameForm({
 					disabled={loading || isLocked}
 					className='px-4 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors rounded'
 				>
-					{loading ? 'Guardando...' : username ? 'Cambiar' : 'Establecer'}
+					{loading ? 'Guardando...' : userNameLabel}
 				</button>
 			</form>
 		</div>

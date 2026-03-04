@@ -6,6 +6,7 @@ import { IProfileService } from '@/interfaces/IProfileService';
 import { LoginDto, SignUpDto } from '@/dtos/auth.dto';
 import { useAuthContext } from '@/context/AuthContext';
 import { isPlanExpired } from '@/utils/planExpiration';
+import { getFirebaseErrorMessage } from '@/utils/firebaseErrors';
 
 export function useAuth(
 	authService: IAuthService,
@@ -35,7 +36,11 @@ export function useAuth(
 					}
 				}
 			} catch (err: unknown) {
-				const message = err instanceof Error ? err.message : 'Login failed';
+				const message = getFirebaseErrorMessage(
+					err,
+					'Error al iniciar sesión.'
+				);
+
 				setError(message);
 				throw err;
 			} finally {
@@ -53,7 +58,10 @@ export function useAuth(
 				const result = await authService.signUp(dto);
 				setAuth(result.token, result.user);
 			} catch (err: unknown) {
-				const message = err instanceof Error ? err.message : 'Sign up failed';
+				const message = getFirebaseErrorMessage(
+					err,
+					'Error al crear la cuenta.'
+				);
 				setError(message);
 				throw err;
 			} finally {
