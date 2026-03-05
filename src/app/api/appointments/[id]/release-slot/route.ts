@@ -1,15 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
-import { checkAuth } from "@/lib/auth/checkAuth";
-import { container } from "@/infrastructure/container";
+import { NextResponse } from "next/server";
 
-export async function PUT(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  try {
-    const { userId, tenantId } = await checkAuth(req);
-    const { id } = await params;
-    const result = await container.releaseAppointmentSlotUseCase.execute(tenantId, userId, id);
-    return NextResponse.json(result);
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Release failed";
-    return NextResponse.json({ error: message }, { status: 400 });
-  }
+// Replaced by PUT /api/appointments/[id]/cancel which cancels the appointment and releases the slot.
+export async function PUT() {
+  return NextResponse.json(
+    { error: "Use PUT /api/appointments/[id]/cancel instead" },
+    { status: 410 }
+  );
 }

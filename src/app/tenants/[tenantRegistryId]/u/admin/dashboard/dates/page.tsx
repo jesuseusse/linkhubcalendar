@@ -1,11 +1,13 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { useAppointments } from '@/hooks/useAppointments';
 import { authService, profileService } from '@/services/serviceFactory';
 import { Header } from '@/components/Common/Header';
 import { AppointmentList } from '@/components/Appointments/AppointmentList';
+import { SlotTakenModal } from '@/components/Appointments/SlotTakenModal';
 
 export default function AppointmentsDashboardPage() {
 	const { logout, user } = useAuth(authService);
@@ -16,10 +18,17 @@ export default function AppointmentsDashboardPage() {
 		totalPages,
 		total,
 		goToPage,
-		deleteAppointment,
+		cancelAppointment,
 		confirmAppointment,
-		releaseAppointmentSlot
+		rescheduleAppointment,
 	} = useAppointments(profileService);
+
+	const [showSlotTakenModal, setShowSlotTakenModal] = useState(false);
+
+	const handleReschedule = async (id: string) => {
+		const { slotTaken } = await rescheduleAppointment(id);
+		if (slotTaken) setShowSlotTakenModal(true);
+	};
 
 	if (!user) {
 		return (
@@ -52,12 +61,15 @@ export default function AppointmentsDashboardPage() {
 						totalPages={totalPages}
 						total={total}
 						onPageChange={goToPage}
-						onDelete={deleteAppointment}
+						onCancel={cancelAppointment}
 						onConfirm={confirmAppointment}
-						onReleaseSlot={releaseAppointmentSlot}
+						onReschedule={handleReschedule}
 					/>
 				</section>
 			</main>
+			{showSlotTakenModal && (
+				<SlotTakenModal onClose={() => setShowSlotTakenModal(false)} />
+			)}
 		</div>
 	);
 }

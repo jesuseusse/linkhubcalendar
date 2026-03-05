@@ -23,9 +23,9 @@ export interface IProfileService {
   getPublicCalendar(username: string): Promise<PublicCalendarDto>;
   bookAppointment(username: string, dto: CreateAppointmentDto): Promise<AppointmentDto>;
   getAppointments(token: string, page: number): Promise<PaginatedAppointmentsDto>;
-  deleteAppointment(token: string, appointmentId: string): Promise<void>;
+  cancelAppointment(token: string, appointmentId: string): Promise<AppointmentDto>;
   confirmAppointment(token: string, appointmentId: string): Promise<AppointmentDto>;
-  releaseAppointmentSlot(token: string, appointmentId: string): Promise<void>;
+  rescheduleAppointment(token: string, appointmentId: string): Promise<AppointmentDto>;
   submitLead(username: string, dto: CreateLeadDto): Promise<LeadDto>;
   getLeads(token: string): Promise<LeadDto[]>;
   getLeadsPaginated(token: string, params: GetLeadsPaginatedParams): Promise<PaginatedLeadsDto>;

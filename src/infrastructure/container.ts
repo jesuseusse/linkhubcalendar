@@ -27,9 +27,9 @@ import {
 import { BookAppointmentUseCase } from '@/application/use-cases/BookAppointmentUseCase';
 import { GetAppointmentsUseCase } from '@/application/use-cases/GetAppointmentsUseCase';
 import {
-  DeleteAppointmentUseCase,
+  CancelAppointmentUseCase,
   ConfirmAppointmentUseCase,
-  ReleaseAppointmentSlotUseCase,
+  RescheduleAppointmentUseCase,
 } from '@/application/use-cases/ManageAppointmentsUseCase';
 import { SubmitLeadUseCase } from '@/application/use-cases/SubmitLeadUseCase';
 import { GetLeadsUseCase } from '@/application/use-cases/GetLeadsUseCase';
@@ -64,9 +64,9 @@ export const container = {
   deleteLinkUseCase: new DeleteLinkUseCase(userRepo),
   bookAppointmentUseCase: new BookAppointmentUseCase(userRepo, appointmentRepo),
   getAppointmentsUseCase: new GetAppointmentsUseCase(appointmentRepo),
-  deleteAppointmentUseCase: new DeleteAppointmentUseCase(appointmentRepo, userRepo),
+  cancelAppointmentUseCase: new CancelAppointmentUseCase(appointmentRepo, userRepo),
   confirmAppointmentUseCase: new ConfirmAppointmentUseCase(appointmentRepo),
-  releaseAppointmentSlotUseCase: new ReleaseAppointmentSlotUseCase(appointmentRepo, userRepo),
+  rescheduleAppointmentUseCase: new RescheduleAppointmentUseCase(appointmentRepo, userRepo),
   submitLeadUseCase: new SubmitLeadUseCase(userRepo, leadRepo),
   getLeadsUseCase: new GetLeadsUseCase(leadRepo),
   updateLeadStatusUseCase: new UpdateLeadStatusUseCase(leadRepo),

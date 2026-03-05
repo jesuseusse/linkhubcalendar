@@ -78,16 +78,16 @@ export class ApiProfileService implements IProfileService {
     return apiClient(`/api/appointments?page=${page}`);
   }
 
-  async deleteAppointment(_token: string, appointmentId: string): Promise<void> {
-    return apiClient(`/api/appointments/${appointmentId}`, { method: 'DELETE' });
+  async cancelAppointment(_token: string, appointmentId: string): Promise<AppointmentDto> {
+    return apiClient(`/api/appointments/${appointmentId}/cancel`, { method: 'PUT' });
   }
 
   async confirmAppointment(_token: string, appointmentId: string): Promise<AppointmentDto> {
     return apiClient(`/api/appointments/${appointmentId}/confirm`, { method: 'PUT' });
   }
 
-  async releaseAppointmentSlot(_token: string, appointmentId: string): Promise<void> {
-    return apiClient(`/api/appointments/${appointmentId}/release-slot`, { method: 'PUT' });
+  async rescheduleAppointment(_token: string, appointmentId: string): Promise<AppointmentDto> {
+    return apiClient(`/api/appointments/${appointmentId}/reschedule`, { method: 'PUT' });
   }
 
   async submitLead(username: string, dto: CreateLeadDto): Promise<LeadDto> {

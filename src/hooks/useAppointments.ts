@@ -39,13 +39,36 @@ export function useAppointments(profileService: IProfileService) {
 		[fetchAppointments]
 	);
 
-	const deleteAppointment = useCallback(
+	const cancelAppointment = useCallback(
 		async (appointmentId: string) => {
 			if (!token) return;
-			await profileService.deleteAppointment(token, appointmentId);
-			await fetchAppointments(page);
+			const updated = await profileService.cancelAppointment(token, appointmentId);
+			setAppointments(prev =>
+				prev.map(a =>
+					a.id === appointmentId ? { ...a, status: updated.status } : a
+				)
+			);
 		},
-		[token, profileService, fetchAppointments, page]
+		[token, profileService]
+	);
+
+	const rescheduleAppointment = useCallback(
+		async (appointmentId: string): Promise<{ slotTaken: boolean }> => {
+			if (!token) return { slotTaken: false };
+			try {
+				const updated = await profileService.rescheduleAppointment(token, appointmentId);
+				setAppointments(prev =>
+					prev.map(a =>
+						a.id === appointmentId ? { ...a, status: updated.status } : a
+					)
+				);
+				return { slotTaken: false };
+			} catch (err) {
+				const isSlotTaken = err instanceof Error && err.message === 'Slot already booked';
+				return { slotTaken: isSlotTaken };
+			}
+		},
+		[token, profileService]
 	);
 
 	const confirmAppointment = useCallback(
@@ -64,15 +87,6 @@ export function useAppointments(profileService: IProfileService) {
 		[token, profileService]
 	);
 
-	const releaseAppointmentSlot = useCallback(
-		async (appointmentId: string) => {
-			if (!token) return;
-			await profileService.releaseAppointmentSlot(token, appointmentId);
-			await fetchAppointments(page);
-		},
-		[token, profileService, fetchAppointments, page]
-	);
-
 	useEffect(() => {
 		fetchAppointments(1);
 	}, [fetchAppointments]);
@@ -84,9 +98,9 @@ export function useAppointments(profileService: IProfileService) {
 		totalPages,
 		total,
 		goToPage,
-		deleteAppointment,
+		cancelAppointment,
 		confirmAppointment,
-		releaseAppointmentSlot,
+		rescheduleAppointment,
 		refetch: () => fetchAppointments(page)
 	};
 }

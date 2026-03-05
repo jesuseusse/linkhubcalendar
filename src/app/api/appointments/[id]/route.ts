@@ -1,15 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
-import { checkAuth } from "@/lib/auth/checkAuth";
-import { container } from "@/infrastructure/container";
+import { NextResponse } from "next/server";
 
-export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  try {
-    const { userId, tenantId } = await checkAuth(req);
-    const { id } = await params;
-    await container.deleteAppointmentUseCase.execute(tenantId, userId, id);
-    return NextResponse.json({ success: true });
-  } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : "Delete failed";
-    return NextResponse.json({ error: message }, { status: 400 });
-  }
+// Permanent deletion of appointments is not supported.
+// Use PUT /api/appointments/[id]/cancel to cancel an appointment and release its slot.
+export async function DELETE() {
+  return NextResponse.json(
+    { error: "Use PUT /api/appointments/[id]/cancel to cancel an appointment" },
+    { status: 405 }
+  );
 }

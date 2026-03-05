@@ -57,7 +57,7 @@ export function InputPhone({ value, onChange, required, style }: Props) {
 				value={phoneNumber}
 				onChange={e => handleNumberChange(e.target.value)}
 				required={required}
-				className='bg-transparent flex-1 px-3 py-2 text-sm border border-border focus:outline-none focus:border-foreground rounded'
+				className='bg-transparent max-w-full flex-1 px-3 py-2 text-sm border border-border focus:outline-none focus:border-foreground rounded'
 				style={style}
 			/>
 		</div>

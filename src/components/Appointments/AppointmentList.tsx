@@ -1,6 +1,9 @@
 'use client';
 
+import { useState } from 'react';
 import { AppointmentDto } from '@/dtos/user.dto';
+
+type Action = 'confirm' | 'cancel' | 'reschedule';
 
 interface Props {
 	appointments: AppointmentDto[];
@@ -9,9 +12,9 @@ interface Props {
 	totalPages: number;
 	total: number;
 	onPageChange: (page: number) => void;
-	onDelete: (id: string) => Promise<void>;
+	onCancel: (id: string) => Promise<void>;
 	onConfirm: (id: string) => Promise<void>;
-	onReleaseSlot: (id: string) => Promise<void>;
+	onReschedule: (id: string) => Promise<void>;
 }
 
 export function AppointmentList({
@@ -21,10 +24,25 @@ export function AppointmentList({
 	totalPages,
 	total,
 	onPageChange,
-	onDelete,
+	onCancel,
 	onConfirm,
-	onReleaseSlot
+	onReschedule
 }: Props) {
+	const [busy, setBusy] = useState<{ id: string; action: Action } | null>(null);
+
+	const handle = async (id: string, action: Action, fn: () => Promise<void>) => {
+		if (busy) return;
+		setBusy({ id, action });
+		try {
+			await fn();
+		} finally {
+			setBusy(null);
+		}
+	};
+
+	const isLoading = (id: string, action: Action) =>
+		busy?.id === id && busy.action === action;
+
 	if (loading) {
 		return (
 			<p className='text-sm text-muted-foreground text-center py-8'>
@@ -42,7 +60,9 @@ export function AppointmentList({
 				>
 					event_busy
 				</span>
-				<p className='text-sm text-muted-foreground'>No hay citas programadas</p>
+				<p className='text-sm text-muted-foreground'>
+					No hay citas programadas
+				</p>
 			</div>
 		);
 	}
@@ -97,34 +117,47 @@ export function AppointmentList({
 										className={`px-2 py-0.5 text-xs font-medium ${
 											a.status === 'confirmed'
 												? 'bg-success-light text-success'
-												: 'bg-warning-light text-warning'
+												: a.status === 'cancelled'
+													? 'bg-error-light text-error'
+													: 'bg-warning-light text-warning'
 										}`}
 									>
-										{a.status === 'confirmed' ? 'Confirmada' : 'Pendiente'}
+										{a.status === 'confirmed'
+											? 'Confirmada'
+											: a.status === 'cancelled'
+												? 'Cancelada'
+												: 'Pendiente'}
 									</span>
 								</td>
 								<td className='py-2 px-2'>
 									<div className='flex gap-1'>
-										{a.status !== 'confirmed' && (
+										{a.status === 'pending' && (
 											<button
-												onClick={() => onConfirm(a.id)}
-												className='text-xs text-success hover:text-success'
+												disabled={busy !== null}
+												onClick={() => handle(a.id, 'confirm', () => onConfirm(a.id))}
+												className='text-xs text-success hover:text-success disabled:opacity-50 disabled:cursor-not-allowed'
 											>
-												Confirmar
+												{isLoading(a.id, 'confirm') ? '...' : 'Confirmar'}
 											</button>
 										)}
-										<button
-											onClick={() => onReleaseSlot(a.id)}
-											className='text-xs text-info hover:text-info'
-										>
-											Liberar horario
-										</button>
-										<button
-											onClick={() => onDelete(a.id)}
-											className='text-xs text-error hover:text-error'
-										>
-											Eliminar
-										</button>
+										{a.status !== 'cancelled' && (
+											<button
+												disabled={busy !== null}
+												onClick={() => handle(a.id, 'cancel', () => onCancel(a.id))}
+												className='text-xs text-error hover:text-error disabled:opacity-50 disabled:cursor-not-allowed'
+											>
+												{isLoading(a.id, 'cancel') ? '...' : 'Cancelar'}
+											</button>
+										)}
+										{a.status === 'cancelled' && (
+											<button
+												disabled={busy !== null}
+												onClick={() => handle(a.id, 'reschedule', () => onReschedule(a.id))}
+												className='text-xs text-primary hover:text-primary/80 disabled:opacity-50 disabled:cursor-not-allowed'
+											>
+												{isLoading(a.id, 'reschedule') ? '...' : 'Reagendar'}
+											</button>
+										)}
 									</div>
 								</td>
 							</tr>
@@ -133,11 +166,13 @@ export function AppointmentList({
 				</table>
 			</div>
 			<div className='flex items-center justify-between mt-4 pt-4 border-t border-border'>
-				<p className='text-xs text-muted-foreground'>Total de registros: {total}</p>
+				<p className='text-xs text-muted-foreground'>
+					Total de registros: {total}
+				</p>
 				<div className='flex items-center gap-2'>
 					<button
 						onClick={() => onPageChange(page - 1)}
-						disabled={page <= 1}
+						disabled={page <= 1 || busy !== null}
 						className='px-3 py-1 text-xs font-medium bg-muted text-muted-foreground hover:bg-muted disabled:opacity-50 transition-colors'
 					>
 						Anterior
@@ -147,7 +182,7 @@ export function AppointmentList({
 					</span>
 					<button
 						onClick={() => onPageChange(page + 1)}
-						disabled={page >= totalPages}
+						disabled={page >= totalPages || busy !== null}
 						className='px-3 py-1 text-xs font-medium bg-muted text-muted-foreground hover:bg-muted disabled:opacity-50 transition-colors'
 					>
 						Siguiente

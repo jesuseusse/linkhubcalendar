@@ -1,4 +1,4 @@
-export type AppointmentStatus = "pending" | "confirmed";
+export type AppointmentStatus = "pending" | "confirmed" | "cancelled";
 
 export interface Appointment {
   id: string;
