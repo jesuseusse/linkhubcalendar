@@ -1,7 +1,7 @@
 import { container } from '@/infrastructure/container';
 import { PublicProfileClient } from './PublicProfileClient';
 import { PublicProfileDto } from '@/dtos/user.dto';
-import { notFound } from 'next/navigation';
+import { notFound, redirect } from 'next/navigation';
 
 export default async function PublicProfilePage({
 	params
@@ -19,17 +19,17 @@ export default async function PublicProfilePage({
 		notFound();
 	}
 
-	profile = await container.getPublicProfileUseCase.execute(
-		tenantConfig.tenantId,
-		username
-	);
+	try {
+		profile = await container.getPublicProfileUseCase.execute(
+			tenantConfig.tenantId,
+			username
+		);
+	} catch {
+		redirect('/');
+	}
 
 	if (!profile) {
-		return (
-			<div className='min-h-screen bg-surface flex items-center justify-center'>
-				<p className='text-sm text-muted-foreground'>Profile not found</p>
-			</div>
-		);
+		redirect('/');
 	}
 
 	return <PublicProfileClient profile={profile} />;

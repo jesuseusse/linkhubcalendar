@@ -54,7 +54,7 @@ function createMockUserRepository(
 describe('GetPublicProfileUseCase', () => {
 	const tenantId = 'tenant-123';
 
-	it('devuelve el perfil público cuando el usuario existe', async () => {
+	it('returns the public profile when the user exists', async () => {
 		const user = createMockUser();
 		const repo = createMockUserRepository(user);
 		const useCase = new GetPublicProfileUseCase(repo);
@@ -79,7 +79,7 @@ describe('GetPublicProfileUseCase', () => {
 		});
 	});
 
-	it('lanza error cuando el usuario no existe', async () => {
+	it('throws when user does not exist', async () => {
 		const repo = createMockUserRepository(null);
 		const useCase = new GetPublicProfileUseCase(repo);
 
@@ -88,7 +88,7 @@ describe('GetPublicProfileUseCase', () => {
 		);
 	});
 
-	it('lanza error cuando el usuario no tiene username', async () => {
+	it('throws when user has no username', async () => {
 		const user = createMockUser({ username: undefined });
 		const repo = createMockUserRepository(user);
 		const useCase = new GetPublicProfileUseCase(repo);
@@ -98,7 +98,7 @@ describe('GetPublicProfileUseCase', () => {
 		);
 	});
 
-	it('incluye theme cuando el usuario tiene tema configurado', async () => {
+	it('includes theme when user has a theme configured', async () => {
 		const theme = {
 			backgroundColor: '#ffffff',
 			textColor: '#000000',
@@ -115,7 +115,7 @@ describe('GetPublicProfileUseCase', () => {
 		expect(profile.theme).toEqual(theme);
 	});
 
-	it('pasa planExpiredAt como unix timestamp', async () => {
+	it('passes planExpiredAt as unix timestamp', async () => {
 		const expTimestamp = new Date('2026-12-31T00:00:00.000Z').getTime();
 		const user = createMockUser({ planExpiredAt: expTimestamp });
 		const repo = createMockUserRepository(user);
@@ -126,7 +126,7 @@ describe('GetPublicProfileUseCase', () => {
 		expect(profile.planExpiredAt).toBe(expTimestamp);
 	});
 
-	it('usa plan "free" por defecto cuando no tiene plan', async () => {
+	it('defaults to "free" plan when plan is not set', async () => {
 		const user = createMockUser({ plan: undefined });
 		const repo = createMockUserRepository(user);
 		const useCase = new GetPublicProfileUseCase(repo);
@@ -136,7 +136,7 @@ describe('GetPublicProfileUseCase', () => {
 		expect(profile.plan).toBe('free');
 	});
 
-	it('incluye calendarSlots cuando calendarEnabled es true', async () => {
+	it('includes calendarSlots when calendarEnabled is true', async () => {
 		const slots = [
 			{
 				id: 'slot-1',
@@ -158,7 +158,7 @@ describe('GetPublicProfileUseCase', () => {
 		expect(profile.calendarSlots).toEqual(slots);
 	});
 
-	it('devuelve calendarSlots vacío cuando calendarEnabled es false', async () => {
+	it('returns empty calendarSlots when calendarEnabled is false', async () => {
 		const slots = [
 			{
 				id: 'slot-1',
@@ -180,7 +180,7 @@ describe('GetPublicProfileUseCase', () => {
 		expect(profile.calendarSlots).toEqual([]);
 	});
 
-	it('incluye profilePhoto cuando existe', async () => {
+	it('includes profilePhoto when it exists', async () => {
 		const user = createMockUser({
 			profilePhoto: 'https://storage.example.com/photo.jpg'
 		});
@@ -205,7 +205,12 @@ describe('PublicProfilePage integration', () => {
 		mockGetByHostname = vi.fn();
 	});
 
+	let mockRedirect: ReturnType<typeof vi.fn>;
+
 	async function loadPage() {
+		mockRedirect = vi.fn(() => {
+			throw new Error('NEXT_REDIRECT');
+		});
 		vi.doMock('@/infrastructure/container', () => ({
 			container: {
 				getPublicProfileUseCase: { execute: mockExecute },
@@ -215,7 +220,8 @@ describe('PublicProfilePage integration', () => {
 		vi.doMock('next/navigation', () => ({
 			notFound: vi.fn(() => {
 				throw new Error('NEXT_NOT_FOUND');
-			})
+			}),
+			redirect: mockRedirect
 		}));
 		vi.doMock('./PublicProfileClient', () => ({
 			PublicProfileClient: ({ profile }: { profile: unknown }) => profile
@@ -225,7 +231,7 @@ describe('PublicProfilePage integration', () => {
 		return mod.default;
 	}
 
-	it('devuelve el perfil cuando el usuario existe', async () => {
+	it('returns profile when user exists', async () => {
 		const expectedProfile = {
 			name: 'Juan Pérez',
 			username: 'juanperez',
@@ -250,23 +256,43 @@ describe('PublicProfilePage integration', () => {
 		expect(result.props.profile).toEqual(expectedProfile);
 	});
 
-	it('muestra "Profile not found" cuando el perfil es null', async () => {
+	it('redirects to / when profile is null', async () => {
 		mockGetByHostname.mockResolvedValue({ tenantId: 'tenant-123' });
 		mockExecute.mockResolvedValue(null);
 
 		const PublicProfilePage = await loadPage();
-		const result = await PublicProfilePage({
-			params: Promise.resolve({
-				username: 'noexiste',
-				tenantRegistryId: 'example.com'
-			})
-		});
 
-		expect(result).toBeTruthy();
-		expect(result.props.children.props.children).toBe('Profile not found');
+		await expect(
+			PublicProfilePage({
+				params: Promise.resolve({
+					username: 'noexiste',
+					tenantRegistryId: 'example.com'
+				})
+			})
+		).rejects.toThrow('NEXT_REDIRECT');
+
+		expect(mockRedirect).toHaveBeenCalledWith('/');
 	});
 
-	it('llama notFound cuando el tenant registry no existe', async () => {
+	it('redirects to / when use case throws an error', async () => {
+		mockGetByHostname.mockResolvedValue({ tenantId: 'tenant-123' });
+		mockExecute.mockRejectedValue(new Error('Profile not found'));
+
+		const PublicProfilePage = await loadPage();
+
+		await expect(
+			PublicProfilePage({
+				params: Promise.resolve({
+					username: 'noexiste',
+					tenantRegistryId: 'example.com'
+				})
+			})
+		).rejects.toThrow('NEXT_REDIRECT');
+
+		expect(mockRedirect).toHaveBeenCalledWith('/');
+	});
+
+	it('calls notFound when tenant registry does not exist', async () => {
 		mockGetByHostname.mockResolvedValue(null);
 
 		const PublicProfilePage = await loadPage();

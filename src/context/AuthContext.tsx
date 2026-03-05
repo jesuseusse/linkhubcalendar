@@ -42,11 +42,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 		tenantReady.then(() => {
 			unsubscribe = onAuthStateChanged(auth, async firebaseUser => {
 				if (firebaseUser) {
-					await firebaseUser.reload();
-					const token = await firebaseUser.getIdToken(true);
 					try {
+						await firebaseUser.reload();
+						const token = await firebaseUser.getIdToken(true);
 						const user = await apiClient('/api/profile');
-
 						setState({
 							token,
 							user: {
@@ -56,7 +55,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 							loading: false
 						});
 					} catch {
-						setState({ token, user: null, loading: false });
+						await signOut(auth).catch(() => {});
+						setState({ token: null, user: null, loading: false });
 					}
 				} else {
 					setState({ token: null, user: null, loading: false });

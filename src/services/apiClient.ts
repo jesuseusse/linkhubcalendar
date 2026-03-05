@@ -2,12 +2,12 @@ import { signOut } from 'firebase/auth';
 import { auth } from '@/lib/firebase/client';
 
 export async function apiClient(path: string, options: RequestInit = {}) {
-	const token = await auth.currentUser?.getIdToken();
 	const headers: Record<string, string> = {
 		...(options.headers as Record<string, string>)
 	};
-	if (token) {
-		headers['Authorization'] = `Bearer ${token}`;
+	if (!headers['Authorization']) {
+		const token = await auth.currentUser?.getIdToken();
+		if (token) headers['Authorization'] = `Bearer ${token}`;
 	}
 	if (!(options.body instanceof FormData)) {
 		headers['Content-Type'] = 'application/json';

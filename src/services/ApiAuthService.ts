@@ -20,6 +20,7 @@ export class ApiAuthService implements IAuthService {
     const token = await cred.user.getIdToken();
     const user = await apiClient('/api/auth/signup', {
       method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
       body: JSON.stringify({ name: dto.name, email: dto.email, referredBy: dto.referredBy }),
     });
     return { token, user };
