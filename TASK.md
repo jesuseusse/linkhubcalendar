@@ -9,6 +9,7 @@
 - [x] update tenant collection to accept stripe config, proPriceId
 - [x] crate collections tenant/{tenant}
 - [x] reserved names in username
+- [ ] list calendar appointments for xs screens, do not scroll horizontal
 
 ---
 

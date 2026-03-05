@@ -1,4 +1,4 @@
-"use client";
+'use client';
 
 import { useState, type ReactNode } from 'react';
 import { hasPermission, type Plan, type Permission } from '@/permissions/plans';
@@ -17,9 +17,12 @@ export function RequirePermission({ plan, permission, children }: Props) {
 	return (
 		<div className='relative'>
 			{!allowed && (
-				<div className='absolute inset-0 bg-surface/60 z-10 flex items-center justify-center cursor-pointer' onClick={() => setShowModal(true)}>
+				<div
+					className='absolute inset-0 bg-surface/60 z-10 flex items-center justify-center cursor-pointer'
+					onClick={() => setShowModal(true)}
+				>
 					<span className='text-xs font-medium text-muted-foreground bg-surface border border-border px-3 py-1.5'>
-						Upgrade
+						suscríbete para acceder a esta función
 					</span>
 				</div>
 			)}
