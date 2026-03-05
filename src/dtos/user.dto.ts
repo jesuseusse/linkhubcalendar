@@ -37,6 +37,7 @@ export interface UserDto {
 	subscriptionCancelAtPeriodEnd?: boolean;
 	subscriptionStatus?: string;
 	stripeSubscriptionId?: string;
+	referredBy?: string;
 	contactFormEnabled: boolean;
 	calendarEnabled: boolean;
 	theme?: ThemeDto;

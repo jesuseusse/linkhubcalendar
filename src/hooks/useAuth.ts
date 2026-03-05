@@ -57,6 +57,7 @@ export function useAuth(
 			try {
 				const result = await authService.signUp(dto);
 				setAuth(result.token, result.user);
+				localStorage.removeItem('referral_code');
 			} catch (err: unknown) {
 				const message = getFirebaseErrorMessage(
 					err,

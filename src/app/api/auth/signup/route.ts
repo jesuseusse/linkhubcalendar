@@ -6,10 +6,11 @@ export async function POST(req: NextRequest) {
   try {
     const { userId, tenantId } = await checkAuth(req);
     const body = await req.json();
-    const { name, email } = body;
+    const { name, email, referredBy } = body;
     await userRepo.createWithId(tenantId, userId, {
       name: name || "",
       email: email || "",
+      ...(referredBy ? { referredBy } : {}),
       links: [],
       calendarSlots: [],
       calendarEnabled: false,

@@ -37,6 +37,7 @@ export interface User {
   subscriptionCancelAtPeriodEnd?: boolean;
   subscriptionStatus?: string;
   stripeSubscriptionId?: string;
+  referredBy?: string;
   contactFormEnabled: boolean;
   calendarEnabled: boolean;
   theme?: ThemeConfig;

@@ -6,6 +6,7 @@ import { LoginForm } from '@/components/Auth/LoginForm';
 import { SignUpForm } from '@/components/Auth/SignUpForm';
 import { useAuth } from '@/hooks/useAuth';
 import { authService, profileService } from '@/services/serviceFactory';
+import ReferralCapture from '@/components/Common/ReferralCapture';
 
 export default function AuthPage() {
 	const searchParams = useSearchParams();
@@ -25,6 +26,7 @@ export default function AuthPage() {
 
 	return (
 		<div className='min-h-screen bg-background flex items-center justify-center p-4'>
+			<ReferralCapture />
 			<div className='w-full max-w-sm'>
 				<h1 className='text-2xl font-bold text-foreground text-center mb-6'>
 					Bienvenido

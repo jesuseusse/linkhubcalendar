@@ -1,6 +1,8 @@
 import Image from 'next/image';
 import Link from 'next/link';
+import { Suspense } from 'react';
 import HeroSection from './DefaultHero';
+import ReferralCapture from '@/components/Common/ReferralCapture';
 
 type Testimonial = {
 	name: string;
@@ -96,6 +98,10 @@ const StarRating = ({ rating }: { rating: number }) => (
 export default function DefaultLandingPage() {
 	return (
 		<div className='bg-background text-foreground'>
+			<Suspense fallback={null}>
+				<ReferralCapture />
+			</Suspense>
+
 			{/* HERO */}
 			<HeroSection />
 

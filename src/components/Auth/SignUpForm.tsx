@@ -25,7 +25,8 @@ export function SignUpForm({
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 		if (!acceptedPrivacy) return;
-		await onSubmit({ name, email, password });
+		const referredBy = localStorage.getItem('referral_code') ?? undefined;
+		await onSubmit({ name, email, password, referredBy });
 	};
 
 	return (
