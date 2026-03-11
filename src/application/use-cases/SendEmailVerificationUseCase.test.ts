@@ -14,7 +14,6 @@ function makeUser(overrides: Partial<User> = {}): User {
 		contactFormEnabled: false,
 		calendarEnabled: false,
 		links: [],
-		calendarSlots: [],
 		plan: 'free',
 		createdAt: Date.now(),
 		updatedAt: Date.now(),
@@ -52,12 +51,8 @@ describe('SendEmailVerificationUseCase', () => {
 			addLink: vi.fn(),
 			updateLink: vi.fn(),
 			deleteLink: vi.fn(),
-			addCalendarSlot: vi.fn(),
-			updateCalendarSlotBooked: vi.fn(),
-			deleteCalendarSlot: vi.fn(),
 			updateTheme: vi.fn(),
 			updatePlan: vi.fn(),
-			upsertCalendarSlots: vi.fn(),
 			updateSubscriptionFlags: vi.fn()
 		};
 

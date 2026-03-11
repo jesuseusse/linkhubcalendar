@@ -1,4 +1,4 @@
-import { User, Link, CalendarSlot, ThemeConfig } from "../entities/User";
+import { User, Link, ThemeConfig } from "../entities/User";
 
 export interface IUserRepository {
   create(tenantId: string, user: Omit<User, "id" | "createdAt" | "updatedAt">): Promise<User>;
@@ -13,10 +13,6 @@ export interface IUserRepository {
   addLink(tenantId: string, userId: string, link: Omit<Link, "id">): Promise<User | null>;
   updateLink(tenantId: string, userId: string, linkId: string, link: Omit<Link, "id">): Promise<User | null>;
   deleteLink(tenantId: string, userId: string, linkId: string): Promise<User | null>;
-  addCalendarSlot(tenantId: string, userId: string, slot: Omit<CalendarSlot, "id">): Promise<User | null>;
-  upsertCalendarSlots(tenantId: string, userId: string, slots: Omit<CalendarSlot, "id">[]): Promise<User | null>;
-  updateCalendarSlotBooked(tenantId: string, userId: string, slotId: string, booked: boolean): Promise<User | null>;
-  deleteCalendarSlot(tenantId: string, userId: string, slotId: string): Promise<User | null>;
   updateTheme(tenantId: string, id: string, theme: ThemeConfig): Promise<User | null>;
   updatePlan(tenantId: string, id: string, plan: string, planExpiredAt?: number | null, stripeSubscriptionId?: string | null): Promise<User | null>;
   updateSubscriptionFlags(tenantId: string, id: string, flags: { subscriptionCancelAtPeriodEnd?: boolean | null; subscriptionStatus?: string | null }): Promise<User | null>;

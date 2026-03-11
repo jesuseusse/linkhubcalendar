@@ -1,14 +1,22 @@
 import { IUserRepository } from "../../domain/interfaces/IUserRepository";
+import { IAppointmentRepository } from "../../domain/interfaces/IAppointmentRepository";
 import { PublicProfileDto } from "../../domain/dtos/AuthDtos";
 
 export class GetPublicProfileUseCase {
-  constructor(private userRepository: IUserRepository) {}
+  constructor(
+    private userRepository: IUserRepository,
+    private appointmentRepository: IAppointmentRepository
+  ) {}
 
   async execute(tenantId: string, username: string): Promise<PublicProfileDto> {
     const user = await this.userRepository.findByUsername(tenantId, username);
     if (!user || !user.username) {
       throw new Error("Profile not found");
     }
+
+    const availableSlots = user.calendarEnabled
+      ? await this.appointmentRepository.findAvailableSlots(tenantId, user.id)
+      : [];
 
     return {
       name: user.name,
@@ -33,15 +41,13 @@ export class GetPublicProfileUseCase {
         title: link.title,
         url: link.url,
       })),
-      calendarSlots: user.calendarEnabled
-        ? (user.calendarSlots || []).map((slot) => ({
-            id: slot.id,
-            date: slot.date,
-            startTime: slot.startTime,
-            endTime: slot.endTime,
-            booked: slot.booked ?? false,
-          }))
-        : [],
+      calendarSlots: availableSlots.map((slot) => ({
+        id: slot.id,
+        date: slot.date,
+        startTime: slot.startTime,
+        endTime: slot.endTime,
+        booked: slot.booked ?? false,
+      })),
     };
   }
 }

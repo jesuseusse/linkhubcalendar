@@ -42,7 +42,6 @@ export interface User {
   calendarEnabled: boolean;
   theme?: ThemeConfig;
   links: Link[];
-  calendarSlots: CalendarSlot[];
   lastVerificationEmailSentAt?: number;
   createdAt: number;
   updatedAt: number;

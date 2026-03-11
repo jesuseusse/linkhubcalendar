@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from 'vitest';
 import { GetPublicProfileUseCase } from '@/application/use-cases/GetPublicProfileUseCase';
 import { IUserRepository } from '@/domain/interfaces/IUserRepository';
+import { IAppointmentRepository } from '@/domain/interfaces/IAppointmentRepository';
 import { User } from '@/domain/entities/User';
 
 function createMockUser(overrides: Partial<User> = {}): User {
@@ -15,7 +16,6 @@ function createMockUser(overrides: Partial<User> = {}): User {
 			{ id: 'link-1', title: 'Mi sitio', url: 'https://example.com' },
 			{ id: 'link-2', title: 'GitHub', url: 'https://github.com/juanperez' }
 		],
-		calendarSlots: [],
 		plan: 'pro',
 		planExpiredAt: null,
 		createdAt: Date.now(),
@@ -40,14 +40,32 @@ function createMockUserRepository(
 		addLink: vi.fn(),
 		updateLink: vi.fn(),
 		deleteLink: vi.fn(),
-		addCalendarSlot: vi.fn(),
-		updateCalendarSlotBooked: vi.fn(),
-		deleteCalendarSlot: vi.fn(),
 		updateTheme: vi.fn(),
 		updatePlan: vi.fn(),
-		upsertCalendarSlots: vi.fn(),
 		updateSubscriptionFlags: vi.fn(),
 		updateLastVerificationEmailSentAt: vi.fn()
+	};
+}
+
+function createMockAppointmentRepository(
+	availableSlots: { id: string; date: string; startTime: string; endTime: string; booked: boolean }[] = []
+): IAppointmentRepository {
+	return {
+		create: vi.fn(),
+		findById: vi.fn(),
+		findByUserId: vi.fn(),
+		findBySlotId: vi.fn(),
+		deleteById: vi.fn(),
+		updateStatus: vi.fn(),
+		addSlot: vi.fn(),
+		upsertSlots: vi.fn(),
+		findAllSlots: vi.fn(),
+		findAvailableSlots: vi.fn().mockResolvedValue(availableSlots),
+		findSlotById: vi.fn(),
+		deleteSlot: vi.fn(),
+		bookSlotAtomically: vi.fn(),
+		releaseSlotAtomically: vi.fn(),
+		markSlotBookedAtomically: vi.fn(),
 	};
 }
 
@@ -56,12 +74,13 @@ describe('GetPublicProfileUseCase', () => {
 
 	it('returns the public profile when the user exists', async () => {
 		const user = createMockUser();
-		const repo = createMockUserRepository(user);
-		const useCase = new GetPublicProfileUseCase(repo);
+		const userRepo = createMockUserRepository(user);
+		const appointmentRepo = createMockAppointmentRepository();
+		const useCase = new GetPublicProfileUseCase(userRepo, appointmentRepo);
 
 		const profile = await useCase.execute(tenantId, 'juanperez');
 
-		expect(repo.findByUsername).toHaveBeenCalledWith(tenantId, 'juanperez');
+		expect(userRepo.findByUsername).toHaveBeenCalledWith(tenantId, 'juanperez');
 		expect(profile).toEqual({
 			name: 'Juan Pérez',
 			username: 'juanperez',
@@ -80,8 +99,9 @@ describe('GetPublicProfileUseCase', () => {
 	});
 
 	it('throws when user does not exist', async () => {
-		const repo = createMockUserRepository(null);
-		const useCase = new GetPublicProfileUseCase(repo);
+		const userRepo = createMockUserRepository(null);
+		const appointmentRepo = createMockAppointmentRepository();
+		const useCase = new GetPublicProfileUseCase(userRepo, appointmentRepo);
 
 		await expect(useCase.execute(tenantId, 'noexiste')).rejects.toThrow(
 			'Profile not found'
@@ -90,8 +110,9 @@ describe('GetPublicProfileUseCase', () => {
 
 	it('throws when user has no username', async () => {
 		const user = createMockUser({ username: undefined });
-		const repo = createMockUserRepository(user);
-		const useCase = new GetPublicProfileUseCase(repo);
+		const userRepo = createMockUserRepository(user);
+		const appointmentRepo = createMockAppointmentRepository();
+		const useCase = new GetPublicProfileUseCase(userRepo, appointmentRepo);
 
 		await expect(useCase.execute(tenantId, 'test')).rejects.toThrow(
 			'Profile not found'
@@ -107,8 +128,9 @@ describe('GetPublicProfileUseCase', () => {
 			accentColor: '#4f46e5'
 		};
 		const user = createMockUser({ theme });
-		const repo = createMockUserRepository(user);
-		const useCase = new GetPublicProfileUseCase(repo);
+		const userRepo = createMockUserRepository(user);
+		const appointmentRepo = createMockAppointmentRepository();
+		const useCase = new GetPublicProfileUseCase(userRepo, appointmentRepo);
 
 		const profile = await useCase.execute(tenantId, 'juanperez');
 
@@ -118,8 +140,9 @@ describe('GetPublicProfileUseCase', () => {
 	it('passes planExpiredAt as unix timestamp', async () => {
 		const expTimestamp = new Date('2026-12-31T00:00:00.000Z').getTime();
 		const user = createMockUser({ planExpiredAt: expTimestamp });
-		const repo = createMockUserRepository(user);
-		const useCase = new GetPublicProfileUseCase(repo);
+		const userRepo = createMockUserRepository(user);
+		const appointmentRepo = createMockAppointmentRepository();
+		const useCase = new GetPublicProfileUseCase(userRepo, appointmentRepo);
 
 		const profile = await useCase.execute(tenantId, 'juanperez');
 
@@ -128,8 +151,9 @@ describe('GetPublicProfileUseCase', () => {
 
 	it('defaults to "free" plan when plan is not set', async () => {
 		const user = createMockUser({ plan: undefined });
-		const repo = createMockUserRepository(user);
-		const useCase = new GetPublicProfileUseCase(repo);
+		const userRepo = createMockUserRepository(user);
+		const appointmentRepo = createMockAppointmentRepository();
+		const useCase = new GetPublicProfileUseCase(userRepo, appointmentRepo);
 
 		const profile = await useCase.execute(tenantId, 'juanperez');
 
@@ -146,46 +170,36 @@ describe('GetPublicProfileUseCase', () => {
 				booked: false
 			}
 		];
-		const user = createMockUser({
-			calendarEnabled: true,
-			calendarSlots: slots
-		});
-		const repo = createMockUserRepository(user);
-		const useCase = new GetPublicProfileUseCase(repo);
+		const user = createMockUser({ calendarEnabled: true });
+		const userRepo = createMockUserRepository(user);
+		const appointmentRepo = createMockAppointmentRepository(slots);
+		const useCase = new GetPublicProfileUseCase(userRepo, appointmentRepo);
 
 		const profile = await useCase.execute(tenantId, 'juanperez');
 
 		expect(profile.calendarSlots).toEqual(slots);
+		expect(appointmentRepo.findAvailableSlots).toHaveBeenCalledWith(tenantId, user.id);
 	});
 
 	it('returns empty calendarSlots when calendarEnabled is false', async () => {
-		const slots = [
-			{
-				id: 'slot-1',
-				date: '2026-03-01',
-				startTime: '10:00',
-				endTime: '11:00',
-				booked: false
-			}
-		];
-		const user = createMockUser({
-			calendarEnabled: false,
-			calendarSlots: slots
-		});
-		const repo = createMockUserRepository(user);
-		const useCase = new GetPublicProfileUseCase(repo);
+		const user = createMockUser({ calendarEnabled: false });
+		const userRepo = createMockUserRepository(user);
+		const appointmentRepo = createMockAppointmentRepository();
+		const useCase = new GetPublicProfileUseCase(userRepo, appointmentRepo);
 
 		const profile = await useCase.execute(tenantId, 'juanperez');
 
 		expect(profile.calendarSlots).toEqual([]);
+		expect(appointmentRepo.findAvailableSlots).not.toHaveBeenCalled();
 	});
 
 	it('includes profilePhoto when it exists', async () => {
 		const user = createMockUser({
 			profilePhoto: 'https://storage.example.com/photo.jpg'
 		});
-		const repo = createMockUserRepository(user);
-		const useCase = new GetPublicProfileUseCase(repo);
+		const userRepo = createMockUserRepository(user);
+		const appointmentRepo = createMockAppointmentRepository();
+		const useCase = new GetPublicProfileUseCase(userRepo, appointmentRepo);
 
 		const profile = await useCase.execute(tenantId, 'juanperez');
 

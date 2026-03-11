@@ -1,7 +1,7 @@
-import { User } from "../../domain/entities/User";
-import { UserResponseDto } from "../../domain/dtos/AuthDtos";
+import { User, CalendarSlot } from "../../domain/entities/User";
+import { UserResponseDto, CalendarSlotResponseDto } from "../../domain/dtos/AuthDtos";
 
-export function toUserResponse(user: User): UserResponseDto {
+export function toUserResponse(user: User, slots: CalendarSlot[] = []): UserResponseDto {
   return {
     id: user.id,
     name: user.name,
@@ -32,7 +32,7 @@ export function toUserResponse(user: User): UserResponseDto {
       title: link.title,
       url: link.url,
     })),
-    calendarSlots: (user.calendarSlots || []).map((slot) => ({
+    calendarSlots: slots.map((slot): CalendarSlotResponseDto => ({
       id: slot.id,
       date: slot.date,
       startTime: slot.startTime,

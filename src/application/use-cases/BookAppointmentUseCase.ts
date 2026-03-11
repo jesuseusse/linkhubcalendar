@@ -21,29 +21,19 @@ export class BookAppointmentUseCase {
       throw new Error("Calendar is not enabled");
     }
 
-    const slot = (user.calendarSlots || []).find((s) => s.id === dto.slotId);
-    if (!slot) {
-      throw new Error("Time slot not found");
-    }
-
-    if (slot.booked) {
-      throw new Error("Time slot is already booked");
-    }
-
-    const appointment = await this.appointmentRepository.create(tenantId, {
-      userId: user.id,
-      slotId: dto.slotId,
-      date: slot.date,
-      startTime: slot.startTime,
-      endTime: slot.endTime,
-      name: dto.name,
-      email: dto.email,
-      phone: dto.phone,
-      reason: dto.reason,
-      status: "pending",
-    });
-
-    await this.userRepository.updateCalendarSlotBooked(tenantId, user.id, dto.slotId, true);
+    // Atomic transaction: reads slot, validates !booked, creates appointment, marks slot booked
+    const appointment = await this.appointmentRepository.bookSlotAtomically(
+      tenantId,
+      user.id,
+      dto.slotId,
+      {
+        userId: user.id,
+        name: dto.name,
+        email: dto.email,
+        phone: dto.phone,
+        reason: dto.reason,
+      }
+    );
 
     return {
       id: appointment.id,

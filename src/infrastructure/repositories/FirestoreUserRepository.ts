@@ -1,6 +1,6 @@
 import { adminDb } from '@/lib/firebase/admin';
 import { IUserRepository } from '@/domain/interfaces/IUserRepository';
-import { User, Link, CalendarSlot, ThemeConfig } from '@/domain/entities/User';
+import { User, Link, ThemeConfig } from '@/domain/entities/User';
 
 const COLLECTION = 'users';
 
@@ -30,7 +30,6 @@ function docToUser(id: string, data: FirebaseFirestore.DocumentData): User {
 		calendarEnabled: data.calendarEnabled ?? false,
 		theme: data.theme,
 		links: data.links ?? [],
-		calendarSlots: data.calendarSlots ?? [],
 		lastVerificationEmailSentAt: toMillis(data.lastVerificationEmailSentAt),
 		createdAt: toMillis(data.createdAt) ?? Date.now(),
 		updatedAt: toMillis(data.updatedAt) ?? Date.now()
@@ -203,87 +202,6 @@ export class FirestoreUserRepository implements IUserRepository {
 		const data = doc.data()!;
 		const links = (data.links ?? []).filter((l: Link) => l.id !== linkId);
 		await ref.update({ links, updatedAt: Date.now() });
-		const updated = await ref.get();
-		return docToUser(userId, updated.data()!);
-	}
-
-	async addCalendarSlot(
-		tenantId: string,
-		userId: string,
-		slot: Omit<CalendarSlot, 'id'>
-	): Promise<User | null> {
-		const ref = this.col(tenantId).doc(userId);
-		const doc = await ref.get();
-		if (!doc.exists) return null;
-		const data = doc.data()!;
-		const calendarSlots = data.calendarSlots ?? [];
-		const newSlot = { ...slot, id: crypto.randomUUID() };
-		calendarSlots.push(newSlot);
-		await ref.update({ calendarSlots, updatedAt: Date.now() });
-		const updated = await ref.get();
-		return docToUser(userId, updated.data()!);
-	}
-
-	async upsertCalendarSlots(
-		tenantId: string,
-		userId: string,
-		slots: Omit<CalendarSlot, 'id'>[]
-	): Promise<User | null> {
-		const ref = this.col(tenantId).doc(userId);
-		const doc = await ref.get();
-		if (!doc.exists) return null;
-		const data = doc.data()!;
-		let calendarSlots: CalendarSlot[] = data.calendarSlots ?? [];
-
-		for (const slot of slots) {
-			const existing = calendarSlots.find(
-				(s) => s.date === slot.date && s.startTime === slot.startTime && s.endTime === slot.endTime
-			);
-			if (existing) {
-				calendarSlots = calendarSlots.map((s) =>
-					s.id === existing.id ? { ...s, ...slot } : s
-				);
-			} else {
-				calendarSlots.push({ ...slot, id: crypto.randomUUID() });
-			}
-		}
-
-		await ref.update({ calendarSlots, updatedAt: Date.now() });
-		const updated = await ref.get();
-		return docToUser(userId, updated.data()!);
-	}
-
-	async updateCalendarSlotBooked(
-		tenantId: string,
-		userId: string,
-		slotId: string,
-		booked: boolean
-	): Promise<User | null> {
-		const ref = this.col(tenantId).doc(userId);
-		const doc = await ref.get();
-		if (!doc.exists) return null;
-		const data = doc.data()!;
-		const calendarSlots = (data.calendarSlots ?? []).map((s: CalendarSlot) =>
-			s.id === slotId ? { ...s, booked } : s
-		);
-		await ref.update({ calendarSlots, updatedAt: Date.now() });
-		const updated = await ref.get();
-		return docToUser(userId, updated.data()!);
-	}
-
-	async deleteCalendarSlot(
-		tenantId: string,
-		userId: string,
-		slotId: string
-	): Promise<User | null> {
-		const ref = this.col(tenantId).doc(userId);
-		const doc = await ref.get();
-		if (!doc.exists) return null;
-		const data = doc.data()!;
-		const calendarSlots = (data.calendarSlots ?? []).filter(
-			(s: CalendarSlot) => s.id !== slotId
-		);
-		await ref.update({ calendarSlots, updatedAt: Date.now() });
 		const updated = await ref.get();
 		return docToUser(userId, updated.data()!);
 	}

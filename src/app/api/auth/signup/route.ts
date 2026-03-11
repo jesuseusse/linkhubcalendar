@@ -12,7 +12,6 @@ export async function POST(req: NextRequest) {
       email: email || "",
       ...(referredBy ? { referredBy } : {}),
       links: [],
-      calendarSlots: [],
       calendarEnabled: false,
       contactFormEnabled: false,
       plan: "free",

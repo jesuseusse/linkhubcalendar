@@ -1,12 +1,24 @@
-import { IUserRepository } from "../../domain/interfaces/IUserRepository";
 import { IAppointmentRepository } from "../../domain/interfaces/IAppointmentRepository";
 import { AppointmentResponseDto } from "../../domain/dtos/AuthDtos";
 
+function toDto(appt: import("../../domain/entities/Appointment").Appointment): AppointmentResponseDto {
+  return {
+    id: appt.id,
+    slotId: appt.slotId,
+    date: appt.date,
+    startTime: appt.startTime,
+    endTime: appt.endTime,
+    name: appt.name,
+    email: appt.email,
+    phone: appt.phone,
+    reason: appt.reason,
+    status: appt.status,
+    createdAt: appt.createdAt,
+  };
+}
+
 export class CancelAppointmentUseCase {
-  constructor(
-    private appointmentRepository: IAppointmentRepository,
-    private userRepository: IUserRepository
-  ) {}
+  constructor(private appointmentRepository: IAppointmentRepository) {}
 
   async execute(tenantId: string, userId: string, appointmentId: string): Promise<AppointmentResponseDto> {
     const appointment = await this.appointmentRepository.findById(tenantId, userId, appointmentId);
@@ -20,36 +32,24 @@ export class CancelAppointmentUseCase {
       throw new Error("Appointment is already cancelled");
     }
 
-    // Release the slot so it can be booked by another person
-    await this.userRepository.updateCalendarSlotBooked(tenantId, userId, appointment.slotId, false);
+    // Atomically: update appointment status to cancelled + release slot
+    await this.appointmentRepository.releaseSlotAtomically(
+      tenantId,
+      userId,
+      appointmentId,
+      appointment.slotId
+    );
 
-    // Mark as cancelled (record is kept for audit purposes)
-    const updated = await this.appointmentRepository.updateStatus(tenantId, userId, appointmentId, "cancelled");
+    const updated = await this.appointmentRepository.findById(tenantId, userId, appointmentId);
     if (!updated) {
       throw new Error("Failed to cancel appointment");
     }
-
-    return {
-      id: updated.id,
-      slotId: updated.slotId,
-      date: updated.date,
-      startTime: updated.startTime,
-      endTime: updated.endTime,
-      name: updated.name,
-      email: updated.email,
-      phone: updated.phone,
-      reason: updated.reason,
-      status: updated.status,
-      createdAt: updated.createdAt,
-    };
+    return toDto(updated);
   }
 }
 
 export class RescheduleAppointmentUseCase {
-  constructor(
-    private appointmentRepository: IAppointmentRepository,
-    private userRepository: IUserRepository
-  ) {}
+  constructor(private appointmentRepository: IAppointmentRepository) {}
 
   async execute(tenantId: string, userId: string, appointmentId: string): Promise<AppointmentResponseDto> {
     const appointment = await this.appointmentRepository.findById(tenantId, userId, appointmentId);
@@ -63,38 +63,20 @@ export class RescheduleAppointmentUseCase {
       throw new Error("Only cancelled appointments can be rescheduled");
     }
 
-    const user = await this.userRepository.findById(tenantId, userId);
-    if (!user) {
-      throw new Error("User not found");
-    }
+    // Atomically: mark slot booked + set appointment status to pending
+    // markSlotBookedAtomically validates slot exists and is not already booked
+    await this.appointmentRepository.markSlotBookedAtomically(
+      tenantId,
+      userId,
+      appointmentId,
+      appointment.slotId
+    );
 
-    const slot = (user.calendarSlots ?? []).find(s => s.id === appointment.slotId);
-    if (!slot) {
-      throw new Error("Slot not found");
-    }
-    if (slot.booked) {
-      throw new Error("Slot already booked");
-    }
-
-    await this.userRepository.updateCalendarSlotBooked(tenantId, userId, appointment.slotId, true);
-    const updated = await this.appointmentRepository.updateStatus(tenantId, userId, appointmentId, "pending");
+    const updated = await this.appointmentRepository.findById(tenantId, userId, appointmentId);
     if (!updated) {
       throw new Error("Failed to reschedule appointment");
     }
-
-    return {
-      id: updated.id,
-      slotId: updated.slotId,
-      date: updated.date,
-      startTime: updated.startTime,
-      endTime: updated.endTime,
-      name: updated.name,
-      email: updated.email,
-      phone: updated.phone,
-      reason: updated.reason,
-      status: updated.status,
-      createdAt: updated.createdAt,
-    };
+    return toDto(updated);
   }
 }
 
@@ -117,19 +99,6 @@ export class ConfirmAppointmentUseCase {
     if (!updated) {
       throw new Error("Failed to confirm appointment");
     }
-
-    return {
-      id: updated.id,
-      slotId: updated.slotId,
-      date: updated.date,
-      startTime: updated.startTime,
-      endTime: updated.endTime,
-      name: updated.name,
-      email: updated.email,
-      phone: updated.phone,
-      reason: updated.reason,
-      status: updated.status,
-      createdAt: updated.createdAt,
-    };
+    return toDto(updated);
   }
 }

@@ -1,9 +1,13 @@
 import { IUserRepository } from "../../domain/interfaces/IUserRepository";
+import { IAppointmentRepository } from "../../domain/interfaces/IAppointmentRepository";
 import { UserResponseDto, CreateCalendarSlotDto } from "../../domain/dtos/AuthDtos";
 import { toUserResponse } from "./mappers";
 
 export class AddCalendarSlotUseCase {
-  constructor(private userRepository: IUserRepository) {}
+  constructor(
+    private userRepository: IUserRepository,
+    private appointmentRepository: IAppointmentRepository
+  ) {}
 
   async execute(tenantId: string, userId: string, dto: CreateCalendarSlotDto): Promise<UserResponseDto> {
     if (!dto.date || !dto.startTime || !dto.endTime) {
@@ -14,23 +18,28 @@ export class AddCalendarSlotUseCase {
       throw new Error("Start time must be before end time");
     }
 
-    const user = await this.userRepository.addCalendarSlot(tenantId, userId, {
+    const user = await this.userRepository.findById(tenantId, userId);
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    await this.appointmentRepository.addSlot(tenantId, userId, {
       date: dto.date,
       startTime: dto.startTime,
       endTime: dto.endTime,
       booked: false,
     });
 
-    if (!user) {
-      throw new Error("User not found");
-    }
-
-    return toUserResponse(user);
+    const slots = await this.appointmentRepository.findAllSlots(tenantId, userId);
+    return toUserResponse(user, slots);
   }
 }
 
 export class UpsertCalendarSlotsUseCase {
-  constructor(private userRepository: IUserRepository) {}
+  constructor(
+    private userRepository: IUserRepository,
+    private appointmentRepository: IAppointmentRepository
+  ) {}
 
   async execute(tenantId: string, userId: string, dtos: CreateCalendarSlotDto[]): Promise<UserResponseDto> {
     for (const dto of dtos) {
@@ -42,46 +51,71 @@ export class UpsertCalendarSlotsUseCase {
       }
     }
 
-    const user = await this.userRepository.upsertCalendarSlots(
+    const user = await this.userRepository.findById(tenantId, userId);
+    if (!user) {
+      throw new Error("User not found");
+    }
+
+    await this.appointmentRepository.upsertSlots(
       tenantId,
       userId,
       dtos.map((dto) => ({ date: dto.date, startTime: dto.startTime, endTime: dto.endTime, booked: false }))
     );
 
-    if (!user) {
-      throw new Error("User not found");
-    }
-
-    return toUserResponse(user);
+    const slots = await this.appointmentRepository.findAllSlots(tenantId, userId);
+    return toUserResponse(user, slots);
   }
 }
 
 export class DeleteCalendarSlotUseCase {
-  constructor(private userRepository: IUserRepository) {}
+  constructor(
+    private userRepository: IUserRepository,
+    private appointmentRepository: IAppointmentRepository
+  ) {}
 
   async execute(tenantId: string, userId: string, slotId: string): Promise<UserResponseDto> {
-    const user = await this.userRepository.deleteCalendarSlot(tenantId, userId, slotId);
+    const user = await this.userRepository.findById(tenantId, userId);
     if (!user) {
       throw new Error("User not found");
     }
-    return toUserResponse(user);
+
+    await this.appointmentRepository.deleteSlot(tenantId, userId, slotId);
+    const slots = await this.appointmentRepository.findAllSlots(tenantId, userId);
+    return toUserResponse(user, slots);
   }
 }
 
 export class ReleaseCalendarSlotUseCase {
-  constructor(private userRepository: IUserRepository) {}
+  constructor(
+    private userRepository: IUserRepository,
+    private appointmentRepository: IAppointmentRepository
+  ) {}
 
   async execute(tenantId: string, userId: string, slotId: string): Promise<UserResponseDto> {
-    const user = await this.userRepository.updateCalendarSlotBooked(tenantId, userId, slotId, false);
+    const user = await this.userRepository.findById(tenantId, userId);
     if (!user) {
       throw new Error("User or slot not found");
     }
-    return toUserResponse(user);
+
+    const slot = await this.appointmentRepository.findSlotById(tenantId, userId, slotId);
+    if (!slot) {
+      throw new Error("User or slot not found");
+    }
+
+    await this.appointmentRepository.upsertSlots(tenantId, userId, [
+      { date: slot.date, startTime: slot.startTime, endTime: slot.endTime, booked: false },
+    ]);
+
+    const slots = await this.appointmentRepository.findAllSlots(tenantId, userId);
+    return toUserResponse(user, slots);
   }
 }
 
 export class GetPublicCalendarUseCase {
-  constructor(private userRepository: IUserRepository) {}
+  constructor(
+    private userRepository: IUserRepository,
+    private appointmentRepository: IAppointmentRepository
+  ) {}
 
   async execute(tenantId: string, username: string) {
     const user = await this.userRepository.findByUsername(tenantId, username);
@@ -93,7 +127,7 @@ export class GetPublicCalendarUseCase {
       throw new Error("Calendar is not available");
     }
 
-    const availableSlots = (user.calendarSlots || []).filter((slot) => !slot.booked);
+    const availableSlots = await this.appointmentRepository.findAvailableSlots(tenantId, user.id);
 
     return {
       name: user.name,
