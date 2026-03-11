@@ -24,7 +24,6 @@ import {
   UpdateLinkUseCase,
   DeleteLinkUseCase,
 } from '@/application/use-cases/ManageLinksUseCase';
-import { BookAppointmentUseCase } from '@/application/use-cases/BookAppointmentUseCase';
 import { GetAppointmentsUseCase } from '@/application/use-cases/GetAppointmentsUseCase';
 import {
   CancelAppointmentUseCase,
@@ -38,7 +37,7 @@ import { GetLeadsPaginatedUseCase } from '@/application/use-cases/GetLeadsPagina
 
 export const tenantRegistryRepo = new FirestoreTenantRegistryRepository();
 export const userRepo = new FirestoreUserRepository();
-const appointmentRepo = new FirestoreAppointmentRepository();
+export const appointmentRepo = new FirestoreAppointmentRepository();
 const leadRepo = new FirestoreLeadRepository();
 const storageService = new FirebaseStorageService();
 export const emailVerificationService = new FirebaseEmailVerificationService();
@@ -62,7 +61,6 @@ export const container = {
   addLinkUseCase: new AddLinkUseCase(userRepo),
   updateLinkUseCase: new UpdateLinkUseCase(userRepo),
   deleteLinkUseCase: new DeleteLinkUseCase(userRepo),
-  bookAppointmentUseCase: new BookAppointmentUseCase(userRepo, appointmentRepo),
   getAppointmentsUseCase: new GetAppointmentsUseCase(appointmentRepo),
   cancelAppointmentUseCase: new CancelAppointmentUseCase(appointmentRepo),
   confirmAppointmentUseCase: new ConfirmAppointmentUseCase(appointmentRepo),

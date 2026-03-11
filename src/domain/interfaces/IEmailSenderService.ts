@@ -4,11 +4,29 @@ export interface EmailSenderConfig {
   fromEmail: string;
 }
 
+export interface AppointmentNotificationData {
+  name: string;
+  email: string;
+  phone: string;
+  reason: string;
+  date: string;
+  startTime: string;
+  endTime: string;
+}
+
 export interface IEmailSenderService {
   sendVerificationEmail(
     config: EmailSenderConfig,
     to: string,
     verificationLink: string,
+    companyName?: string
+  ): Promise<void>;
+
+  sendAppointmentNotification(
+    config: EmailSenderConfig,
+    ownerEmail: string,
+    appointment: AppointmentNotificationData,
+    dashboardUrl: string,
     companyName?: string
   ): Promise<void>;
 }

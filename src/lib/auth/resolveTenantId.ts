@@ -83,6 +83,11 @@ async function resolveTenantRegistryByHost(
 	};
 }
 
+export async function resolveTenantRegistry(req: NextRequest): Promise<TenantRegistryData> {
+	const host = req.headers.get('host') || '';
+	return resolveTenantRegistryByHost(host);
+}
+
 /**
  * Returns both tenantId and theme from a single Firestore read.
  * Used in the root layout to avoid double reads.

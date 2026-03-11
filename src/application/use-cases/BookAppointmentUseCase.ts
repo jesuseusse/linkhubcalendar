@@ -1,11 +1,16 @@
 import { IUserRepository } from "../../domain/interfaces/IUserRepository";
 import { IAppointmentRepository } from "../../domain/interfaces/IAppointmentRepository";
+import { IEmailSenderService, EmailSenderConfig } from "../../domain/interfaces/IEmailSenderService";
 import { AppointmentResponseDto, CreateAppointmentDto } from "../../domain/dtos/AuthDtos";
 
 export class BookAppointmentUseCase {
   constructor(
     private userRepository: IUserRepository,
-    private appointmentRepository: IAppointmentRepository
+    private appointmentRepository: IAppointmentRepository,
+    private emailSenderService?: IEmailSenderService | null,
+    private emailConfig?: EmailSenderConfig | null,
+    private dashboardUrl?: string | null,
+    private companyName?: string | null
   ) {}
 
   async execute(
@@ -34,6 +39,24 @@ export class BookAppointmentUseCase {
         reason: dto.reason,
       }
     );
+
+    if (this.emailSenderService && this.emailConfig && this.dashboardUrl && user.email) {
+      this.emailSenderService.sendAppointmentNotification(
+        this.emailConfig,
+        user.email,
+        {
+          name: appointment.name,
+          email: appointment.email,
+          phone: appointment.phone,
+          reason: appointment.reason,
+          date: appointment.date,
+          startTime: appointment.startTime,
+          endTime: appointment.endTime,
+        },
+        this.dashboardUrl,
+        this.companyName ?? undefined
+      ).catch(() => {});
+    }
 
     return {
       id: appointment.id,
