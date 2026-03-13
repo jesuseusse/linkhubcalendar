@@ -31,6 +31,7 @@ function docToUser(id: string, data: FirebaseFirestore.DocumentData): User {
 		theme: data.theme,
 		links: data.links ?? [],
 		lastVerificationEmailSentAt: toMillis(data.lastVerificationEmailSentAt),
+		referredBy: typeof data.referredBy === 'string' ? data.referredBy : undefined,
 		createdAt: toMillis(data.createdAt) ?? Date.now(),
 		updatedAt: toMillis(data.updatedAt) ?? Date.now()
 	};

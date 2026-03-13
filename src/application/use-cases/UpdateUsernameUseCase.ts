@@ -4,7 +4,7 @@ import { toUserResponse } from './mappers';
 import { RESERVED_USERNAMES } from '../../lib/constants';
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
-const USERNAME_REGEX = /^[a-zA-Z0-9_-]{3,30}$/;
+const USERNAME_REGEX = /^[a-z0-9_-]{3,30}$/;
 
 export class UpdateUsernameUseCase {
 	constructor(private userRepository: IUserRepository) {}

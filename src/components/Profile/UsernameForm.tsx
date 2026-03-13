@@ -74,10 +74,10 @@ export function UsernameForm({
 					<input
 						type='text'
 						value={value}
-						onChange={e => setValue(e.target.value)}
+						onChange={e => setValue(e.target.value.toLowerCase())}
 						placeholder='usuario'
-						pattern='[a-zA-Z0-9_-]{3,30}'
-						title='Solo letras, números, guiones y guiones bajos (3-30 caracteres)'
+						pattern='[a-z0-9_-]{3,30}'
+						title='Solo letras minúsculas, números, guiones y guiones bajos (3-30 caracteres)'
 						required
 						disabled={isLocked}
 						className='px-1 py-2 text-sm focus:outline-none'

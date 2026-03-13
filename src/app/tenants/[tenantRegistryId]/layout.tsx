@@ -1,8 +1,10 @@
 // app/_tenants/[tenantId]/layout.tsx
 import { notFound } from 'next/navigation';
+import { Suspense } from 'react';
 import type { Metadata } from 'next';
 import { tenantThemeToCssVars } from '@/lib/tenant/tenantTheme';
 import { container } from '@/infrastructure/container';
+import ReferralCapture from '@/components/Common/ReferralCapture';
 
 export async function generateMetadata({
 	params
@@ -88,7 +90,9 @@ export default async function TenantLayout({
 
 	return (
 		<section style={themeStyle}>
-			{/* Aquí podries posar un Navbar específic del tenant */}
+			<Suspense fallback={null}>
+				<ReferralCapture />
+			</Suspense>
 			{children}
 		</section>
 	);
