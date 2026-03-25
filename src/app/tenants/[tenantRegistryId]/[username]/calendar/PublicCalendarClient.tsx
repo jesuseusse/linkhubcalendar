@@ -12,6 +12,13 @@ import { getProfilePhotoUrl } from '@/utils/profilePhoto';
 import 'react-day-picker/style.css';
 import Image from 'next/image';
 
+function formatTime(hhmm: string): string {
+	const [h, m] = hhmm.split(':').map(Number);
+	const period = h >= 12 ? 'pm' : 'am';
+	const hour = h % 12 || 12;
+	return `${hour}:${m.toString().padStart(2, '0')} ${period}`;
+}
+
 function storageKey(username: string) {
 	return `linkhub_appointment_${username}`;
 }
@@ -170,7 +177,7 @@ export function PublicCalendarClient({
 														}
 														className={`cursor-pointer w-full text-left px-4 py-3 text-sm border transition-colors ${selectedSlot?.id === slot.id ? 'bg-success-light border-success text-success' : 'bg-success-light border-success text-success hover:bg-success-light'}`}
 													>
-														{slot.startTime} - {slot.endTime}
+														{formatTime(slot.startTime)} - {formatTime(slot.endTime)}
 													</button>
 													{selectedSlot?.id === slot.id && (
 														<AppointmentBookingForm

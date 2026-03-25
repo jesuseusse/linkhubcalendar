@@ -96,6 +96,19 @@ const StarRating = ({ rating }: { rating: number }) => (
 export default function DefaultLandingPage() {
 	return (
 		<div className='bg-background text-foreground'>
+			{/* HEADER */}
+			<header className='sticky top-0 z-50 bg-background border-b border-border'>
+				<div className='max-w-7xl mx-auto px-6 h-16 flex items-center justify-between'>
+					<span className='font-bold text-lg text-primary'> </span>
+					<Link
+						href='u/admin/login'
+						className='bg-primary text-primaryForeground px-5 py-2 rounded-xl font-semibold text-sm hover:scale-105 transition'
+					>
+						Inicia sesión
+					</Link>
+				</div>
+			</header>
+
 			{/* HERO */}
 			<UnMujerBonitaHeroSection />
 

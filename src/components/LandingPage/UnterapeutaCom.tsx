@@ -61,27 +61,27 @@ const comparison = [
 	{
 		item: 'Diseño profesional',
 		traditional: '$5,000 – $12,000 MXN',
-		tuterapeuta: 'Incluido'
+		unterapeuta: 'Incluido'
 	},
 	{
 		item: 'Programación',
 		traditional: '$8,000 – $20,000 MXN',
-		tuterapeuta: 'Incluido'
+		unterapeuta: 'Incluido'
 	},
 	{
 		item: 'Base de datos',
 		traditional: '$3,000+ MXN',
-		tuterapeuta: 'Incluido'
+		unterapeuta: 'Incluido'
 	},
 	{
 		item: 'Sistema de citas',
 		traditional: '$5,000+ MXN',
-		tuterapeuta: 'Incluido'
+		unterapeuta: 'Incluido'
 	},
 	{
 		item: 'Mantenimiento',
 		traditional: 'Mensual',
-		tuterapeuta: 'Incluido'
+		unterapeuta: 'Incluido'
 	}
 ];
 
@@ -96,6 +96,19 @@ const StarRating = ({ rating }: { rating: number }) => (
 export default function DefaultLandingPage() {
 	return (
 		<div className='bg-background text-foreground'>
+			{/* HEADER */}
+			<header className='sticky top-0 z-50 bg-background border-b border-border'>
+				<div className='max-w-7xl mx-auto px-6 h-16 flex items-center justify-between'>
+					<span className='font-bold text-lg text-primary'> </span>
+					<Link
+						href='u/admin/login'
+						className='bg-primary text-primaryForeground px-5 py-2 rounded-xl font-semibold text-sm hover:scale-105 transition'
+					>
+						Inicia sesión
+					</Link>
+				</div>
+			</header>
+
 			{/* HERO */}
 			<HeroSection />
 
@@ -178,7 +191,7 @@ export default function DefaultLandingPage() {
 			{/* PRICE COMPARISON */}
 			<section className='max-w-6xl mx-auto px-6 py-20'>
 				<h2 className='text-3xl font-bold text-center mb-12'>
-					Crear una página tradicional vs tuterapeuta
+					Crear una página tradicional vs unterapeuta
 				</h2>
 
 				<div className='overflow-x-auto'>
@@ -187,7 +200,7 @@ export default function DefaultLandingPage() {
 							<tr>
 								<th className='p-4 text-left'>Servicio</th>
 								<th className='p-4'>Con programador</th>
-								<th className='p-4 text-primary'>tuterapeuta</th>
+								<th className='p-4 text-primary'>unterapeuta</th>
 							</tr>
 						</thead>
 						<tbody>
@@ -198,7 +211,7 @@ export default function DefaultLandingPage() {
 										{row.traditional}
 									</td>
 									<td className='p-4 text-center font-semibold text-success'>
-										{row.tuterapeuta}
+										{row.unterapeuta}
 									</td>
 								</tr>
 							))}
@@ -256,7 +269,7 @@ export default function DefaultLandingPage() {
 
 			{/* FOOTER */}
 			<footer className='border-t border-border py-8 text-center text-sm text-mutedForeground'>
-				© {new Date().getFullYear()} tuterapeuta.com.mx — Todos los derechos
+				© {new Date().getFullYear()} unterapeuta.com.mx — Todos los derechos
 				reservados
 			</footer>
 		</div>
