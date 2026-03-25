@@ -266,6 +266,25 @@ export default function DashboardPage() {
 						</Link>
 					</div>
 				</section>
+
+				<section className='bg-surface border border-border p-6 rounded'>
+					<div className='flex items-center justify-between'>
+						<div>
+							<h2 className='text-sm font-semibold text-foreground uppercase tracking-wider'>
+								SEO
+							</h2>
+							<p className='text-xs text-muted-foreground mt-1'>
+								Título, descripción y metadatos de búsqueda del sitio.
+							</p>
+						</div>
+						<Link
+							href='/u/admin/dashboard/seo'
+							className='text-sm text-muted-foreground hover:text-foreground underline transition-colors'
+						>
+							Configurar SEO
+						</Link>
+					</div>
+				</section>
 			</main>
 		</div>
 	);

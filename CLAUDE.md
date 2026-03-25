@@ -206,6 +206,34 @@ Multiple email backends selectable per tenant:
 
 `emailSenderFactory.ts` selects the implementation based on tenant config (`resendApiKey` / `sesConfig` in `ITenantRegistryData`). Templates live in `emailTemplates.ts`.
 
+## SEO Configuration
+
+Per-tenant SEO is managed through `tenant_registry/{hostname}.seoConfig` (`ISeoConfig`).
+
+**Fields in `SeoConfig`:**
+- `siteName`, `title`, `description`, `keywords` — standard meta tags
+- `ogImage`, `favicon` — auto-populated from `tenant_registry.logoUrl` on save
+- `canonicalUrl` — auto-populated from `tenant_registry.domain` on save
+- `locale` — hardcoded to `'es_ES'` server-side
+- `twitterHandle` — Twitter/X card handle
+- `organizationType` — hardcoded to `'Organization'` server-side (used in JSON-LD)
+
+**Admin UI:** `src/components/SEO/SeoConfigClient.tsx` + `dashboard/seo/page.tsx`
+- Clients only edit content fields: `siteName`, `title`, `description`, `keywords`, `twitterHandle`
+- Technical fields (`canonicalUrl`, `favicon`, `ogImage`, `locale`, `organizationType`) are injected server-side on every PUT
+
+**API route:** `GET/PUT /api/profile/seo/route.ts`
+- GET: returns current `seoConfig` from the tenant registry
+- PUT: merges client body with server-derived defaults before calling `updateByHostname`
+
+**Public page metadata:** `generateMetadata` is exported from both:
+- `src/app/tenants/[tenantRegistryId]/[username]/page.tsx` — profile page
+- `src/app/tenants/[tenantRegistryId]/[username]/calendar/page.tsx` — calendar page
+
+**JSON-LD injection:** `src/app/tenants/[tenantRegistryId]/layout.tsx` generates a `<script type="application/ld+json">` block server-side from `seoConfig` and injects it into every public tenant page.
+
+**Header navigation:** Gear dropdown in `Header.tsx` has an "SEO" link above "Cuenta" that navigates to `.../dashboard/seo`.
+
 ## Language
 
 UI strings are in **Spanish**. There is no i18n library — all text is hardcoded.

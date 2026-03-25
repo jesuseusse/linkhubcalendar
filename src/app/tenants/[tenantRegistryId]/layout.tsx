@@ -88,8 +88,37 @@ export default async function TenantLayout({
 		themeStyle = tenantThemeToCssVars(tenantConfig.theme);
 	}
 
+	const seo = tenantConfig.seoConfig;
+	const jsonLd = seo
+		? {
+				'@context': 'https://schema.org',
+				'@type': seo.organizationType || 'Organization',
+				name: seo.siteName || tenantConfig.companyName || undefined,
+				url: seo.canonicalUrl
+					? `https://${seo.canonicalUrl}`
+					: tenantConfig.domain
+						? `https://${tenantConfig.domain}`
+						: undefined,
+				description: seo.description || undefined,
+				logo: seo.ogImage || seo.favicon || tenantConfig.logoUrl || undefined,
+				...(seo.twitterHandle
+					? {
+							sameAs: [
+								`https://twitter.com/${seo.twitterHandle.replace(/^@/, '')}`
+							]
+						}
+					: {})
+			}
+		: null;
+
 	return (
 		<section style={themeStyle}>
+			{jsonLd && (
+				<script
+					type='application/ld+json'
+					dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+				/>
+			)}
 			<Suspense fallback={null}>
 				<ReferralCapture />
 			</Suspense>

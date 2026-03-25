@@ -21,6 +21,10 @@ export function Header({ userName, isAuthenticated, onLogout }: Props) {
 		dashboardIndex !== -1
 			? pathname.slice(0, dashboardIndex + '/dashboard'.length) + '/billing'
 			: '/billing';
+	const seoPath =
+		dashboardIndex !== -1
+			? pathname.slice(0, dashboardIndex + '/dashboard'.length) + '/seo'
+			: '/seo';
 
 	useEffect(() => {
 		function handleClickOutside(e: MouseEvent) {
@@ -66,6 +70,13 @@ export function Header({ userName, isAuthenticated, onLogout }: Props) {
 
 							{open && (
 								<div className='absolute right-0 mt-2 w-44 rounded-md shadow-lg bg-surface border border-border z-50 overflow-hidden'>
+									<Link
+										href={seoPath}
+										onClick={() => setOpen(false)}
+										className='flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors'
+									>
+										SEO
+									</Link>
 									<Link
 										href={billingPath}
 										onClick={() => setOpen(false)}
