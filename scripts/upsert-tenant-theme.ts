@@ -90,6 +90,7 @@ const VALID_THEME_KEYS = new Set([
 	'success', 'successLight', 'warning', 'warningLight',
 	'error', 'errorLight', 'info', 'infoLight',
 	'radiusSm', 'radiusMd', 'radiusLg', 'radiusXl',
+	'fontHeading', 'fontBody',
 ]);
 
 function validateConfig(cfg: TenantConfig): string[] {

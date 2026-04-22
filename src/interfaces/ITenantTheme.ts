@@ -25,4 +25,6 @@ export interface TenantTheme {
 	radiusMd?: string;
 	radiusLg?: string;
 	radiusXl?: string;
+	fontHeading?: string;
+	fontBody?: string;
 }

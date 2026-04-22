@@ -41,10 +41,15 @@
 	--radius-lg: 0.75rem;
 	--radius-xl: 1rem;
 	--radius-full: 9999px;
+
+	/* Typography */
+	--font-heading: 'Inter';
+	--font-body: 'Inter';
 }
 
 body {
 	font-family:
+		var(--font-body),
 		'Inter',
 		-apple-system,
 		BlinkMacSystemFont,
@@ -53,6 +58,46 @@ body {
 		sans-serif;
 	color: var(--color-foreground);
 	background-color: var(--color-background);
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+	font-family:
+		var(--font-heading),
+		var(--font-body),
+		'Inter',
+		sans-serif;
+}
+
+/* =========================
+   FORM ELEMENTS
+========================= */
+
+input,
+textarea,
+select {
+	background-color: var(--color-surface);
+	color: var(--color-foreground);
+	border-color: var(--color-border);
+}
+
+input::placeholder,
+textarea::placeholder {
+	color: var(--color-muted-foreground);
+}
+
+input:-webkit-autofill,
+input:-webkit-autofill:hover,
+input:-webkit-autofill:focus,
+textarea:-webkit-autofill,
+select:-webkit-autofill {
+	-webkit-text-fill-color: var(--color-foreground);
+	-webkit-box-shadow: 0 0 0px 1000px var(--color-surface) inset;
+	transition: background-color 5000s ease-in-out 0s;
 }
 
 /* =========================

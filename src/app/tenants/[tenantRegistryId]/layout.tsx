@@ -64,6 +64,13 @@ export async function generateMetadata({
 	};
 }
 
+function buildGoogleFontsUrl(fonts: string[]): string {
+	const families = fonts
+		.map(f => `family=${f.replace(/ /g, '+')}:wght@400;600;700;900`)
+		.join('&');
+	return `https://fonts.googleapis.com/css2?${families}&display=swap`;
+}
+
 export default async function TenantLayout({
 	children,
 	params
@@ -82,10 +89,18 @@ export default async function TenantLayout({
 	}
 
 	let themeStyle: Record<string, string> = {};
+	let customFonts: string[] = [];
 
 	if (tenantConfig.theme) {
 		// 2. Transformem el tema de Firebase a CSS Variables
 		themeStyle = tenantThemeToCssVars(tenantConfig.theme);
+
+		// Collect custom fonts that differ from the global Inter default
+		const { fontHeading, fontBody } = tenantConfig.theme;
+		const candidates = [fontHeading, fontBody].filter(
+			(f): f is string => !!f && f !== 'Inter'
+		);
+		customFonts = [...new Set(candidates)];
 	}
 
 	const seo = tenantConfig.seoConfig;
@@ -113,6 +128,20 @@ export default async function TenantLayout({
 
 	return (
 		<section style={themeStyle}>
+			{customFonts.length > 0 && (
+				<>
+					<link rel='preconnect' href='https://fonts.googleapis.com' />
+					<link
+						rel='preconnect'
+						href='https://fonts.gstatic.com'
+						crossOrigin='anonymous'
+					/>
+					<link
+						rel='stylesheet'
+						href={buildGoogleFontsUrl(customFonts)}
+					/>
+				</>
+			)}
 			{jsonLd && (
 				<script
 					type='application/ld+json'

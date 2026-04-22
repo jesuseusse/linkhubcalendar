@@ -9,5 +9,8 @@ export const LANDING_COMPONENTS: Record<string, any> = {
 	),
 	'unamujerbonita.com': dynamic(
 		() => import('@/components/LandingPage/UnaMujerBonitaCom')
+	),
+	'unabarberia.com': dynamic(
+		() => import('@/components/LandingPage/UnaBarberiaCom')
 	)
 };

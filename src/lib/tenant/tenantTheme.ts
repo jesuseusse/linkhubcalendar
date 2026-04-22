@@ -32,7 +32,9 @@ const THEME_TO_CSS_VAR: Record<keyof TenantTheme, string> = {
 	radiusSm: '--radius-sm',
 	radiusMd: '--radius-md',
 	radiusLg: '--radius-lg',
-	radiusXl: '--radius-xl'
+	radiusXl: '--radius-xl',
+	fontHeading: '--font-heading',
+	fontBody: '--font-body'
 };
 
 /**
