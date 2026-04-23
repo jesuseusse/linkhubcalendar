@@ -101,6 +101,41 @@ select:-webkit-autofill {
 }
 
 /* =========================
+   REACT-DAY-PICKER OVERRIDES
+   Use :root .rdp-root for higher specificity than the library's own .rdp-root
+========================= */
+
+:root .rdp-root { 
+	--rdp-accent-color: var(--color-primary);
+	--rdp-accent-background-color: color-mix(
+		in srgb,
+		var(--color-primary) 12%,
+		var(--color-background)
+	);
+	--rdp-today-color: var(--color-primary);
+	--rdp-range_start-color: var(--color-primary-foreground);
+	--rdp-range_end-color: var(--color-primary-foreground);
+	--rdp-range_start-date-background-color: var(--color-primary);
+	--rdp-range_end-date-background-color: var(--color-primary);
+	--rdp-range_middle-background-color: color-mix(
+		in srgb,
+		var(--color-primary) 12%,
+		var(--color-background)
+	);
+	--rdp-range_middle-color: var(--color-foreground);
+}
+
+/* Ensure day text and buttons inherit tenant foreground/background */
+:root .rdp-root .rdp-day_button {
+	color: var(--color-foreground);
+}
+
+:root .rdp-root .rdp-caption_label,
+:root .rdp-root .rdp-weekday {
+	color: var(--color-foreground);
+}
+
+/* =========================
    ANIMATIONS
 ========================= */
 

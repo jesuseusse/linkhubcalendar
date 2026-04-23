@@ -9,7 +9,6 @@ import { profileService } from '@/services/serviceFactory';
 import { AppointmentBookingForm } from '@/components/Appointments/AppointmentBookingForm';
 import { ReservedAppointmentModal, StoredAppointment } from '@/components/Calendar/ReservedAppointmentModal';
 import { getProfilePhotoUrl } from '@/utils/profilePhoto';
-import 'react-day-picker/style.css';
 import Image from 'next/image';
 
 function formatTime(hhmm: string): string {
@@ -155,7 +154,10 @@ export function PublicCalendarClient({
 								onSelect={setSelectedDate}
 								modifiers={{ hasSlots: highlightedDays }}
 								modifiersStyles={{
-									hasSlots: { backgroundColor: '#d1fae5', borderRadius: '100%' }
+									hasSlots: {
+										backgroundColor: 'color-mix(in srgb, var(--color-primary) 15%, var(--color-background))',
+										borderRadius: '100%'
+									}
 								}}
 							/>
 						</div>
@@ -175,7 +177,7 @@ export function PublicCalendarClient({
 																selectedSlot?.id === slot.id ? null : slot
 															)
 														}
-														className={`cursor-pointer w-full text-left px-4 py-3 text-sm border transition-colors ${selectedSlot?.id === slot.id ? 'bg-success-light border-success text-success' : 'bg-success-light border-success text-success hover:bg-success-light'}`}
+														className={`cursor-pointer w-full text-left px-4 py-3 text-sm border transition-colors ${selectedSlot?.id === slot.id ? 'bg-primary text-primary-foreground border-primary' : 'bg-surface border-border text-foreground hover:border-primary'}`}
 													>
 														{formatTime(slot.startTime)} - {formatTime(slot.endTime)}
 													</button>

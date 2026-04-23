@@ -4,7 +4,6 @@ import { useState, useEffect, useCallback } from 'react';
 import { DayPicker, DateRange } from 'react-day-picker';
 import { format, eachDayOfInterval } from 'date-fns';
 import { CalendarSlotDto, CreateCalendarSlotDto } from '@/dtos/user.dto';
-import 'react-day-picker/style.css';
 
 const DRAFT_KEY = 'linkhub_calendar_draft';
 
