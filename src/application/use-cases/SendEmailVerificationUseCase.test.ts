@@ -61,7 +61,9 @@ describe('SendEmailVerificationUseCase', () => {
 		};
 
 		emailSenderService = {
-			sendVerificationEmail: vi.fn().mockResolvedValue(undefined)
+			sendVerificationEmail: vi.fn().mockResolvedValue(undefined),
+			sendAppointmentNotification: vi.fn().mockResolvedValue(undefined),
+			sendUpcomingRenewalEmail: vi.fn().mockResolvedValue(undefined),
 		};
 
 		useCase = new SendEmailVerificationUseCase(

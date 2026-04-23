@@ -2,9 +2,10 @@ import { SESClient, SendEmailCommand } from '@aws-sdk/client-ses';
 import {
 	IEmailSenderService,
 	EmailSenderConfig,
-	AppointmentNotificationData
+	AppointmentNotificationData,
+	UpcomingRenewalData
 } from '@/domain/interfaces/IEmailSenderService';
-import { getVerificationEmailTemplate, getAppointmentNotificationTemplate } from './emailTemplates';
+import { getVerificationEmailTemplate, getAppointmentNotificationTemplate, getUpcomingRenewalTemplate } from './emailTemplates';
 
 export class AwsSesEmailSenderService implements IEmailSenderService {
 	private client: SESClient;
@@ -75,6 +76,32 @@ export class AwsSesEmailSenderService implements IEmailSenderService {
 						Charset: 'UTF-8'
 					}
 				}
+			}
+		});
+
+		try {
+			await this.client.send(command);
+		} catch (err: unknown) {
+			const message = err instanceof Error ? err.message : 'SES send error';
+			console.error(message);
+			throw new Error(`Error al enviar correo`);
+		}
+	}
+
+	async sendUpcomingRenewalEmail(
+		config: EmailSenderConfig,
+		data: UpcomingRenewalData,
+		companyName?: string
+	): Promise<void> {
+		const name = companyName || 'LinkHub';
+		const template = getUpcomingRenewalTemplate(config.tenantId);
+
+		const command = new SendEmailCommand({
+			Source: config.fromEmail,
+			Destination: { ToAddresses: [data.email] },
+			Message: {
+				Subject: { Data: template.subject(name), Charset: 'UTF-8' },
+				Body: { Html: { Data: template.html(data, name), Charset: 'UTF-8' } }
 			}
 		});
 

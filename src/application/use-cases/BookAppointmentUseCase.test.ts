@@ -109,6 +109,7 @@ describe('BookAppointmentUseCase', () => {
     emailSenderService = {
       sendVerificationEmail: vi.fn(),
       sendAppointmentNotification: vi.fn().mockResolvedValue(undefined),
+      sendUpcomingRenewalEmail: vi.fn().mockResolvedValue(undefined),
     };
   });
 

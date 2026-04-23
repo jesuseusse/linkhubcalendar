@@ -1,4 +1,4 @@
-import { AppointmentNotificationData } from '@/domain/interfaces/IEmailSenderService';
+import { AppointmentNotificationData, UpcomingRenewalData } from '@/domain/interfaces/IEmailSenderService';
 
 export interface VerificationEmailTemplate {
 	subject: (companyName: string) => string;
@@ -140,4 +140,56 @@ const tenantAppointmentTemplates: Record<string, AppointmentNotificationTemplate
 
 export function getAppointmentNotificationTemplate(tenantId: string): AppointmentNotificationTemplate {
 	return tenantAppointmentTemplates[tenantId] ?? defaultAppointmentTemplate;
+}
+
+// ---------------------------------------------------------------------------
+// Upcoming renewal template
+// ---------------------------------------------------------------------------
+
+export interface UpcomingRenewalTemplate {
+	subject: (companyName: string) => string;
+	html: (data: UpcomingRenewalData, companyName: string) => string;
+}
+
+const defaultRenewalTemplate: UpcomingRenewalTemplate = {
+	subject: (companyName) => `${companyName} — Tu suscripción se renovará pronto`,
+	html: (data, companyName) => `<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#f4f4f5;font-family:Arial,Helvetica,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:40px 0;">
+    <tr><td align="center">
+      <table width="480" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;border:1px solid #e4e4e7;padding:40px;">
+        <tr><td style="text-align:center;padding-bottom:24px;">
+          <h1 style="margin:0;font-size:20px;color:#18181b;">${companyName}</h1>
+        </td></tr>
+        <tr><td style="padding-bottom:16px;">
+          <h2 style="margin:0;font-size:18px;color:#18181b;">Tu suscripción se renovará pronto</h2>
+        </td></tr>
+        <tr><td style="padding-bottom:24px;">
+          <p style="margin:0;font-size:14px;line-height:1.6;color:#52525b;">
+            Te informamos que tu suscripción Pro se renovará automáticamente el <strong>${data.renewalDate}</strong> por un monto de <strong>${data.amountFormatted}</strong>.
+          </p>
+        </td></tr>
+        <tr><td style="padding-bottom:24px;">
+          <p style="margin:0;font-size:14px;line-height:1.6;color:#52525b;">
+            Si no deseas continuar, puedes cancelar tu suscripción desde el panel de administración antes de esa fecha y no se realizará ningún cobro adicional.
+          </p>
+        </td></tr>
+        <tr><td>
+          <p style="margin:0;font-size:12px;color:#a1a1aa;">
+            Este es un correo automático. Por favor no respondas a este mensaje.
+          </p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`
+};
+
+const tenantRenewalTemplates: Record<string, UpcomingRenewalTemplate> = {};
+
+export function getUpcomingRenewalTemplate(tenantId: string): UpcomingRenewalTemplate {
+	return tenantRenewalTemplates[tenantId] ?? defaultRenewalTemplate;
 }

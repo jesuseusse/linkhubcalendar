@@ -14,6 +14,12 @@ export interface AppointmentNotificationData {
   endTime: string;
 }
 
+export interface UpcomingRenewalData {
+  email: string;
+  amountFormatted: string;
+  renewalDate: string;
+}
+
 export interface IEmailSenderService {
   sendVerificationEmail(
     config: EmailSenderConfig,
@@ -27,6 +33,12 @@ export interface IEmailSenderService {
     ownerEmail: string,
     appointment: AppointmentNotificationData,
     dashboardUrl: string,
+    companyName?: string
+  ): Promise<void>;
+
+  sendUpcomingRenewalEmail(
+    config: EmailSenderConfig,
+    data: UpcomingRenewalData,
     companyName?: string
   ): Promise<void>;
 }

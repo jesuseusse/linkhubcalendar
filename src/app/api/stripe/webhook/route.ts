@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { container } from '@/infrastructure/container';
 import { StripeConfig } from '@/interfaces/IStripeConfig';
+import { createEmailSenderService } from '@/infrastructure/services/emailSenderFactory';
 
 export async function POST(req: NextRequest) {
 	const rawBody = await req.text();
@@ -84,6 +85,14 @@ export async function POST(req: NextRequest) {
 					stripe,
 					event.data.object as Stripe.Invoice,
 					stripeConfig
+				);
+				break;
+
+			case 'invoice.upcoming':
+				await handleInvoiceUpcoming(
+					stripe,
+					event.data.object as Stripe.Invoice,
+					tenantRegistry
 				);
 				break;
 		}
@@ -261,6 +270,59 @@ async function handleInvoicePaymentSucceeded(
 	if (priceId !== stripeConfig.proPriceId || !currentPeriodEnd) return;
 
 	await updateUserPlan(tenantId, email, 'pro', currentPeriodEnd * 1000);
+}
+
+// ---------------------------------------------------------------------------
+// invoice.upcoming
+// Fired ~3 days before a subscription renewal (configurable in Stripe dashboard).
+// Sends a reminder email to the subscriber so they know the charge is coming.
+// ---------------------------------------------------------------------------
+async function handleInvoiceUpcoming(
+	stripe: Stripe,
+	invoice: Stripe.Invoice,
+	tenantRegistry: Awaited<ReturnType<typeof container.tenantRegistryRepo.getByHostname>>
+) {
+	if (!tenantRegistry) return;
+
+	// Resolve subscription to get metadata (tenantId, email)
+	const subscriptionRef = invoice.parent?.subscription_details?.subscription;
+	const subscriptionId =
+		typeof subscriptionRef === 'string'
+			? subscriptionRef
+			: subscriptionRef != null && typeof subscriptionRef === 'object'
+				? (subscriptionRef as Stripe.Subscription).id
+				: null;
+	if (!subscriptionId) return;
+
+	const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+	const { email } = subscription.metadata ?? {};
+	if (!email) return;
+
+	// Format amount and renewal date from invoice
+	const amountCents = invoice.amount_due ?? 0;
+	const currency = (invoice.currency ?? 'mxn').toUpperCase();
+	const amountFormatted = new Intl.NumberFormat('es-MX', {
+		style: 'currency',
+		currency,
+		minimumFractionDigits: 2
+	}).format(amountCents / 100);
+
+	const nextPaymentAttempt = invoice.next_payment_attempt;
+	const renewalDate = nextPaymentAttempt
+		? new Intl.DateTimeFormat('es-MX', { day: 'numeric', month: 'long', year: 'numeric' })
+				.format(new Date(nextPaymentAttempt * 1000))
+		: '—';
+
+	const emailService = createEmailSenderService(tenantRegistry);
+	const config = {
+		tenantId: tenantRegistry.tenantId,
+		apiKey: tenantRegistry.resendApiKey ?? tenantRegistry.sesConfig?.accessKeyId ?? '',
+		fromEmail: tenantRegistry.resendFromEmail ?? tenantRegistry.sesConfig?.fromEmail ?? ''
+	};
+	const companyName = tenantRegistry.seoConfig?.siteName ?? tenantRegistry.companyName ?? 'LinkHub';
+
+	await emailService.sendUpcomingRenewalEmail(config, { email, amountFormatted, renewalDate }, companyName);
+	console.log(`[stripe-webhook] invoice.upcoming — renewal reminder sent to ${email}`);
 }
 
 // ---------------------------------------------------------------------------
