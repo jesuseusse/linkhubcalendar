@@ -13,9 +13,11 @@ import Image from 'next/image';
 
 interface Props {
 	profile: PublicProfileDto;
+	logoUrl?: string;
+	siteName?: string;
 }
 
-export function PublicProfileClient({ profile }: Props) {
+export function PublicProfileClient({ profile, logoUrl, siteName }: Props) {
 	const plan = (profile.plan || 'free') as Plan;
 	const expired = isPlanExpired(profile.planExpiredAt);
 	const effectivePlan: Plan = expired ? 'free' : plan;
@@ -220,12 +222,57 @@ export function PublicProfileClient({ profile }: Props) {
 					)}
 
 					{/* Footer */}
-					<p
-						className='mt-14 text-xs text-foreground/25'
-						style={theme ? { color: `${theme.textColor}35` } : undefined}
-					>
-						Powered by Link Hub
-					</p>
+					<div className='mt-14 w-full border-t border-foreground/10 pt-8 pb-4 flex flex-col items-center gap-3 text-center'>
+						{logoUrl ? (
+							/* eslint-disable-next-line @next/next/no-img-element */
+							<img
+								src={logoUrl}
+								alt={siteName ?? 'Logo'}
+								className='h-8 w-auto object-contain opacity-80'
+							/>
+						) : (
+							<svg
+								xmlns='http://www.w3.org/2000/svg'
+								className='w-7 h-7 text-foreground/30'
+								fill='none'
+								viewBox='0 0 24 24'
+								stroke='currentColor'
+								strokeWidth={1.5}
+								aria-hidden='true'
+								style={theme ? { color: `${theme.textColor}50` } : undefined}
+							>
+								<path strokeLinecap='round' strokeLinejoin='round' d='M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244' />
+							</svg>
+						)}
+
+						<p
+							className='text-sm font-semibold text-foreground/60'
+							style={theme ? { color: `${theme.textColor}90` } : undefined}
+						>
+							{siteName ?? 'Link Hub'}
+						</p>
+						<p
+							className='text-xs text-foreground/45 max-w-xs leading-relaxed'
+							style={theme ? { color: `${theme.textColor}70` } : undefined}
+						>
+							Crea tu página, comparte tus enlaces y gestiona tus citas en línea.
+						</p>
+
+						<a
+							href='/'
+							className='mt-1 inline-flex items-center gap-1.5 px-5 py-2 rounded-full text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors'
+							style={theme ? { backgroundColor: theme.buttonColor, color: theme.buttonTextColor } : undefined}
+						>
+							Empezar gratis
+						</a>
+
+						<p
+							className='text-xs text-foreground/20 mt-1'
+							style={theme ? { color: `${theme.textColor}30` } : undefined}
+						>
+							Powered by Eusse
+						</p>
+					</div>
 				</div>
 			</div>
 			{/* Photo lightbox */}

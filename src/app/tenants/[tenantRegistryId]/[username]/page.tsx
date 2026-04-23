@@ -99,5 +99,11 @@ export default async function PublicProfilePage({
 		redirect('/');
 	}
 
-	return <PublicProfileClient profile={profile} />;
+	return (
+		<PublicProfileClient
+			profile={profile}
+			logoUrl={tenantConfig.logoUrl ?? undefined}
+			siteName={tenantConfig.seoConfig?.siteName ?? tenantConfig.companyName ?? undefined}
+		/>
+	);
 }
