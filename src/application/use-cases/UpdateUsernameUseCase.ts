@@ -21,7 +21,7 @@ export class UpdateUsernameUseCase {
 		}
 
 		if (RESERVED_USERNAMES.includes(username.toLowerCase())) {
-			throw new Error('This username is reserved');
+			throw new Error('Este nombre de usuario no esta disponible');
 		}
 
 		const user = await this.userRepository.findById(tenantId, userId);

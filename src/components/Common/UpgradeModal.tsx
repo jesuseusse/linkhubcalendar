@@ -34,8 +34,8 @@ export function UpgradeModal({ onClose }: Props) {
 						Mensual
 					</button>
 					<button
-						onClick={() => setBilling('yearly')}
-						className={`px-3 py-1 text-xs font-medium transition-colors ${billing === 'yearly' ? 'bg-primary text-primary-foreground' : 'bg-muted text-muted-foreground'}`}
+						disabled
+						className='px-3 py-1 text-xs font-medium bg-muted text-muted-foreground/40 cursor-not-allowed'
 					>
 						Anual
 					</button>

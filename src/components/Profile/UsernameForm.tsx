@@ -47,10 +47,7 @@ export function UsernameForm({
 	};
 
 	return (
-		<div className='space-y-3'>
-			<h3 className='text-sm font-semibold text-foreground'>
-				Nombre de usuario
-			</h3>
+		<div className='space-y-3'> 
 			{username && <PublicProfileLink username={username} />}
 			{!username && (
 				<p className='text-xs text-muted-foreground'>
