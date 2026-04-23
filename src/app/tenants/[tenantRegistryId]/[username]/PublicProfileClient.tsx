@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { useState, useEffect } from 'react';
 import { PublicProfileDto } from '@/dtos/user.dto';
 import { getPlatformIcon } from '@/utils/platformIcons';
+import { getSocialIcon } from '@/components/Common/SocialIcons';
 import { getProfilePhotoUrl } from '@/utils/profilePhoto';
 import { ContactForm } from '@/components/Contact/ContactForm';
 import { isPlanExpired } from '@/utils/planExpiration';
@@ -145,6 +146,7 @@ export function PublicProfileClient({ profile }: Props) {
 						{profile.links.length > 0 ? (
 							profile.links.map((link, index) => {
 								const { icon } = getPlatformIcon(link.url);
+								const socialIcon = getSocialIcon(link.url);
 								return (
 									<a
 										key={link.id}
@@ -162,9 +164,13 @@ export function PublicProfileClient({ profile }: Props) {
 												: undefined),
 										}}
 									>
-										<span className='material-icons text-[18px]' aria-hidden='true'>
-											{icon}
-										</span>
+										{socialIcon ? (
+											<socialIcon.Icon className='w-[18px] h-[18px] shrink-0' style={{ fill: 'currentColor' }} />
+										) : (
+											<span className='material-icons text-[18px]' aria-hidden='true'>
+												{icon}
+											</span>
+										)}
 										<span className='flex-1 text-center pr-4.5'>{link.title}</span>
 									</a>
 								);

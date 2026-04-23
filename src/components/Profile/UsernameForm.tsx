@@ -66,7 +66,7 @@ export function UsernameForm({
 				</p>
 			)}
 			<form onSubmit={handleSubmit} className='flex gap-2'>
-				<div className='flex items-center border border-border'>
+				<div className='w-full flex items-center border border-border'>
 					<span className='px-2 text-sm text-muted-foreground'>/</span>
 					<input
 						type='text'
@@ -83,7 +83,7 @@ export function UsernameForm({
 				<button
 					type='submit'
 					disabled={loading || isLocked}
-					className='px-4 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors rounded'
+					className='w-full px-4 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors rounded'
 				>
 					{loading ? 'Guardando...' : userNameLabel}
 				</button>

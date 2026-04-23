@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { LinkDto, UpdateLinkDto } from '@/dtos/link.dto';
 import { getPlatformIcon } from '@/utils/platformIcons';
+import { getSocialIcon } from '@/components/Common/SocialIcons';
 
 interface Props {
 	link: LinkDto;
@@ -17,6 +18,7 @@ export function LinkItem({ link, existingLinks, onUpdate, onDelete }: Props) {
 	const [url, setUrl] = useState(link.url);
 	const [error, setError] = useState<string | null>(null);
 	const { icon } = getPlatformIcon(link.url);
+	const socialIcon = getSocialIcon(link.url);
 
 	const handleSave = async () => {
 		setError(null);
@@ -83,12 +85,16 @@ export function LinkItem({ link, existingLinks, onUpdate, onDelete }: Props) {
 	return (
 		<div className='flex items-center justify-between border border-border px-3 py-2'>
 			<div className='flex items-center gap-2 min-w-0'>
-				<span
-					className='material-icons text-muted-foreground text-base'
-					aria-hidden='true'
-				>
-					{icon}
-				</span>
+				{socialIcon ? (
+					<socialIcon.Icon
+						className='w-4 h-4 shrink-0'
+						style={{ fill: socialIcon.color }}
+					/>
+				) : (
+					<span className='material-icons text-muted-foreground text-base' aria-hidden='true'>
+						{icon}
+					</span>
+				)}
 				<div className='min-w-0'>
 					<p className='text-sm font-medium text-foreground truncate'>
 						{link.title}

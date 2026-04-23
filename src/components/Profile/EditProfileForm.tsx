@@ -36,7 +36,7 @@ export function EditProfileForm({
 	};
 
 	return (
-		<form onSubmit={handleSubmit} className='space-y-3'>
+		<form onSubmit={handleSubmit} className='space-y-3 mb-4'>
 			{error && <p className='text-xs text-error'>{error}</p>}
 			<div>
 				<label className='block text-xs font-medium text-muted-foreground mb-1'>
@@ -80,7 +80,7 @@ export function EditProfileForm({
 			<button
 				type='submit'
 				disabled={loading}
-				className='px-4 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors rounded'
+				className='w-full px-4 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors rounded'
 			>
 				{loading ? 'Actualizando...' : 'Actualizar'}
 			</button>

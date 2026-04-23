@@ -234,6 +234,36 @@ Per-tenant SEO is managed through `tenant_registry/{hostname}.seoConfig` (`ISeoC
 
 **Header navigation:** Gear dropdown in `Header.tsx` has an "SEO" link above "Cuenta" that navigates to `.../dashboard/seo`.
 
+## Links
+
+### Limit
+
+All plans are capped at **5 links** per user. Enforced server-side in `AddLinkUseCase` (`src/application/use-cases/ManageLinksUseCase.ts`) and in the UI via `AddLinkForm` (`src/components/Links/AddLinkForm.tsx`), which hides the form and shows a message when the limit is reached.
+
+### Social quick-add buttons
+
+The dashboard (`dashboard/page.tsx`) shows per-network "Agregar X" buttons above `<LinkList>` when no link for that network is detected (via regex). Each button opens a dedicated modal:
+
+| Network | Modal | Regex detection |
+|---|---|---|
+| WhatsApp | `AddWhatsappModal` | `/wa\.me\|api\.whatsapp\.com\|whatsapp\.com/i` |
+| Instagram | `AddInstagramModal` | `/instagram\.com/i` |
+| TikTok | `AddTiktokModal` | `/tiktok\.com/i` |
+
+Modals call `addLink` from `useLinks` with a pre-formatted `{ title, url }`. The button disappears once the link exists.
+
+### Social SVG icons
+
+`src/components/Common/SocialIcons.tsx` exports:
+- `WhatsappIcon`, `InstagramIcon`, `TiktokIcon` — branded SVG components
+- `getSocialIcon(url)` — returns `{ Icon, color, label }` for a URL or `null` if no match
+
+Used in `LinkItem.tsx` (dashboard list) and `PublicProfileClient.tsx` (public profile). Falls back to material-icons for non-matched URLs.
+
+### Image crop upload
+
+`src/components/Common/ImageCropUpload.tsx` — three-state component (drop zone → fullscreen crop modal → square preview). Used in `ProfileCard` for profile photo. Canvas util at `src/utils/getCroppedImg.ts`. Compresses output to WebP via `browser-image-compression`.
+
 ## Language
 
 UI strings are in **Spanish**. There is no i18n library — all text is hardcoded.

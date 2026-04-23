@@ -10,6 +10,9 @@ export class AddLinkUseCase {
     if (!existing) {
       throw new Error("User not found");
     }
+    if (existing.links.length >= 5) {
+      throw new Error("Has alcanzado el límite de 5 enlaces");
+    }
     if (existing.links.some((l) => l.title.toLowerCase() === dto.title.toLowerCase())) {
       throw new Error("A link with this name already exists");
     }

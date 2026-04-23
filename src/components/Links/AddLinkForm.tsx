@@ -10,10 +10,20 @@ interface Props {
 	existingLinks: LinkDto[];
 }
 
+const LINK_LIMIT = 5;
+
 export function AddLinkForm({ onSubmit, loading, existingLinks }: Props) {
 	const [title, setTitle] = useState('');
 	const [url, setUrl] = useState('');
 	const [error, setError] = useState<string | null>(null);
+
+	if (existingLinks.length >= LINK_LIMIT) {
+		return (
+			<p className='text-xs text-muted-foreground'>
+				Límite de {LINK_LIMIT} enlaces alcanzado. Elimina uno para agregar otro.
+			</p>
+		);
+	}
 
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
@@ -40,7 +50,7 @@ export function AddLinkForm({ onSubmit, loading, existingLinks }: Props) {
 	};
 
 	return (
-		<form onSubmit={handleSubmit} className='space-y-3'>
+		<form onSubmit={handleSubmit} className='my-3 space-y-3'>
 			{error && <p className='text-xs text-error'>{error}</p>}
 
 			<div className='flex flex-col gap-2 w-full md:flex-row md:items-end'>

@@ -18,6 +18,10 @@ import { UsernameForm } from '@/components/Profile/UsernameForm';
 import { ContactFormToggle } from '@/components/Profile/ContactFormToggle';
 import { AddLinkForm } from '@/components/Links/AddLinkForm';
 import { LinkList } from '@/components/Links/LinkList';
+import { AddWhatsappModal } from '@/components/Links/AddWhatsappModal';
+import { AddInstagramModal } from '@/components/Links/AddInstagramModal';
+import { AddTiktokModal } from '@/components/Links/AddTiktokModal';
+import { WhatsappIcon, InstagramIcon, TiktokIcon } from '@/components/Common/SocialIcons';
 import { ThemeCustomizer } from '@/components/Theme/ThemeCustomizer';
 import { CalendarToggle } from '@/components/Calendar/CalendarToggle';
 import { ModalCalendarManager } from '@/components/Calendar/ModalCalendarManager';
@@ -34,6 +38,9 @@ export default function DashboardPage() {
 	const router = useRouter();
 	const pathname = usePathname();
 	const [calendarModalOpen, setCalendarModalOpen] = useState(false);
+	const [whatsappModalOpen, setWhatsappModalOpen] = useState(false);
+	const [instagramModalOpen, setInstagramModalOpen] = useState(false);
+	const [tiktokModalOpen, setTiktokModalOpen] = useState(false);
 
 	const stripeParam = searchParams.get('successStripe');
 	const stripeModal =
@@ -71,6 +78,15 @@ export default function DashboardPage() {
 
 	const domain = window.location.host.replace(/^www\./, '');
 	const url = `${domain}/${profile?.username}`;
+
+	const WHATSAPP_REGEX = /wa\.me|api\.whatsapp\.com|whatsapp\.com/i;
+	const hasWhatsapp = profile?.links.some(l => WHATSAPP_REGEX.test(l.url)) ?? false;
+
+	const INSTAGRAM_REGEX = /instagram\.com/i;
+	const hasInstagram = profile?.links.some(l => INSTAGRAM_REGEX.test(l.url)) ?? false;
+
+	const TIKTOK_REGEX = /tiktok\.com/i;
+	const hasTiktok = profile?.links.some(l => TIKTOK_REGEX.test(l.url)) ?? false;
 
 	if (!fetched || !profile) {
 		return (
@@ -130,15 +146,68 @@ export default function DashboardPage() {
 					<h2 className='text-sm font-semibold text-foreground mb-4 uppercase tracking-wider'>
 						Mis Enlaces
 					</h2>
-					<AddLinkForm
-						onSubmit={addLink}
-						loading={loading}
-						existingLinks={profile.links}
-					/>
 					<LinkList
 						links={profile.links}
 						onUpdate={updateLink}
 						onDelete={deleteLink}
+					/>
+					<div className='mt-3 flex flex-wrap gap-2'>
+						{!hasWhatsapp && (
+							<button
+								type='button'
+								onClick={() => setWhatsappModalOpen(true)}
+								className='w-full md:w-auto flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium border border-border text-muted-foreground hover:text-foreground hover:border-foreground transition-colors'
+							>
+								<WhatsappIcon className='w-4 h-4 fill-[#25D366] shrink-0' />
+								Agregar WhatsApp
+							</button>
+						)}
+						{!hasInstagram && (
+							<button
+								type='button'
+								onClick={() => setInstagramModalOpen(true)}
+								className='w-full md:w-auto flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium border border-border text-muted-foreground hover:text-foreground hover:border-foreground transition-colors'
+							>
+								<InstagramIcon className='w-4 h-4 fill-[#E1306C] shrink-0' />
+								Agregar Instagram
+							</button>
+						)}
+						{!hasTiktok && (
+							<button
+								type='button'
+								onClick={() => setTiktokModalOpen(true)}
+								className='w-full md:w-auto flex items-center justify-center gap-2 px-4 py-2 text-sm font-medium border border-border text-muted-foreground hover:text-foreground hover:border-foreground transition-colors'
+							>
+								<TiktokIcon className='w-4 h-4 fill-foreground shrink-0' />
+								Agregar TikTok
+							</button>
+						)}
+					</div>
+					{whatsappModalOpen && (
+						<AddWhatsappModal
+							onConfirm={async dto => { await addLink(dto); setWhatsappModalOpen(false); }}
+							onClose={() => setWhatsappModalOpen(false)}
+							loading={loading}
+						/>
+					)}
+					{instagramModalOpen && (
+						<AddInstagramModal
+							onConfirm={async dto => { await addLink(dto); setInstagramModalOpen(false); }}
+							onClose={() => setInstagramModalOpen(false)}
+							loading={loading}
+						/>
+					)}
+					{tiktokModalOpen && (
+						<AddTiktokModal
+							onConfirm={async dto => { await addLink(dto); setTiktokModalOpen(false); }}
+							onClose={() => setTiktokModalOpen(false)}
+							loading={loading}
+						/>
+					)}
+					<AddLinkForm
+						onSubmit={addLink}
+						loading={loading}
+						existingLinks={profile.links}
 					/>
 				</section>
 
