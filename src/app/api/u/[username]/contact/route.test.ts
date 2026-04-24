@@ -7,8 +7,7 @@ import { NextRequest } from 'next/server';
 const TENANT_ID = 'tenant-abc';
 const HOSTNAME = 'example.com';
 const USERNAME = 'juanita';
-const APPOINTMENT_ID = 'appt-77';
-const SLOT_ID = 'slot-99';
+const LEAD_ID = 'lead-11';
 
 const MOCK_REGISTRY = {
   tenantId: TENANT_ID,
@@ -21,17 +20,12 @@ const MOCK_REGISTRY = {
   logoUrl: null,
 };
 
-const MOCK_APPOINTMENT = {
-  id: APPOINTMENT_ID,
-  slotId: SLOT_ID,
-  date: '2026-04-01',
-  startTime: '10:00',
-  endTime: '11:00',
+const MOCK_LEAD = {
+  id: LEAD_ID,
   name: 'Pedro Visitante',
   email: 'pedro@example.com',
   phone: '555-1234',
-  reason: 'Consulta general',
-  status: 'pending',
+  message: 'Hola',
   createdAt: 2_000_000,
 };
 
@@ -42,20 +36,20 @@ const {
   mockResolveTenantRegistry,
   mockResolveEffectiveHostname,
   mockCreateEmailSenderService,
-  mockBookAppointmentExecute,
-  MockBookAppointmentUseCase,
+  mockSubmitLeadExecute,
+  MockSubmitLeadUseCase,
 } = vi.hoisted(() => {
-  const mockBookAppointmentExecute = vi.fn();
-  // Must use a regular function (not arrow) so `new MockBookAppointmentUseCase()` works
-  const MockBookAppointmentUseCase = vi.fn(function () {
-    return { execute: mockBookAppointmentExecute };
+  const mockSubmitLeadExecute = vi.fn();
+  // Must use a regular function (not arrow) so `new MockSubmitLeadUseCase()` works
+  const MockSubmitLeadUseCase = vi.fn(function () {
+    return { execute: mockSubmitLeadExecute };
   });
   return {
     mockResolveTenantRegistry: vi.fn(),
     mockResolveEffectiveHostname: vi.fn(),
     mockCreateEmailSenderService: vi.fn(),
-    mockBookAppointmentExecute,
-    MockBookAppointmentUseCase,
+    mockSubmitLeadExecute,
+    MockSubmitLeadUseCase,
   };
 });
 
@@ -68,13 +62,13 @@ vi.mock('@/infrastructure/services/emailSenderFactory', () => ({
   createEmailSenderService: mockCreateEmailSenderService,
 }));
 
-vi.mock('@/application/use-cases/BookAppointmentUseCase', () => ({
-  BookAppointmentUseCase: MockBookAppointmentUseCase,
+vi.mock('@/application/use-cases/SubmitLeadUseCase', () => ({
+  SubmitLeadUseCase: MockSubmitLeadUseCase,
 }));
 
 vi.mock('@/infrastructure/container', () => ({
   userRepo: {},
-  appointmentRepo: {},
+  leadRepo: {},
 }));
 
 import { POST } from './route';
@@ -83,10 +77,16 @@ import { POST } from './route';
 // Helpers
 // ---------------------------------------------------------------------------
 function makeRequest(body: Record<string, unknown> = {}) {
-  return new NextRequest(`http://${HOSTNAME}/api/u/${USERNAME}/appointments`, {
+  return new NextRequest(`http://${HOSTNAME}/api/u/${USERNAME}/contact`, {
     method: 'POST',
     headers: { 'content-type': 'application/json', host: HOSTNAME },
-    body: JSON.stringify({ slotId: SLOT_ID, name: 'Pedro Visitante', email: 'pedro@example.com', phone: '555-1234', reason: 'Consulta general', ...body }),
+    body: JSON.stringify({
+      name: 'Pedro Visitante',
+      email: 'pedro@example.com',
+      phone: '555-1234',
+      message: 'Hola',
+      ...body,
+    }),
   });
 }
 
@@ -100,33 +100,32 @@ const MOCK_EMAIL_SENDER = {
 // ---------------------------------------------------------------------------
 // Tests
 // ---------------------------------------------------------------------------
-describe('POST /api/u/[username]/appointments', () => {
+describe('POST /api/u/[username]/contact', () => {
   beforeEach(() => {
     vi.clearAllMocks();
     mockResolveTenantRegistry.mockResolvedValue(MOCK_REGISTRY);
     mockResolveEffectiveHostname.mockReturnValue(HOSTNAME);
     mockCreateEmailSenderService.mockReturnValue(MOCK_EMAIL_SENDER);
-    mockBookAppointmentExecute.mockResolvedValue(MOCK_APPOINTMENT);
+    mockSubmitLeadExecute.mockResolvedValue(MOCK_LEAD);
   });
 
   describe('happy path — email configured', () => {
-    it('returns 201 with the booked appointment', async () => {
+    it('returns 201 with success on valid submission', async () => {
       const res = await POST(makeRequest(), { params: Promise.resolve({ username: USERNAME }) });
-      const body = await res.json();
 
       expect(res.status).toBe(201);
-      expect(body).toMatchObject({ id: APPOINTMENT_ID, status: 'pending' });
+      expect(await res.json()).toEqual({ success: true });
     });
 
-    it('instantiates BookAppointmentUseCase with email sender and dashboard URL', async () => {
+    it('instantiates SubmitLeadUseCase with email sender and leads dashboard URL', async () => {
       await POST(makeRequest(), { params: Promise.resolve({ username: USERNAME }) });
 
-      expect(MockBookAppointmentUseCase).toHaveBeenCalledWith(
-        {},                     // userRepo
-        {},                     // appointmentRepo
+      expect(MockSubmitLeadUseCase).toHaveBeenCalledWith(
+        {},             // userRepo
+        {},             // leadRepo
         MOCK_EMAIL_SENDER,
         { tenantId: TENANT_ID, apiKey: 'resend-key', fromEmail: 'no-reply@example.com' },
-        `https://${HOSTNAME}/u/admin/dashboard/dates`,
+        `https://${HOSTNAME}/u/admin/dashboard/leads`,
         'Mi Empresa'
       );
     });
@@ -134,10 +133,10 @@ describe('POST /api/u/[username]/appointments', () => {
     it('calls use-case execute with resolved tenantId and username', async () => {
       await POST(makeRequest(), { params: Promise.resolve({ username: USERNAME }) });
 
-      expect(mockBookAppointmentExecute).toHaveBeenCalledWith(
+      expect(mockSubmitLeadExecute).toHaveBeenCalledWith(
         TENANT_ID,
         USERNAME,
-        expect.objectContaining({ slotId: SLOT_ID })
+        expect.objectContaining({ name: 'Pedro Visitante' })
       );
     });
   });
@@ -153,37 +152,37 @@ describe('POST /api/u/[username]/appointments', () => {
       expect(res.status).toBe(201);
     });
 
-    it('instantiates BookAppointmentUseCase with null email deps when service unavailable', async () => {
+    it('instantiates SubmitLeadUseCase with null email deps when service unavailable', async () => {
       mockCreateEmailSenderService.mockImplementation(() => {
         throw new Error('Servicio de correo no configurado para este tenant');
       });
 
       await POST(makeRequest(), { params: Promise.resolve({ username: USERNAME }) });
 
-      expect(MockBookAppointmentUseCase).toHaveBeenCalledWith(
+      expect(MockSubmitLeadUseCase).toHaveBeenCalledWith(
         {},
         {},
         null,
         null,
-        `https://${HOSTNAME}/u/admin/dashboard/dates`,
+        `https://${HOSTNAME}/u/admin/dashboard/leads`,
         'Mi Empresa'
       );
     });
   });
 
   describe('error cases', () => {
-    it('returns 400 when slot is already booked', async () => {
-      mockBookAppointmentExecute.mockRejectedValue(new Error('Time slot is already booked'));
+    it('returns 400 when contact form is disabled', async () => {
+      mockSubmitLeadExecute.mockRejectedValue(new Error('Contact form is not enabled'));
 
       const res = await POST(makeRequest(), { params: Promise.resolve({ username: USERNAME }) });
       const body = await res.json();
 
       expect(res.status).toBe(400);
-      expect(body.error).toBe('Time slot is already booked');
+      expect(body.error).toBe('Contact form is not enabled');
     });
 
     it('returns 400 when user is not found', async () => {
-      mockBookAppointmentExecute.mockRejectedValue(new Error('User not found'));
+      mockSubmitLeadExecute.mockRejectedValue(new Error('User not found'));
 
       const res = await POST(makeRequest(), { params: Promise.resolve({ username: USERNAME }) });
       const body = await res.json();
@@ -193,13 +192,13 @@ describe('POST /api/u/[username]/appointments', () => {
     });
 
     it('returns 400 with generic message on unexpected error', async () => {
-      mockBookAppointmentExecute.mockRejectedValue('unexpected');
+      mockSubmitLeadExecute.mockRejectedValue('unexpected');
 
       const res = await POST(makeRequest(), { params: Promise.resolve({ username: USERNAME }) });
       const body = await res.json();
 
       expect(res.status).toBe(400);
-      expect(body.error).toBe('Booking failed');
+      expect(body.error).toBe('Submission failed');
     });
 
     it('returns 400 when tenant registry is not found', async () => {

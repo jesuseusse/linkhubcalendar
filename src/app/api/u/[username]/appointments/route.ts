@@ -23,7 +23,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ use
       // Email not configured for this tenant — proceed without notification
     }
 
-    const dashboardUrl = `https://${hostname}/tenants/${hostname}/u/admin/dashboard/dates`;
+    const dashboardUrl = `https://${hostname}/u/admin/dashboard/dates`;
     const useCase = new BookAppointmentUseCase(
       userRepo,
       appointmentRepo,

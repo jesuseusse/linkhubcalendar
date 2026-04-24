@@ -38,7 +38,7 @@ import { GetLeadsPaginatedUseCase } from '@/application/use-cases/GetLeadsPagina
 export const tenantRegistryRepo = new FirestoreTenantRegistryRepository();
 export const userRepo = new FirestoreUserRepository();
 export const appointmentRepo = new FirestoreAppointmentRepository();
-const leadRepo = new FirestoreLeadRepository();
+export const leadRepo = new FirestoreLeadRepository();
 const storageService = new FirebaseStorageService();
 export const emailVerificationService = new FirebaseEmailVerificationService();
 

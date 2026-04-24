@@ -1,11 +1,16 @@
 import { IUserRepository } from "../../domain/interfaces/IUserRepository";
 import { ILeadRepository } from "../../domain/interfaces/ILeadRepository";
+import { IEmailSenderService, EmailSenderConfig } from "../../domain/interfaces/IEmailSenderService";
 import { LeadResponseDto } from "../../domain/dtos/AuthDtos";
 
 export class SubmitLeadUseCase {
   constructor(
     private userRepository: IUserRepository,
-    private leadRepository: ILeadRepository
+    private leadRepository: ILeadRepository,
+    private emailSenderService?: IEmailSenderService | null,
+    private emailConfig?: EmailSenderConfig | null,
+    private dashboardUrl?: string | null,
+    private companyName?: string | null
   ) {}
 
   async execute(
@@ -28,6 +33,16 @@ export class SubmitLeadUseCase {
       phone: data.phone,
       message: data.message,
     });
+
+    if (this.emailSenderService && this.emailConfig && this.dashboardUrl && user.email) {
+      this.emailSenderService.sendContactNotification(
+        this.emailConfig,
+        user.email,
+        { name: data.name, email: data.email, phone: data.phone, message: data.message },
+        this.dashboardUrl,
+        this.companyName ?? undefined
+      ).catch(() => {});
+    }
 
     return {
       id: lead.id,

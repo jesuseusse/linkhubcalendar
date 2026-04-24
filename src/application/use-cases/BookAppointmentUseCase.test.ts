@@ -14,7 +14,7 @@ const USERNAME = 'juanita';
 const USER_ID = 'user-42';
 const SLOT_ID = 'slot-99';
 const APPOINTMENT_ID = 'appt-77';
-const DASHBOARD_URL = 'https://example.com/tenants/example.com/u/admin/dashboard/dates';
+const DASHBOARD_URL = 'https://example.com/u/admin/dashboard/dates';
 const EMAIL_CONFIG = { tenantId: TENANT_ID, apiKey: 'key', fromEmail: 'no-reply@example.com' };
 
 function makeUser(overrides: Partial<User> = {}): User {
@@ -110,6 +110,7 @@ describe('BookAppointmentUseCase', () => {
       sendVerificationEmail: vi.fn(),
       sendAppointmentNotification: vi.fn().mockResolvedValue(undefined),
       sendUpcomingRenewalEmail: vi.fn().mockResolvedValue(undefined),
+      sendContactNotification: vi.fn().mockResolvedValue(undefined),
     };
   });
 

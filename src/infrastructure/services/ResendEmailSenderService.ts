@@ -3,9 +3,10 @@ import {
 	IEmailSenderService,
 	EmailSenderConfig,
 	AppointmentNotificationData,
+	ContactNotificationData,
 	UpcomingRenewalData
 } from '@/domain/interfaces/IEmailSenderService';
-import { getVerificationEmailTemplate, getAppointmentNotificationTemplate, getUpcomingRenewalTemplate } from './emailTemplates';
+import { getVerificationEmailTemplate, getAppointmentNotificationTemplate, getContactNotificationTemplate, getUpcomingRenewalTemplate } from './emailTemplates';
 
 export class ResendEmailSenderService implements IEmailSenderService {
 	async sendVerificationEmail(
@@ -46,6 +47,29 @@ export class ResendEmailSenderService implements IEmailSenderService {
 			to: ownerEmail,
 			subject: template.subject(appointment),
 			html: template.html(appointment, dashboardUrl, name)
+		});
+
+		if (error) {
+			throw new Error(`Error al enviar correo: ${error.message}`);
+		}
+	}
+
+	async sendContactNotification(
+		config: EmailSenderConfig,
+		ownerEmail: string,
+		data: ContactNotificationData,
+		dashboardUrl: string,
+		companyName?: string
+	): Promise<void> {
+		const resend = new Resend(config.apiKey);
+		const name = companyName || 'LinkHub';
+		const template = getContactNotificationTemplate(config.tenantId);
+
+		const { error } = await resend.emails.send({
+			from: config.fromEmail,
+			to: ownerEmail,
+			subject: template.subject(data),
+			html: template.html(data, dashboardUrl, name)
 		});
 
 		if (error) {

@@ -20,6 +20,13 @@ export interface UpcomingRenewalData {
   renewalDate: string;
 }
 
+export interface ContactNotificationData {
+  name: string;
+  email: string;
+  phone: string;
+  message: string;
+}
+
 export interface IEmailSenderService {
   sendVerificationEmail(
     config: EmailSenderConfig,
@@ -39,6 +46,14 @@ export interface IEmailSenderService {
   sendUpcomingRenewalEmail(
     config: EmailSenderConfig,
     data: UpcomingRenewalData,
+    companyName?: string
+  ): Promise<void>;
+
+  sendContactNotification(
+    config: EmailSenderConfig,
+    ownerEmail: string,
+    data: ContactNotificationData,
+    dashboardUrl: string,
     companyName?: string
   ): Promise<void>;
 }

@@ -206,6 +206,22 @@ Multiple email backends selectable per tenant:
 
 `emailSenderFactory.ts` selects the implementation based on tenant config (`resendApiKey` / `sesConfig` in `ITenantRegistryData`). Templates live in `emailTemplates.ts`.
 
+### Transactional notifications
+
+| Event | Recipient | Template | Route that wires it |
+|---|---|---|---|
+| Appointment booked | Calendar owner (`user.email`) | `defaultAppointmentTemplate` | `POST /api/u/[username]/appointments` |
+| Contact form submitted | Profile owner (`user.email`) | `defaultContactTemplate` | `POST /api/u/[username]/contact` |
+| Subscription renewal upcoming | Subscriber | `defaultRenewalTemplate` | Stripe `invoice.upcoming` webhook |
+
+**Pattern** (appointments and contact form): The API route calls `resolveTenantRegistry` to get the full registry, builds `emailSenderService` + `emailConfig` inside a `try/catch` (silently skips email if not configured), then constructs the use case ad-hoc (not from container) with those deps. The use case fires `sendXxxNotification(...).catch(() => {})` after saving to Firestore, so email failures never break the user flow.
+
+**Interface:** `IEmailSenderService` (`src/domain/interfaces/IEmailSenderService.ts`) — all implementations must implement:
+- `sendVerificationEmail`
+- `sendAppointmentNotification`
+- `sendUpcomingRenewalEmail`
+- `sendContactNotification`
+
 ## SEO Configuration
 
 Per-tenant SEO is managed through `tenant_registry/{hostname}.seoConfig` (`ISeoConfig`).

@@ -1,4 +1,4 @@
-import { AppointmentNotificationData, UpcomingRenewalData } from '@/domain/interfaces/IEmailSenderService';
+import { AppointmentNotificationData, ContactNotificationData, UpcomingRenewalData } from '@/domain/interfaces/IEmailSenderService';
 
 export interface VerificationEmailTemplate {
 	subject: (companyName: string) => string;
@@ -192,4 +192,80 @@ const tenantRenewalTemplates: Record<string, UpcomingRenewalTemplate> = {};
 
 export function getUpcomingRenewalTemplate(tenantId: string): UpcomingRenewalTemplate {
 	return tenantRenewalTemplates[tenantId] ?? defaultRenewalTemplate;
+}
+
+// ---------------------------------------------------------------------------
+// Contact form notification template
+// ---------------------------------------------------------------------------
+
+export interface ContactNotificationTemplate {
+	subject: (data: ContactNotificationData) => string;
+	html: (data: ContactNotificationData, dashboardUrl: string, companyName: string) => string;
+}
+
+const defaultContactTemplate: ContactNotificationTemplate = {
+	subject: (d) => `Nuevo contacto — ${d.name}`,
+	html: (d, dashboardUrl, companyName) => `<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#f4f4f5;font-family:Arial,Helvetica,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:40px 0;">
+    <tr><td align="center">
+      <table width="480" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;border:1px solid #e4e4e7;padding:40px;">
+        <tr><td style="text-align:center;padding-bottom:24px;">
+          <h1 style="margin:0;font-size:20px;color:#18181b;">${companyName}</h1>
+        </td></tr>
+        <tr><td style="padding-bottom:8px;">
+          <h2 style="margin:0;font-size:18px;color:#18181b;">Nuevo mensaje de contacto</h2>
+        </td></tr>
+        <tr><td style="padding-bottom:24px;">
+          <p style="margin:0;font-size:14px;line-height:1.6;color:#52525b;">
+            Has recibido un nuevo mensaje a través de tu formulario de contacto.
+          </p>
+        </td></tr>
+        <tr><td style="padding-bottom:24px;">
+          <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e4e4e7;border-radius:6px;overflow:hidden;">
+            <tr style="background:#f4f4f5;">
+              <td style="padding:10px 16px;font-size:12px;font-weight:600;color:#71717a;text-transform:uppercase;letter-spacing:0.05em;width:35%;">Campo</td>
+              <td style="padding:10px 16px;font-size:12px;font-weight:600;color:#71717a;text-transform:uppercase;letter-spacing:0.05em;">Detalle</td>
+            </tr>
+            <tr style="border-top:1px solid #e4e4e7;">
+              <td style="padding:10px 16px;font-size:13px;color:#71717a;">Nombre</td>
+              <td style="padding:10px 16px;font-size:13px;color:#18181b;font-weight:500;">${d.name}</td>
+            </tr>
+            <tr style="border-top:1px solid #e4e4e7;background:#fafafa;">
+              <td style="padding:10px 16px;font-size:13px;color:#71717a;">Correo</td>
+              <td style="padding:10px 16px;font-size:13px;color:#18181b;">${d.email}</td>
+            </tr>
+            <tr style="border-top:1px solid #e4e4e7;">
+              <td style="padding:10px 16px;font-size:13px;color:#71717a;">Teléfono</td>
+              <td style="padding:10px 16px;font-size:13px;color:#18181b;">${d.phone}</td>
+            </tr>
+            <tr style="border-top:1px solid #e4e4e7;background:#fafafa;">
+              <td style="padding:10px 16px;font-size:13px;color:#71717a;">Mensaje</td>
+              <td style="padding:10px 16px;font-size:13px;color:#18181b;">${d.message}</td>
+            </tr>
+          </table>
+        </td></tr>
+        <tr><td style="text-align:center;padding-bottom:24px;">
+          <a href="${dashboardUrl}" style="display:inline-block;background:#18181b;color:#ffffff;font-size:14px;font-weight:600;text-decoration:none;padding:12px 32px;border-radius:6px;">
+            Ver contactos
+          </a>
+        </td></tr>
+        <tr><td>
+          <p style="margin:0;font-size:12px;color:#a1a1aa;">
+            Este es un correo automático. Por favor no respondas a este mensaje.
+          </p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`
+};
+
+const tenantContactTemplates: Record<string, ContactNotificationTemplate> = {};
+
+export function getContactNotificationTemplate(tenantId: string): ContactNotificationTemplate {
+	return tenantContactTemplates[tenantId] ?? defaultContactTemplate;
 }
