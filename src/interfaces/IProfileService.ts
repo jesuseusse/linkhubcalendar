@@ -22,7 +22,7 @@ export interface IProfileService {
   getPublicProfile(username: string): Promise<PublicProfileDto>;
   getPublicCalendar(username: string): Promise<PublicCalendarDto>;
   bookAppointment(username: string, dto: CreateAppointmentDto): Promise<AppointmentDto>;
-  getAppointments(token: string, page: number): Promise<PaginatedAppointmentsDto>;
+  getAppointments(token: string, page: number, filter?: 'upcoming' | 'past'): Promise<PaginatedAppointmentsDto>;
   cancelAppointment(token: string, appointmentId: string): Promise<AppointmentDto>;
   confirmAppointment(token: string, appointmentId: string): Promise<AppointmentDto>;
   rescheduleAppointment(token: string, appointmentId: string): Promise<AppointmentDto>;

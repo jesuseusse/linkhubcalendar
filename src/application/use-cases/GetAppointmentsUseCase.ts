@@ -4,8 +4,8 @@ import { PaginatedAppointmentsDto } from "../../domain/dtos/AuthDtos";
 export class GetAppointmentsUseCase {
   constructor(private appointmentRepository: IAppointmentRepository) {}
 
-  async execute(tenantId: string, userId: string, page: number, limit: number): Promise<PaginatedAppointmentsDto> {
-    const { appointments, total } = await this.appointmentRepository.findByUserId(tenantId, userId, page, limit);
+  async execute(tenantId: string, userId: string, page: number, limit: number, filter?: 'upcoming' | 'past'): Promise<PaginatedAppointmentsDto> {
+    const { appointments, total } = await this.appointmentRepository.findByUserId(tenantId, userId, page, limit, filter);
 
     return {
       appointments: appointments.map((a) => ({

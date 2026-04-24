@@ -9,8 +9,11 @@ import { Header } from '@/components/Common/Header';
 import { AppointmentList } from '@/components/Appointments/AppointmentList';
 import { SlotTakenModal } from '@/components/Appointments/SlotTakenModal';
 
+type Filter = 'upcoming' | 'past';
+
 export default function AppointmentsDashboardPage() {
 	const { logout, user } = useAuth(authService);
+	const [filter, setFilter] = useState<Filter>('upcoming');
 	const {
 		appointments,
 		loading,
@@ -21,13 +24,17 @@ export default function AppointmentsDashboardPage() {
 		cancelAppointment,
 		confirmAppointment,
 		rescheduleAppointment,
-	} = useAppointments(profileService);
+	} = useAppointments(profileService, filter);
 
 	const [showSlotTakenModal, setShowSlotTakenModal] = useState(false);
 
 	const handleReschedule = async (id: string) => {
 		const { slotTaken } = await rescheduleAppointment(id);
 		if (slotTaken) setShowSlotTakenModal(true);
+	};
+
+	const handleFilterChange = (newFilter: Filter) => {
+		setFilter(newFilter);
 	};
 
 	if (!user) {
@@ -51,9 +58,33 @@ export default function AppointmentsDashboardPage() {
 					</Link>
 				</div>
 				<section className='bg-surface border border-border p-6 rounded'>
-					<h2 className='text-sm font-semibold text-foreground mb-4 uppercase tracking-wider'>
-						Citas
-					</h2>
+					<div className='flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-4'>
+						<h2 className='text-sm font-semibold text-foreground uppercase tracking-wider'>
+							Citas
+						</h2>
+						<div className='flex gap-2'>
+							<button
+								onClick={() => handleFilterChange('upcoming')}
+								className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
+									filter === 'upcoming'
+										? 'bg-primary text-primary-foreground'
+										: 'bg-muted text-muted-foreground hover:bg-muted/80'
+								}`}
+							>
+								Próximas citas
+							</button>
+							<button
+								onClick={() => handleFilterChange('past')}
+								className={`px-3 py-1.5 text-xs font-medium rounded transition-colors ${
+									filter === 'past'
+										? 'bg-primary text-primary-foreground'
+										: 'bg-muted text-muted-foreground hover:bg-muted/80'
+								}`}
+							>
+								Citas anteriores
+							</button>
+						</div>
+					</div>
 					<AppointmentList
 						appointments={appointments}
 						loading={loading}

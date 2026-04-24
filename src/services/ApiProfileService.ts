@@ -74,8 +74,10 @@ export class ApiProfileService implements IProfileService {
     return apiClient(`/api/u/${username}/appointments`, { method: 'POST', body: JSON.stringify(dto) });
   }
 
-  async getAppointments(_token: string, page: number): Promise<PaginatedAppointmentsDto> {
-    return apiClient(`/api/appointments?page=${page}`);
+  async getAppointments(_token: string, page: number, filter?: 'upcoming' | 'past'): Promise<PaginatedAppointmentsDto> {
+    const params = new URLSearchParams({ page: String(page) });
+    if (filter) params.set('filter', filter);
+    return apiClient(`/api/appointments?${params.toString()}`);
   }
 
   async cancelAppointment(_token: string, appointmentId: string): Promise<AppointmentDto> {

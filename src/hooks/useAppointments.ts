@@ -5,7 +5,7 @@ import { IProfileService } from '@/interfaces/IProfileService';
 import { AppointmentDto } from '@/dtos/user.dto';
 import { useAuthContext } from '@/context/AuthContext';
 
-export function useAppointments(profileService: IProfileService) {
+export function useAppointments(profileService: IProfileService, filter: 'upcoming' | 'past' = 'upcoming') {
 	const { token } = useAuthContext();
 	const [appointments, setAppointments] = useState<AppointmentDto[]>([]);
 	const [loading, setLoading] = useState(false);
@@ -18,7 +18,7 @@ export function useAppointments(profileService: IProfileService) {
 			if (!token) return;
 			setLoading(true);
 			try {
-				const data = await profileService.getAppointments(token, p);
+				const data = await profileService.getAppointments(token, p, filter);
 				setAppointments(data.appointments);
 				setTotalPages(data.totalPages);
 				setTotal(data.total);
@@ -29,7 +29,7 @@ export function useAppointments(profileService: IProfileService) {
 				setLoading(false);
 			}
 		},
-		[token, profileService]
+		[token, profileService, filter]
 	);
 
 	const goToPage = useCallback(

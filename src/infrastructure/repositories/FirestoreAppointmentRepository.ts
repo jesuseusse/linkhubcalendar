@@ -56,15 +56,21 @@ export class FirestoreAppointmentRepository implements IAppointmentRepository {
     return docToAppointment(doc.id, data);
   }
 
-  async findByUserId(tenantId: string, userId: string, page: number, limit: number): Promise<{ appointments: Appointment[]; total: number }> {
+  async findByUserId(tenantId: string, userId: string, page: number, limit: number, filter?: 'upcoming' | 'past'): Promise<{ appointments: Appointment[]; total: number }> {
     const col = this.col(tenantId, userId);
-    const query = col.where('type', '==', 'appointment');
+    const today = new Date().toISOString().slice(0, 10); // YYYY-MM-DD
+    let query = col.where('type', '==', 'appointment') as FirebaseFirestore.Query;
+    if (filter === 'upcoming') {
+      query = query.where('date', '>=', today);
+    } else if (filter === 'past') {
+      query = query.where('date', '<', today);
+    }
     const countSnap = await query.count().get();
     const total = countSnap.data().count;
 
     const offset = (page - 1) * limit;
     const snap = await query
-      .orderBy('createdAt', 'desc')
+      .orderBy('date', filter === 'past' ? 'desc' : 'asc')
       .offset(offset)
       .limit(limit)
       .get();
