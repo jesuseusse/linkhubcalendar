@@ -70,14 +70,23 @@ export function PublicCalendarClient({
 		if (stored) setReservedAppointment(stored);
 	}, [username]);
 
+	const now = new Date();
+	const localToday = format(now, 'yyyy-MM-dd');
+	const localNow = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+	const visibleSlots = calendar.calendarSlots.filter(slot => {
+		if (slot.date > localToday) return true;
+		if (slot.date === localToday) return slot.startTime >= localNow;
+		return false;
+	});
+
 	const selectedDateStr = selectedDate
 		? format(selectedDate, 'yyyy-MM-dd')
 		: '';
 	const slotsForSelectedDate = sortSlotsByDateTime(
-		calendar.calendarSlots.filter(slot => slot.date === selectedDateStr)
+		visibleSlots.filter(slot => slot.date === selectedDateStr)
 	);
 
-	const datesWithSlots = calendar.calendarSlots.reduce<Record<string, number>>(
+	const datesWithSlots = visibleSlots.reduce<Record<string, number>>(
 		(acc, slot) => {
 			acc[slot.date] = (acc[slot.date] || 0) + 1;
 			return acc;
@@ -89,7 +98,7 @@ export function PublicCalendarClient({
 		d => new Date(d + 'T00:00:00')
 	);
 
-	const sortedSlots = sortSlotsByDateTime(calendar.calendarSlots);
+	const sortedSlots = sortSlotsByDateTime(visibleSlots);
 
 	const groupedSlots = sortedSlots.reduce<Record<string, typeof sortedSlots>>(
 		(acc, slot) => {
@@ -258,7 +267,7 @@ export function PublicCalendarClient({
 						</div>
 					)} */}
 
-					{calendar.calendarSlots.length === 0 && (
+					{visibleSlots.length === 0 && (
 						<p className='text-sm text-muted-foreground text-center py-8'>
 							No available slots
 						</p>
