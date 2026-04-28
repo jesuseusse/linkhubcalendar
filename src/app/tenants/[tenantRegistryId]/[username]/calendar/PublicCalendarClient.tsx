@@ -9,6 +9,7 @@ import { profileService } from '@/services/serviceFactory';
 import { AppointmentBookingForm } from '@/components/Appointments/AppointmentBookingForm';
 import { ReservedAppointmentModal, StoredAppointment } from '@/components/Calendar/ReservedAppointmentModal';
 import { getProfilePhotoUrl } from '@/utils/profilePhoto';
+import { sortSlotsByDateTime } from '@/lib/utils/sortSlots';
 import Image from 'next/image';
 
 function formatTime(hhmm: string): string {
@@ -72,8 +73,8 @@ export function PublicCalendarClient({
 	const selectedDateStr = selectedDate
 		? format(selectedDate, 'yyyy-MM-dd')
 		: '';
-	const slotsForSelectedDate = calendar.calendarSlots.filter(
-		slot => slot.date === selectedDateStr
+	const slotsForSelectedDate = sortSlotsByDateTime(
+		calendar.calendarSlots.filter(slot => slot.date === selectedDateStr)
 	);
 
 	const datesWithSlots = calendar.calendarSlots.reduce<Record<string, number>>(
@@ -88,10 +89,7 @@ export function PublicCalendarClient({
 		d => new Date(d + 'T00:00:00')
 	);
 
-	const sortedSlots = [...calendar.calendarSlots].sort((a, b) => {
-		if (a.date !== b.date) return a.date.localeCompare(b.date);
-		return a.startTime.localeCompare(b.startTime);
-	});
+	const sortedSlots = sortSlotsByDateTime(calendar.calendarSlots);
 
 	const groupedSlots = sortedSlots.reduce<Record<string, typeof sortedSlots>>(
 		(acc, slot) => {
@@ -152,6 +150,7 @@ export function PublicCalendarClient({
 								mode='single'
 								selected={selectedDate}
 								onSelect={setSelectedDate}
+								disabled={{ before: new Date() }}
 								modifiers={{ hasSlots: highlightedDays }}
 								modifiersStyles={{
 									hasSlots: {

@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { DayPicker, DateRange } from 'react-day-picker';
 import { format, eachDayOfInterval } from 'date-fns';
 import { CalendarSlotDto, CreateCalendarSlotDto } from '@/dtos/user.dto';
+import { sortSlotsByDateTime, filterFutureSlots } from '@/lib/utils/sortSlots';
 
 const DRAFT_KEY = 'linkhub_calendar_draft';
 
@@ -245,11 +246,10 @@ export function ModalCalendarManager({
 			}
 		: undefined;
 
-	const sortedSlots = [...slots].sort((a, b) =>
-		a.date !== b.date
-			? a.date.localeCompare(b.date)
-			: a.startTime.localeCompare(b.startTime)
-	);
+	const now = new Date();
+	const todayStr = format(now, 'yyyy-MM-dd');
+	const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+	const sortedSlots = sortSlotsByDateTime(filterFutureSlots(slots, todayStr, currentTime));
 
 	const groupedSlots = sortedSlots.reduce<Record<string, CalendarSlotDto[]>>(
 		(acc, slot) => {

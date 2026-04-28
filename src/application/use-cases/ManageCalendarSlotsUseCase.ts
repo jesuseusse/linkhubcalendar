@@ -127,13 +127,23 @@ export class GetPublicCalendarUseCase {
       throw new Error("Calendar is not available");
     }
 
+    const isoStr = new Date().toISOString();
+    const todayStr = isoStr.slice(0, 10);
+    const currentTime = isoStr.slice(11, 16);
+
     const availableSlots = await this.appointmentRepository.findAvailableSlots(tenantId, user.id);
+
+    const futureSlots = availableSlots.filter((slot) => {
+      if (slot.date > todayStr) return true;
+      if (slot.date === todayStr) return slot.startTime >= currentTime;
+      return false;
+    });
 
     return {
       name: user.name,
       username: user.username,
       profilePhoto: user.profilePhoto,
-      calendarSlots: availableSlots.map((slot) => ({
+      calendarSlots: futureSlots.map((slot) => ({
         id: slot.id,
         date: slot.date,
         startTime: slot.startTime,

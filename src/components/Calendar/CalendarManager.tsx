@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { DayPicker } from 'react-day-picker';
 import { format } from 'date-fns';
 import { CalendarSlotDto, CreateCalendarSlotDto } from '@/dtos/user.dto';
+import { sortSlotsByDateTime, filterFutureSlots } from '@/lib/utils/sortSlots';
 import 'react-day-picker/style.css';
 
 interface Props {
@@ -28,6 +29,11 @@ export function CalendarManager({
 	const selectedDateStr = selectedDate
 		? format(selectedDate, 'yyyy-MM-dd')
 		: '';
+	const now = new Date();
+	const todayStr = format(now, 'yyyy-MM-dd');
+	const currentTime = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
+	const futureSlots = filterFutureSlots(slots, todayStr, currentTime);
+
 	const slotsForDate = slots.filter(s => s.date === selectedDateStr);
 
 	const datesWithSlots = slots.reduce<Record<string, number>>((acc, slot) => {
@@ -45,10 +51,7 @@ export function CalendarManager({
 		await onAddSlot({ date: selectedDateStr, startTime, endTime });
 	};
 
-	const sortedSlots = [...slots].sort((a, b) => {
-		if (a.date !== b.date) return a.date.localeCompare(b.date);
-		return a.startTime.localeCompare(b.startTime);
-	});
+	const sortedSlots = sortSlotsByDateTime(futureSlots);
 
 	const groupedSlots = sortedSlots.reduce<Record<string, typeof sortedSlots>>(
 		(acc, slot) => {
@@ -70,6 +73,7 @@ export function CalendarManager({
 						mode='single'
 						selected={selectedDate}
 						onSelect={setSelectedDate}
+						disabled={{ before: new Date() }}
 						modifiers={{ hasSlots: highlightedDays }}
 						modifiersStyles={{
 							hasSlots: { backgroundColor: '#d1fae5', borderRadius: '100%' }
