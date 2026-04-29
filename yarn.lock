@@ -1554,6 +1554,15 @@ __metadata:
   languageName: node
   linkType: hard
 
+"@firebase/rules-unit-testing@npm:^5.0.0":
+  version: 5.0.0
+  resolution: "@firebase/rules-unit-testing@npm:5.0.0"
+  peerDependencies:
+    firebase: ^12.0.0
+  checksum: 4e6a04b3521a639acdad2fb80f4e728b3b756bccd51b777003b25e804fcfcd46385ab84582302142c84e73a01d9d856308d5ee50f165bbb6d1a528bb9151154f
+  languageName: node
+  linkType: hard
+
 "@firebase/storage-compat@npm:0.4.0":
   version: 0.4.0
   resolution: "@firebase/storage-compat@npm:0.4.0"
@@ -6858,6 +6867,7 @@ __metadata:
   resolution: "nex@workspace:."
   dependencies:
     "@aws-sdk/client-ses": ^3.1000.0
+    "@firebase/rules-unit-testing": ^5.0.0
     "@tailwindcss/postcss": ^4
     "@types/node": ^20
     "@types/qrcode": ^1.5.6

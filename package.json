@@ -10,7 +10,8 @@
     "upsert-tenant-theme": "tsx scripts/upsert-tenant-theme.ts",
     "upsert-tenant": "tsx scripts/upsert-tenant-theme.ts",
     "test": "vitest run",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:rules": "JAVA_HOME=/Library/Java/JavaVirtualMachines/zulu-21.jdk/Contents/Home firebase emulators:exec --only firestore 'vitest run --config vitest.rules.config.ts'"
   },
   "dependencies": {
     "@aws-sdk/client-ses": "^3.1000.0",
@@ -28,6 +29,7 @@
     "stripe": "^20.3.1"
   },
   "devDependencies": {
+    "@firebase/rules-unit-testing": "^5.0.0",
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/qrcode": "^1.5.6",

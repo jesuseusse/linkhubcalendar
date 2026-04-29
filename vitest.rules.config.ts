@@ -4,7 +4,7 @@ import path from 'path';
 export default defineConfig({
 	test: {
 		globals: true,
-		exclude: ['**/node_modules/**', 'src/__tests__/firestore.rules.test.ts']
+		include: ['src/__tests__/firestore.rules.test.ts']
 	},
 	resolve: {
 		alias: {

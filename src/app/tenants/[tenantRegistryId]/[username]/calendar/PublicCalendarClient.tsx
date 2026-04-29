@@ -70,14 +70,8 @@ export function PublicCalendarClient({
 		if (stored) setReservedAppointment(stored);
 	}, [username]);
 
-	const now = new Date();
-	const localToday = format(now, 'yyyy-MM-dd');
-	const localNow = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}`;
-	const visibleSlots = calendar.calendarSlots.filter(slot => {
-		if (slot.date > localToday) return true;
-		if (slot.date === localToday) return slot.startTime >= localNow;
-		return false;
-	});
+	const todayStr = format(new Date(), 'yyyy-MM-dd');
+	const visibleSlots = calendar.calendarSlots.filter(slot => slot.date >= todayStr);
 
 	const selectedDateStr = selectedDate
 		? format(selectedDate, 'yyyy-MM-dd')
