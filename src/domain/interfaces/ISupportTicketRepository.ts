@@ -76,4 +76,7 @@ export interface ISupportTicketRepository {
     ticketId: string,
     comment: Omit<TicketComment, 'id' | 'createdAt'>
   ): Promise<TicketComment>;
+
+  /** Returns all tickets across a set of users in a tenant, unordered. */
+  findAllByTenant(tenantId: string, userIds: string[]): Promise<SupportTicket[]>;
 }

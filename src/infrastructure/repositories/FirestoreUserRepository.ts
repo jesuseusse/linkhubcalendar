@@ -257,6 +257,11 @@ export class FirestoreUserRepository implements IUserRepository {
 		return docToUser(id, updated.data()!);
 	}
 
+	async findAll(tenantId: string): Promise<User[]> {
+		const snap = await this.col(tenantId).get();
+		return snap.docs.map((doc) => docToUser(doc.id, doc.data()));
+	}
+
 	async updateSubscriptionFlags(
 		tenantId: string,
 		id: string,

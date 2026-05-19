@@ -42,6 +42,11 @@ import {
   UpdateTicketStatusUseCase,
   AddCommentUseCase,
 } from '@/application/use-cases/ManageSupportTicketsUseCase';
+import {
+  GetSuperAdminStatsUseCase,
+  GetAllUsersUseCase,
+  GetAllTicketsUseCase,
+} from '@/application/use-cases/SuperAdminUseCases';
 
 export const tenantRegistryRepo = new FirestoreTenantRegistryRepository();
 export const userRepo = new FirestoreUserRepository();
@@ -85,4 +90,8 @@ export const container = {
   getTicketDetailUseCase: new GetTicketDetailUseCase(supportTicketRepo),
   updateTicketStatusUseCase: new UpdateTicketStatusUseCase(supportTicketRepo),
   addCommentUseCase: new AddCommentUseCase(supportTicketRepo),
+  // Super admin
+  getSuperAdminStatsUseCase: new GetSuperAdminStatsUseCase(userRepo),
+  getAllUsersUseCase: new GetAllUsersUseCase(userRepo),
+  getAllTicketsUseCase: new GetAllTicketsUseCase(userRepo, supportTicketRepo),
 };

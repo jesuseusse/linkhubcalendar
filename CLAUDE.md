@@ -327,6 +327,32 @@ SupportPage
 - UI constants: `src/components/Support/support.const.ts`
 - Dashboard page: `src/app/tenants/[tenantRegistryId]/u/admin/dashboard/support/page.tsx`
 
+## Super Admin Panel
+
+Accessible only to emails listed in `NEXT_SUPER_ADMINS_EMAILS` (comma-separated env var). The panel is intentionally at a non-obvious route to reduce discoverability.
+
+**Routes:**
+- `/dashboard/console/hub/` — stats dashboard (total users, paid users)
+- `/dashboard/console/hub/users/` — registered user list with plan, links, profile link
+- `/dashboard/console/hub/tickets/` — all tenant tickets with filters and detail modal
+
+**Access control:** All API routes call `checkSuperAdmin(req)` which wraps `checkAuth` and additionally validates the caller's email against the allow-list. Non-admins get 403; client pages redirect to `/dashboard/` on 403.
+
+**Ticket filters (client-side):** type (error | suggestion | all), email substring search, sort order (newest/oldest).
+
+**Ticket detail modal:** Reuses `CommentSection` component. Supports status transitions and adding comments (admin is the commenter). `ALLOWED_TRANSITIONS` in `TicketDetailModal.tsx` is intentionally wider than the user-facing version (admin can also transition `closed → solved`).
+
+**Header badge:** Super admin pages pass `badge="SUPER ADMIN"` to `<Header>`. The `badge` prop is optional; regular dashboard pages are unaffected.
+
+**Key files:**
+- Auth guard: `src/lib/auth/checkSuperAdmin.ts`
+- Use cases: `src/application/use-cases/SuperAdminUseCases.ts`
+- API routes: `src/app/api/super-admin/`
+- Client service: `src/services/ApiSuperAdminService.ts`
+- Hook: `src/hooks/useSuperAdmin.ts`
+- Components: `src/components/SuperAdmin/`
+- Pages: `src/app/tenants/[tenantRegistryId]/u/admin/dashboard/console/hub/`
+
 ## Commands
 
 ```bash

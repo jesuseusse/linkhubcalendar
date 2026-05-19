@@ -173,3 +173,40 @@ export interface CreateSupportTicketDto {
 	deviceOther?: string;
 	whatsappPhone?: string;
 }
+
+// ---------------------------------------------------------------------------
+// Super admin DTOs
+// ---------------------------------------------------------------------------
+
+export interface UserSummaryDto {
+	id: string;
+	email: string;
+	name: string;
+	username?: string;
+	plan?: Plan;
+	planExpiredAt?: number | null;
+	links: LinkDto[];
+	createdAt: number;
+}
+
+export interface SuperAdminTicketDto {
+	id: string;
+	userId: string;
+	userEmail: string;
+	userName: string;
+	type: TicketType;
+	status: TicketStatus;
+	title: string;
+	description: string;
+	deviceType?: DeviceType;
+	deviceOther?: string;
+	screenshotUrl?: string;
+	whatsappPhone?: string;
+	createdAt: number;
+	updatedAt: number;
+}
+
+export interface SuperAdminStatsDto {
+	totalUsers: number;
+	usersWithActivePaidPlan: number;
+}

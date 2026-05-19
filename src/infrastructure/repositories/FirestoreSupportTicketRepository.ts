@@ -106,6 +106,13 @@ export class FirestoreSupportTicketRepository implements ISupportTicketRepositor
     return docToTicket(ticketId, updated.data()!);
   }
 
+  async findAllByTenant(tenantId: string, userIds: string[]): Promise<SupportTicket[]> {
+    const results = await Promise.all(
+      userIds.map((userId) => this.findByUserId(tenantId, userId))
+    );
+    return results.flat();
+  }
+
   async addComment(
     tenantId: string,
     userId: string,

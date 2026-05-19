@@ -8,9 +8,10 @@ interface Props {
 	userName?: string;
 	isAuthenticated?: boolean;
 	onLogout?: () => void;
+	badge?: string;
 }
 
-export function Header({ userName, isAuthenticated, onLogout }: Props) {
+export function Header({ userName, isAuthenticated, onLogout, badge }: Props) {
 	const [open, setOpen] = useState(false);
 	const ref = useRef<HTMLDivElement>(null);
 	const pathname = usePathname();
@@ -38,7 +39,14 @@ export function Header({ userName, isAuthenticated, onLogout }: Props) {
 	return (
 		<header className='bg-primary text-primary-foreground px-4 py-3'>
 			<div className='max-w-5xl mx-auto flex items-center justify-between'>
-				<span className='text-sm font-semibold tracking-tight'>Link Hub</span>
+				<div className='flex items-center gap-2'>
+					<span className='text-sm font-semibold tracking-tight'>Link Hub</span>
+					{badge && (
+						<span className='text-xs font-bold px-2 py-0.5 bg-warning text-white rounded uppercase tracking-wider'>
+							{badge}
+						</span>
+					)}
+				</div>
 				<div className='flex items-center gap-3'>
 					{isAuthenticated && userName && (
 						<span className='text-xs text-primary-foreground/60'>
