@@ -1,4 +1,4 @@
-import { AppointmentNotificationData, ContactNotificationData, UpcomingRenewalData } from '@/domain/interfaces/IEmailSenderService';
+import { AppointmentNotificationData, ContactNotificationData, SupportTicketNotificationData, UpcomingRenewalData } from '@/domain/interfaces/IEmailSenderService';
 
 export interface VerificationEmailTemplate {
 	subject: (companyName: string) => string;
@@ -268,4 +268,84 @@ const tenantContactTemplates: Record<string, ContactNotificationTemplate> = {};
 
 export function getContactNotificationTemplate(tenantId: string): ContactNotificationTemplate {
 	return tenantContactTemplates[tenantId] ?? defaultContactTemplate;
+}
+
+// ---------------------------------------------------------------------------
+// Support ticket admin notification template
+// ---------------------------------------------------------------------------
+
+export interface SupportTicketNotificationTemplate {
+	subject: (data: SupportTicketNotificationData) => string;
+	html: (data: SupportTicketNotificationData, companyName: string) => string;
+}
+
+const typeLabels: Record<string, string> = {
+	error: 'Reporte de error',
+	suggestion: 'Sugerencia',
+};
+
+const defaultSupportTicketTemplate: SupportTicketNotificationTemplate = {
+	subject: (d) => `Nuevo ticket: ${typeLabels[d.type] ?? d.type} — ${d.title}`,
+	html: (d, companyName) => `<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#f4f4f5;font-family:Arial,Helvetica,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:40px 0;">
+    <tr><td align="center">
+      <table width="480" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;border:1px solid #e4e4e7;padding:40px;">
+        <tr><td style="text-align:center;padding-bottom:24px;">
+          <h1 style="margin:0;font-size:20px;color:#18181b;">${companyName}</h1>
+        </td></tr>
+        <tr><td style="padding-bottom:8px;">
+          <h2 style="margin:0;font-size:18px;color:#18181b;">Nuevo ticket de soporte</h2>
+        </td></tr>
+        <tr><td style="padding-bottom:24px;">
+          <p style="margin:0;font-size:14px;line-height:1.6;color:#52525b;">
+            Un usuario ha enviado un nuevo ticket que requiere tu atención.
+          </p>
+        </td></tr>
+        <tr><td style="padding-bottom:24px;">
+          <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e4e4e7;border-radius:6px;overflow:hidden;">
+            <tr style="background:#f4f4f5;">
+              <td style="padding:10px 16px;font-size:12px;font-weight:600;color:#71717a;text-transform:uppercase;letter-spacing:0.05em;width:35%;">Campo</td>
+              <td style="padding:10px 16px;font-size:12px;font-weight:600;color:#71717a;text-transform:uppercase;letter-spacing:0.05em;">Detalle</td>
+            </tr>
+            <tr style="border-top:1px solid #e4e4e7;">
+              <td style="padding:10px 16px;font-size:13px;color:#71717a;">Tipo</td>
+              <td style="padding:10px 16px;font-size:13px;color:#18181b;font-weight:500;">${typeLabels[d.type] ?? d.type}</td>
+            </tr>
+            <tr style="border-top:1px solid #e4e4e7;background:#fafafa;">
+              <td style="padding:10px 16px;font-size:13px;color:#71717a;">Título</td>
+              <td style="padding:10px 16px;font-size:13px;color:#18181b;">${d.title}</td>
+            </tr>
+            <tr style="border-top:1px solid #e4e4e7;">
+              <td style="padding:10px 16px;font-size:13px;color:#71717a;">Usuario</td>
+              <td style="padding:10px 16px;font-size:13px;color:#18181b;">${d.userName}</td>
+            </tr>
+            <tr style="border-top:1px solid #e4e4e7;background:#fafafa;">
+              <td style="padding:10px 16px;font-size:13px;color:#71717a;">Correo</td>
+              <td style="padding:10px 16px;font-size:13px;color:#18181b;">${d.userEmail}</td>
+            </tr>
+            <tr style="border-top:1px solid #e4e4e7;">
+              <td style="padding:10px 16px;font-size:13px;color:#71717a;">Descripción</td>
+              <td style="padding:10px 16px;font-size:13px;color:#18181b;white-space:pre-wrap;">${d.description}</td>
+            </tr>
+          </table>
+        </td></tr>
+        <tr><td>
+          <p style="margin:0;font-size:12px;color:#a1a1aa;">
+            Este es un correo automático. Por favor no respondas a este mensaje.
+          </p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`
+};
+
+const tenantSupportTicketTemplates: Record<string, SupportTicketNotificationTemplate> = {};
+
+export function getSupportTicketNotificationTemplate(tenantId: string): SupportTicketNotificationTemplate {
+	return tenantSupportTicketTemplates[tenantId] ?? defaultSupportTicketTemplate;
 }

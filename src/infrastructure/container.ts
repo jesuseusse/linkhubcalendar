@@ -2,6 +2,7 @@ import { FirestoreTenantRegistryRepository } from './repositories/FirestoreTenan
 import { FirestoreUserRepository } from './repositories/FirestoreUserRepository';
 import { FirestoreAppointmentRepository } from './repositories/FirestoreAppointmentRepository';
 import { FirestoreLeadRepository } from './repositories/FirestoreLeadRepository';
+import { FirestoreSupportTicketRepository } from './repositories/FirestoreSupportTicketRepository';
 import { FirebaseStorageService } from './services/FirebaseStorageService';
 import { FirebaseEmailVerificationService } from './services/FirebaseEmailVerificationService';
 import { GetProfileUseCase } from '@/application/use-cases/GetProfileUseCase';
@@ -34,11 +35,19 @@ import { SubmitLeadUseCase } from '@/application/use-cases/SubmitLeadUseCase';
 import { GetLeadsUseCase } from '@/application/use-cases/GetLeadsUseCase';
 import { UpdateLeadStatusUseCase } from '@/application/use-cases/UpdateLeadStatusUseCase';
 import { GetLeadsPaginatedUseCase } from '@/application/use-cases/GetLeadsPaginatedUseCase';
+import {
+  CreateSupportTicketUseCase,
+  GetSupportTicketsUseCase,
+  GetTicketDetailUseCase,
+  UpdateTicketStatusUseCase,
+  AddCommentUseCase,
+} from '@/application/use-cases/ManageSupportTicketsUseCase';
 
 export const tenantRegistryRepo = new FirestoreTenantRegistryRepository();
 export const userRepo = new FirestoreUserRepository();
 export const appointmentRepo = new FirestoreAppointmentRepository();
 export const leadRepo = new FirestoreLeadRepository();
+export const supportTicketRepo = new FirestoreSupportTicketRepository();
 const storageService = new FirebaseStorageService();
 export const emailVerificationService = new FirebaseEmailVerificationService();
 
@@ -69,4 +78,11 @@ export const container = {
   getLeadsUseCase: new GetLeadsUseCase(leadRepo),
   updateLeadStatusUseCase: new UpdateLeadStatusUseCase(leadRepo),
   getLeadsPaginatedUseCase: new GetLeadsPaginatedUseCase(leadRepo),
+  // Support tickets — email deps are injected ad-hoc per request in the API route
+  supportTicketRepo,
+  createSupportTicketUseCase: new CreateSupportTicketUseCase(supportTicketRepo),
+  getSupportTicketsUseCase: new GetSupportTicketsUseCase(supportTicketRepo),
+  getTicketDetailUseCase: new GetTicketDetailUseCase(supportTicketRepo),
+  updateTicketStatusUseCase: new UpdateTicketStatusUseCase(supportTicketRepo),
+  addCommentUseCase: new AddCommentUseCase(supportTicketRepo),
 };

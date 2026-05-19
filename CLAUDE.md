@@ -284,6 +284,49 @@ Used in `LinkItem.tsx` (dashboard list) and `PublicProfileClient.tsx` (public pr
 
 UI strings are in **Spanish**. There is no i18n library — all text is hardcoded.
 
+## Support Tickets
+
+Users can report bugs and submit suggestions from the Header settings dropdown under "Soporte y sugerencias", which navigates to `/dashboard/support`.
+
+**Ticket types:** `error` | `suggestion`
+
+**Ticket statuses:** `open` | `closed` | `solved` | `cancelled`
+
+**Constraints (both server and client-enforced):**
+- Only one open ticket per type per user
+- Comments are only allowed on `open` tickets
+
+**Firestore paths:**
+- Tickets: `tenants/{tenantId}/users/{userId}/support_tickets/{ticketId}`
+- Comments: `tenants/{tenantId}/users/{userId}/support_tickets/{ticketId}/comments/{commentId}`
+
+**Admin notification:** New tickets send an email to `NEXT_SUPER_ADMINS_EMAILS` (comma-separated env var) using the tenant's email service (silently skipped if not configured).
+
+**Error form fields:** title, description, device type (dropdown), free-text if "other", screenshot (ImageCropUpload), WhatsApp phone (InputPhone).
+
+**Suggestion form fields:** title, description, screenshot (ImageCropUpload), WhatsApp phone (InputPhone).
+
+**UI strings** are centralised in `src/components/Support/support.const.ts` for easy maintenance.
+
+**Component tree:**
+```
+SupportPage
+├── TicketWizard (multi-step: TicketTypeSelector → ErrorReportForm | SuggestionForm → success)
+├── TicketList
+└── TicketDetail
+    └── CommentSection
+```
+
+**Key files:**
+- Entity: `src/domain/entities/SupportTicket.ts`
+- Repository interface: `src/domain/interfaces/ISupportTicketRepository.ts`
+- Firestore repo: `src/infrastructure/repositories/FirestoreSupportTicketRepository.ts`
+- Use cases: `src/application/use-cases/ManageSupportTicketsUseCase.ts`
+- API routes: `src/app/api/support/`
+- Hook: `src/hooks/useSupportTickets.ts`
+- UI constants: `src/components/Support/support.const.ts`
+- Dashboard page: `src/app/tenants/[tenantRegistryId]/u/admin/dashboard/support/page.tsx`
+
 ## Commands
 
 ```bash

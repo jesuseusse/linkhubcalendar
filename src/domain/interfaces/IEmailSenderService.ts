@@ -27,6 +27,15 @@ export interface ContactNotificationData {
   message: string;
 }
 
+export interface SupportTicketNotificationData {
+  title: string;
+  /** 'error' or 'suggestion' */
+  type: string;
+  userName: string;
+  userEmail: string;
+  description: string;
+}
+
 export interface IEmailSenderService {
   sendVerificationEmail(
     config: EmailSenderConfig,
@@ -54,6 +63,20 @@ export interface IEmailSenderService {
     ownerEmail: string,
     data: ContactNotificationData,
     dashboardUrl: string,
+    companyName?: string
+  ): Promise<void>;
+
+  /**
+   * Sends a new-ticket notification to one or more super-admin email addresses.
+   * @param config - Tenant email sender config.
+   * @param adminEmails - List of recipient addresses (from NEXT_SUPER_ADMINS_EMAILS).
+   * @param data - Ticket summary data for the email body.
+   * @param companyName - Optional tenant company name for the email header.
+   */
+  sendSupportTicketNotification(
+    config: EmailSenderConfig,
+    adminEmails: string[],
+    data: SupportTicketNotificationData,
     companyName?: string
   ): Promise<void>;
 }

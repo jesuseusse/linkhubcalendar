@@ -4,9 +4,10 @@ import {
 	EmailSenderConfig,
 	AppointmentNotificationData,
 	ContactNotificationData,
+	SupportTicketNotificationData,
 	UpcomingRenewalData
 } from '@/domain/interfaces/IEmailSenderService';
-import { getVerificationEmailTemplate, getAppointmentNotificationTemplate, getContactNotificationTemplate, getUpcomingRenewalTemplate } from './emailTemplates';
+import { getVerificationEmailTemplate, getAppointmentNotificationTemplate, getContactNotificationTemplate, getUpcomingRenewalTemplate, getSupportTicketNotificationTemplate } from './emailTemplates';
 
 export class ResendEmailSenderService implements IEmailSenderService {
 	async sendVerificationEmail(
@@ -90,6 +91,29 @@ export class ResendEmailSenderService implements IEmailSenderService {
 			from: config.fromEmail,
 			to: data.email,
 			subject: template.subject(name),
+			html: template.html(data, name)
+		});
+
+		if (error) {
+			throw new Error(`Error al enviar correo: ${error.message}`);
+		}
+	}
+
+	async sendSupportTicketNotification(
+		config: EmailSenderConfig,
+		adminEmails: string[],
+		data: SupportTicketNotificationData,
+		companyName?: string
+	): Promise<void> {
+		if (adminEmails.length === 0) return;
+		const resend = new Resend(config.apiKey);
+		const name = companyName || 'LinkHub';
+		const template = getSupportTicketNotificationTemplate(config.tenantId);
+
+		const { error } = await resend.emails.send({
+			from: config.fromEmail,
+			to: adminEmails,
+			subject: template.subject(data),
 			html: template.html(data, name)
 		});
 

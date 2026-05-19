@@ -129,3 +129,47 @@ export interface PaginatedAppointmentsDto {
 	page: number;
 	totalPages: number;
 }
+
+// ---------------------------------------------------------------------------
+// Support tickets
+// ---------------------------------------------------------------------------
+
+export type TicketType = 'error' | 'suggestion';
+export type TicketStatus = 'open' | 'closed' | 'solved' | 'cancelled';
+export type DeviceType = 'ios' | 'android' | 'windows' | 'mac' | 'tablet' | 'other';
+
+export interface SupportTicketDto {
+	id: string;
+	type: TicketType;
+	status: TicketStatus;
+	title: string;
+	description: string;
+	deviceType?: DeviceType;
+	deviceOther?: string;
+	screenshotUrl?: string;
+	whatsappPhone?: string;
+	createdAt: number;
+	updatedAt: number;
+}
+
+export interface TicketCommentDto {
+	id: string;
+	content: string;
+	userName: string;
+	userEmail: string;
+	createdAt: number;
+}
+
+export interface TicketDetailDto {
+	ticket: SupportTicketDto;
+	comments: TicketCommentDto[];
+}
+
+export interface CreateSupportTicketDto {
+	type: TicketType;
+	title: string;
+	description: string;
+	deviceType?: DeviceType;
+	deviceOther?: string;
+	whatsappPhone?: string;
+}

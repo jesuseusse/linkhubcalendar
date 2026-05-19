@@ -4,9 +4,10 @@ import {
 	EmailSenderConfig,
 	AppointmentNotificationData,
 	ContactNotificationData,
+	SupportTicketNotificationData,
 	UpcomingRenewalData
 } from '@/domain/interfaces/IEmailSenderService';
-import { getVerificationEmailTemplate, getAppointmentNotificationTemplate, getContactNotificationTemplate, getUpcomingRenewalTemplate } from './emailTemplates';
+import { getVerificationEmailTemplate, getAppointmentNotificationTemplate, getContactNotificationTemplate, getUpcomingRenewalTemplate, getSupportTicketNotificationTemplate } from './emailTemplates';
 
 export class AwsSesEmailSenderService implements IEmailSenderService {
 	private client: SESClient;
@@ -130,6 +131,34 @@ export class AwsSesEmailSenderService implements IEmailSenderService {
 			Destination: { ToAddresses: [data.email] },
 			Message: {
 				Subject: { Data: template.subject(name), Charset: 'UTF-8' },
+				Body: { Html: { Data: template.html(data, name), Charset: 'UTF-8' } }
+			}
+		});
+
+		try {
+			await this.client.send(command);
+		} catch (err: unknown) {
+			const message = err instanceof Error ? err.message : 'SES send error';
+			console.error(message);
+			throw new Error(`Error al enviar correo`);
+		}
+	}
+
+	async sendSupportTicketNotification(
+		config: EmailSenderConfig,
+		adminEmails: string[],
+		data: SupportTicketNotificationData,
+		companyName?: string
+	): Promise<void> {
+		if (adminEmails.length === 0) return;
+		const name = companyName || 'LinkHub';
+		const template = getSupportTicketNotificationTemplate(config.tenantId);
+
+		const command = new SendEmailCommand({
+			Source: config.fromEmail,
+			Destination: { ToAddresses: adminEmails },
+			Message: {
+				Subject: { Data: template.subject(data), Charset: 'UTF-8' },
 				Body: { Html: { Data: template.html(data, name), Charset: 'UTF-8' } }
 			}
 		});

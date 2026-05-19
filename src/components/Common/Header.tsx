@@ -15,16 +15,15 @@ export function Header({ userName, isAuthenticated, onLogout }: Props) {
 	const ref = useRef<HTMLDivElement>(null);
 	const pathname = usePathname();
 
-	// Derive billing path from current pathname: find "/dashboard" segment and append "/billing"
+	// Derive section paths from current pathname by finding the "/dashboard" segment
 	const dashboardIndex = pathname.indexOf('/dashboard');
-	const billingPath =
+	const dashboardBase =
 		dashboardIndex !== -1
-			? pathname.slice(0, dashboardIndex + '/dashboard'.length) + '/billing'
-			: '/billing';
-	const seoPath =
-		dashboardIndex !== -1
-			? pathname.slice(0, dashboardIndex + '/dashboard'.length) + '/seo'
-			: '/seo';
+			? pathname.slice(0, dashboardIndex + '/dashboard'.length)
+			: '';
+	const billingPath = dashboardBase ? dashboardBase + '/billing' : '/billing';
+	const seoPath = dashboardBase ? dashboardBase + '/seo' : '/seo';
+	const supportPath = dashboardBase ? dashboardBase + '/support' : '/support';
 
 	useEffect(() => {
 		function handleClickOutside(e: MouseEvent) {
@@ -69,7 +68,7 @@ export function Header({ userName, isAuthenticated, onLogout }: Props) {
 							</button>
 
 							{open && (
-								<div className='absolute right-0 mt-2 w-44 rounded-md shadow-lg bg-surface border border-border z-50 overflow-hidden'>
+								<div className='absolute right-0 mt-2 w-52 rounded-md shadow-lg bg-surface border border-border z-50 overflow-hidden'>
 									<Link
 										href={seoPath}
 										onClick={() => setOpen(false)}
@@ -83,6 +82,13 @@ export function Header({ userName, isAuthenticated, onLogout }: Props) {
 										className='flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors'
 									>
 										Cuenta
+									</Link>
+									<Link
+										href={supportPath}
+										onClick={() => setOpen(false)}
+										className='flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors'
+									>
+										Soporte y sugerencias
 									</Link>
 									{onLogout && (
 										<button
