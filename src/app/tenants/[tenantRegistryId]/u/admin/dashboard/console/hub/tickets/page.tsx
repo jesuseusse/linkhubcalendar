@@ -33,6 +33,7 @@ export default function SuperAdminTicketsPage() {
     updateTicketStatus,
     addComment,
     forbidden,
+    checking,
   } = useSuperAdmin(superAdminService);
 
   useEffect(() => {
@@ -44,7 +45,7 @@ export default function SuperAdminTicketsPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (!user) {
+  if (checking || forbidden || !user) {
     return (
       <p className='text-center text-muted-foreground py-16 text-sm'>Cargando...</p>
     );

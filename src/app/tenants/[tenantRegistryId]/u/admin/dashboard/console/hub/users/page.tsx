@@ -14,7 +14,7 @@ import { SUPER_ADMIN_BADGE, USERS_LABELS } from '@/components/SuperAdmin/superAd
 export default function SuperAdminUsersPage() {
   const router = useRouter();
   const { logout, user } = useAuth(authService);
-  const { users, usersLoading, loadUsers, forbidden } = useSuperAdmin(superAdminService);
+  const { users, usersLoading, loadUsers, forbidden, checking } = useSuperAdmin(superAdminService);
 
   useEffect(() => {
     if (forbidden) router.replace('../../../dashboard');
@@ -25,7 +25,7 @@ export default function SuperAdminUsersPage() {
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  if (!user) {
+  if (checking || forbidden || !user) {
     return (
       <p className='text-center text-muted-foreground py-16 text-sm'>Cargando...</p>
     );

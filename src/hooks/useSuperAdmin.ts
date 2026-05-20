@@ -39,6 +39,7 @@ export function useSuperAdmin(service: ISuperAdminService) {
 
   // Access control
   const [forbidden, setForbidden] = useState(false);
+  const [checking, setChecking] = useState(true);
 
   const handleError = useCallback((err: unknown) => {
     if (err instanceof Error && err.message === 'Forbidden') {
@@ -56,6 +57,7 @@ export function useSuperAdmin(service: ISuperAdminService) {
       handleError(err);
     } finally {
       setStatsLoading(false);
+      setChecking(false);
     }
   }, [token, service, handleError]);
 
@@ -194,5 +196,6 @@ export function useSuperAdmin(service: ISuperAdminService) {
     updateTicketStatus,
     addComment,
     forbidden,
+    checking,
   };
 }

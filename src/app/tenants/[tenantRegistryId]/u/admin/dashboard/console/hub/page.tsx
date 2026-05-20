@@ -14,13 +14,13 @@ import { SUPER_ADMIN_BADGE } from '@/components/SuperAdmin/superAdmin.const';
 export default function SuperAdminDashboardPage() {
   const router = useRouter();
   const { logout, user } = useAuth(authService);
-  const { stats, statsLoading, forbidden } = useSuperAdmin(superAdminService);
+  const { stats, statsLoading, forbidden, checking } = useSuperAdmin(superAdminService);
 
   useEffect(() => {
     if (forbidden) router.replace('../../dashboard');
   }, [forbidden, router]);
 
-  if (!user) {
+  if (checking || forbidden || !user) {
     return (
       <p className='text-center text-muted-foreground py-16 text-sm'>Cargando...</p>
     );
