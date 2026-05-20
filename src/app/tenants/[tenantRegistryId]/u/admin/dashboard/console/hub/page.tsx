@@ -17,7 +17,7 @@ export default function SuperAdminDashboardPage() {
   const { stats, statsLoading, forbidden } = useSuperAdmin(superAdminService);
 
   useEffect(() => {
-    if (forbidden) router.replace('../dashboard');
+    if (forbidden) router.replace('../../dashboard');
   }, [forbidden, router]);
 
   if (!user) {
@@ -32,7 +32,7 @@ export default function SuperAdminDashboardPage() {
       <main className='max-w-5xl mx-auto py-8 px-4'>
         <div className='flex items-center gap-4 mb-6'>
           <Link
-            href='../dashboard'
+            href='../../dashboard'
             className='text-sm text-muted-foreground hover:text-foreground transition-colors'
           >
             &larr; Dashboard
