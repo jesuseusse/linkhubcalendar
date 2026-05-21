@@ -6,7 +6,7 @@ frontend:
         - yarn install
     build:
       commands:
-        - env | grep -e NEXT_PUBLIC_ -e FIREBASE_ADMIN_ >> .env.production
+        - env | grep -e NEXT_PUBLIC_ -e FIREBASE_ADMIN_ -e NEXT_SUPER_ADMINS_EMAILS >> .env.production
         - yarn build
   artifacts:
     baseDirectory: .next
