@@ -337,7 +337,7 @@ export default function DashboardPage() {
 							</div>
 						</div>
 						<Link
-							href='./gallery'
+							href={pathname + '/gallery'}
 							className='inline-block mt-4 text-sm text-muted-foreground hover:text-foreground underline transition-colors'
 						>
 							Gestionar galería

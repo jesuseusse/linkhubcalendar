@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import Image from 'next/image';
 import {
   DndContext,
@@ -61,8 +61,8 @@ function SortablePhoto({ photo, onDelete, loading }: SortablePhotoProps) {
         aria-label={GALLERY_LABELS.dragAriaLabel}
       />
 
-      {/* Drag handle icon visible on hover/focus */}
-      <div className='absolute top-1.5 left-1.5 w-6 h-6 flex items-center justify-center rounded-full bg-black/40 text-white opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none'>
+      {/* Drag handle icon: always visible on mobile, hover-reveal on desktop */}
+      <div className='absolute top-1.5 left-1.5 w-6 h-6 flex items-center justify-center rounded-full bg-black/40 text-white opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity pointer-events-none'>
         <span className='material-icons text-sm' style={{ fontSize: 14 }}>
           drag_indicator
         </span>
@@ -74,7 +74,7 @@ function SortablePhoto({ photo, onDelete, loading }: SortablePhotoProps) {
         onClick={() => onDelete(photo.id)}
         disabled={loading}
         aria-label={GALLERY_LABELS.deleteAriaLabel}
-        className='absolute top-1.5 right-1.5 w-6 h-6 flex items-center justify-center rounded-full bg-black/50 text-white hover:bg-error transition-colors pointer-events-auto z-10 opacity-0 group-hover:opacity-100'
+        className='absolute top-1.5 right-1.5 w-6 h-6 flex items-center justify-center rounded-full bg-black/50 text-white hover:bg-error transition-colors pointer-events-auto z-10 opacity-100 sm:opacity-0 sm:group-hover:opacity-100'
       >
         <span className='material-icons' style={{ fontSize: 14 }}>
           close
@@ -103,14 +103,19 @@ export function GalleryManager({
   onReorder,
   onToggle,
 }: Props) {
-  const [localPhotos, setLocalPhotos] = useState<GalleryPhotoDto[]>(photos);
+  const [localOrder, setLocalOrder] = useState<string[] | null>(null);
   const [showUpload, setShowUpload] = useState(false);
-  const maxReached = localPhotos.length >= 10;
 
-  // Keep local state in sync when parent updates (after upload/delete)
-  if (photos.length !== localPhotos.length || photos.some((p, i) => p.id !== localPhotos[i]?.id)) {
-    setLocalPhotos([...photos].sort((a, b) => a.order - b.order));
-  }
+  const localPhotos = useMemo(() => {
+    if (localOrder) {
+      return localOrder
+        .map((id) => photos.find((p) => p.id === id))
+        .filter(Boolean) as GalleryPhotoDto[];
+    }
+    return [...photos].sort((a, b) => a.order - b.order);
+  }, [photos, localOrder]);
+
+  const maxReached = localPhotos.length >= 10;
 
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
@@ -124,8 +129,10 @@ export function GalleryManager({
     const oldIndex = localPhotos.findIndex((p) => p.id === active.id);
     const newIndex = localPhotos.findIndex((p) => p.id === over.id);
     const reordered = arrayMove(localPhotos, oldIndex, newIndex);
-    setLocalPhotos(reordered);
-    await onReorder(reordered.map((p) => p.id));
+    const orderedIds = reordered.map((p) => p.id);
+    setLocalOrder(orderedIds);
+    await onReorder(orderedIds);
+    setLocalOrder(null);
   }
 
   async function handleDelete(photoId: string) {

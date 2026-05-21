@@ -7,6 +7,8 @@ import { authService, profileService } from '@/services/serviceFactory';
 import { Header } from '@/components/Common/Header';
 import { GalleryManager } from '@/components/Gallery/GalleryManager';
 import { GALLERY_LABELS } from '@/components/Gallery/gallery.const';
+import { RequirePermission } from '@/components/Common/RequirePermission';
+import { PERMISSIONS } from '@/permissions/plans';
 
 export default function GalleryDashboardPage() {
   const { logout, user } = useAuth(authService);
@@ -37,20 +39,22 @@ export default function GalleryDashboardPage() {
             &larr; Dashboard
           </Link>
         </div>
-        <section className='bg-surface border border-border p-6 rounded'>
-          <h2 className='text-sm font-semibold text-foreground uppercase tracking-wider mb-6'>
-            {GALLERY_LABELS.title}
-          </h2>
-          <GalleryManager
-            photos={profile.galleryPhotos ?? []}
-            galleryEnabled={profile.galleryEnabled ?? false}
-            loading={loading}
-            onUpload={uploadGalleryPhoto}
-            onDelete={deleteGalleryPhoto}
-            onReorder={reorderGalleryPhotos}
-            onToggle={toggleGallery}
-          />
-        </section>
+        <RequirePermission plan={profile.plan} permission={PERMISSIONS.GALLERY_MANAGE}>
+          <section className='bg-surface border border-border p-6 rounded'>
+            <h2 className='text-sm font-semibold text-foreground uppercase tracking-wider mb-6'>
+              {GALLERY_LABELS.title}
+            </h2>
+            <GalleryManager
+              photos={profile.galleryPhotos ?? []}
+              galleryEnabled={profile.galleryEnabled ?? false}
+              loading={loading}
+              onUpload={uploadGalleryPhoto}
+              onDelete={deleteGalleryPhoto}
+              onReorder={reorderGalleryPhotos}
+              onToggle={toggleGallery}
+            />
+          </section>
+        </RequirePermission>
       </main>
     </div>
   );
