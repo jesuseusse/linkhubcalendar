@@ -24,6 +24,8 @@ export interface UserResponseDto {
   stripeSubscriptionId?: string;
   contactFormEnabled: boolean;
   calendarEnabled: boolean;
+  galleryEnabled: boolean;
+  galleryPhotos: GalleryPhotoResponseDto[];
   theme?: ThemeResponseDto;
   links: LinkResponseDto[];
   calendarSlots: CalendarSlotResponseDto[];
@@ -102,6 +104,12 @@ export interface UpdateThemeDto {
   accentColor: string;
 }
 
+export interface GalleryPhotoResponseDto {
+  id: string;
+  url: string;
+  order: number;
+}
+
 export interface PublicProfileDto {
   name: string;
   description?: string;
@@ -111,6 +119,8 @@ export interface PublicProfileDto {
   planExpiredAt?: number | null;
   contactFormEnabled: boolean;
   calendarEnabled: boolean;
+  galleryEnabled: boolean;
+  galleryPhotos: GalleryPhotoResponseDto[];
   theme?: ThemeResponseDto;
   links: LinkResponseDto[];
   calendarSlots: CalendarSlotResponseDto[];

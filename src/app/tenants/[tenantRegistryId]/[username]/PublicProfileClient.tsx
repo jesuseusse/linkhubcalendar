@@ -9,6 +9,7 @@ import { getProfilePhotoUrl } from '@/utils/profilePhoto';
 import { ContactForm } from '@/components/Contact/ContactForm';
 import { isPlanExpired } from '@/utils/planExpiration';
 import { hasPermission, PERMISSIONS, type Plan } from '@/permissions/plans';
+import { GalleryCarousel } from '@/components/Gallery/GalleryCarousel';
 import Image from 'next/image';
 
 interface Props {
@@ -40,6 +41,10 @@ export function PublicProfileClient({ profile, logoUrl, siteName }: Props) {
 	const showCalendar =
 		profile.calendarEnabled &&
 		hasPermission(effectivePlan, PERMISSIONS.CALENDAR);
+	const showGallery =
+		profile.galleryEnabled &&
+		hasPermission(effectivePlan, PERMISSIONS.GALLERY_MANAGE) &&
+		(profile.galleryPhotos?.length ?? 0) > 0;
 
 	return (
 		<>
@@ -208,6 +213,17 @@ export function PublicProfileClient({ profile, logoUrl, siteName }: Props) {
 							</Link>
 						)}
 					</div>
+
+					{/* Gallery Carousel */}
+					{showGallery && (
+						<div className='w-full mt-6'>
+							<GalleryCarousel
+								photos={profile.galleryPhotos!}
+								theme={theme}
+								animationDelay={0.25 + (profile.links.length + (showCalendar ? 1 : 0)) * 0.08}
+							/>
+						</div>
+					)}
 
 					{/* Contact Form */}
 					{showContact && (

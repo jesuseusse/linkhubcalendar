@@ -1,4 +1,4 @@
-import { AppointmentDto, CreateAppointmentDto, CreateCalendarSlotDto, CreateLeadDto, LeadDto, LeadStatus, PaginatedAppointmentsDto, PaginatedLeadsDto, PublicCalendarDto, PublicProfileDto, ThemeDto, UpdateProfileDto, UpdateUsernameDto, UserDto } from "../dtos/user.dto";
+import { AppointmentDto, CreateAppointmentDto, CreateCalendarSlotDto, CreateLeadDto, GalleryPhotoDto, LeadDto, LeadStatus, PaginatedAppointmentsDto, PaginatedLeadsDto, PublicCalendarDto, PublicProfileDto, ThemeDto, UpdateProfileDto, UpdateUsernameDto, UserDto } from "../dtos/user.dto";
 import type { LeadOrder } from "../domain/interfaces/ILeadRepository";
 
 export interface GetLeadsPaginatedParams {
@@ -32,4 +32,8 @@ export interface IProfileService {
   updateLeadStatus(token: string, leadId: string, status: LeadStatus | null): Promise<LeadDto>;
   downgradePlan(token: string): Promise<UserDto>;
   sendVerificationEmail(token: string): Promise<void>;
+  uploadGalleryPhoto(token: string, file: File): Promise<GalleryPhotoDto[]>;
+  deleteGalleryPhoto(token: string, photoId: string): Promise<GalleryPhotoDto[]>;
+  reorderGalleryPhotos(token: string, orderedIds: string[]): Promise<GalleryPhotoDto[]>;
+  toggleGallery(token: string, enabled: boolean): Promise<UserDto>;
 }

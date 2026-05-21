@@ -210,6 +210,82 @@ export function useProfile(profileService: IProfileService) {
 		await profileService.sendVerificationEmail(token);
 	}, [token, profileService]);
 
+	const uploadGalleryPhoto = useCallback(
+		async (file: File) => {
+			if (!token || !user) return;
+			setLoading(true);
+			setError(null);
+			try {
+				const photos = await profileService.uploadGalleryPhoto(token, file);
+				updateUser({ ...user, galleryPhotos: photos });
+			} catch (err: unknown) {
+				const message = err instanceof Error ? err.message : 'Upload failed';
+				setError(message);
+				throw err;
+			} finally {
+				setLoading(false);
+			}
+		},
+		[token, user, profileService, updateUser]
+	);
+
+	const deleteGalleryPhoto = useCallback(
+		async (photoId: string) => {
+			if (!token || !user) return;
+			setLoading(true);
+			setError(null);
+			try {
+				const photos = await profileService.deleteGalleryPhoto(token, photoId);
+				updateUser({ ...user, galleryPhotos: photos });
+			} catch (err: unknown) {
+				const message = err instanceof Error ? err.message : 'Delete failed';
+				setError(message);
+				throw err;
+			} finally {
+				setLoading(false);
+			}
+		},
+		[token, user, profileService, updateUser]
+	);
+
+	const reorderGalleryPhotos = useCallback(
+		async (orderedIds: string[]) => {
+			if (!token || !user) return;
+			setLoading(true);
+			setError(null);
+			try {
+				const photos = await profileService.reorderGalleryPhotos(token, orderedIds);
+				updateUser({ ...user, galleryPhotos: photos });
+			} catch (err: unknown) {
+				const message = err instanceof Error ? err.message : 'Reorder failed';
+				setError(message);
+				throw err;
+			} finally {
+				setLoading(false);
+			}
+		},
+		[token, user, profileService, updateUser]
+	);
+
+	const toggleGallery = useCallback(
+		async (enabled: boolean) => {
+			if (!token) return;
+			setLoading(true);
+			setError(null);
+			try {
+				const data = await profileService.toggleGallery(token, enabled);
+				updateUser(data);
+			} catch (err: unknown) {
+				const message = err instanceof Error ? err.message : 'Update failed';
+				setError(message);
+				throw err;
+			} finally {
+				setLoading(false);
+			}
+		},
+		[token, profileService, updateUser]
+	);
+
 	const fetchLeads = useCallback(async () => {
 		if (!token) return;
 		setLeadsLoading(true);
@@ -245,6 +321,10 @@ export function useProfile(profileService: IProfileService) {
 		leads,
 		leadsLoading,
 		sendVerificationEmail,
+		uploadGalleryPhoto,
+		deleteGalleryPhoto,
+		reorderGalleryPhotos,
+		toggleGallery,
 		refetchLeads: fetchLeads,
 		refetch: fetchProfile
 	};

@@ -1,6 +1,6 @@
 import { adminDb } from '@/lib/firebase/admin';
 import { IUserRepository } from '@/domain/interfaces/IUserRepository';
-import { User, Link, ThemeConfig } from '@/domain/entities/User';
+import { User, Link, ThemeConfig, GalleryPhoto } from '@/domain/entities/User';
 
 const COLLECTION = 'users';
 
@@ -28,6 +28,8 @@ function docToUser(id: string, data: FirebaseFirestore.DocumentData): User {
 		stripeSubscriptionId: typeof data.stripeSubscriptionId === 'string' ? data.stripeSubscriptionId : undefined,
 		contactFormEnabled: data.contactFormEnabled ?? false,
 		calendarEnabled: data.calendarEnabled ?? false,
+		galleryEnabled: data.galleryEnabled ?? false,
+		galleryPhotos: data.galleryPhotos ?? [],
 		theme: data.theme,
 		links: data.links ?? [],
 		lastVerificationEmailSentAt: toMillis(data.lastVerificationEmailSentAt),
@@ -260,6 +262,32 @@ export class FirestoreUserRepository implements IUserRepository {
 	async findAll(tenantId: string): Promise<User[]> {
 		const snap = await this.col(tenantId).get();
 		return snap.docs.map((doc) => docToUser(doc.id, doc.data()));
+	}
+
+	async updateGalleryEnabled(
+		tenantId: string,
+		userId: string,
+		enabled: boolean
+	): Promise<User | null> {
+		const ref = this.col(tenantId).doc(userId);
+		const doc = await ref.get();
+		if (!doc.exists) return null;
+		await ref.update({ galleryEnabled: enabled, updatedAt: Date.now() });
+		const updated = await ref.get();
+		return docToUser(userId, updated.data()!);
+	}
+
+	async updateGalleryPhotos(
+		tenantId: string,
+		userId: string,
+		photos: GalleryPhoto[]
+	): Promise<User | null> {
+		const ref = this.col(tenantId).doc(userId);
+		const doc = await ref.get();
+		if (!doc.exists) return null;
+		await ref.update({ galleryPhotos: photos, updatedAt: Date.now() });
+		const updated = await ref.get();
+		return docToUser(userId, updated.data()!);
 	}
 
 	async updateSubscriptionFlags(

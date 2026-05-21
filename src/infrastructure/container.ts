@@ -47,6 +47,12 @@ import {
   GetAllUsersUseCase,
   GetAllTicketsUseCase,
 } from '@/application/use-cases/SuperAdminUseCases';
+import {
+  UploadGalleryPhotoUseCase,
+  DeleteGalleryPhotoUseCase,
+  ReorderGalleryPhotosUseCase,
+  ToggleGalleryUseCase,
+} from '@/application/use-cases/ManageGalleryUseCase';
 
 export const tenantRegistryRepo = new FirestoreTenantRegistryRepository();
 export const userRepo = new FirestoreUserRepository();
@@ -90,6 +96,11 @@ export const container = {
   getTicketDetailUseCase: new GetTicketDetailUseCase(supportTicketRepo),
   updateTicketStatusUseCase: new UpdateTicketStatusUseCase(supportTicketRepo),
   addCommentUseCase: new AddCommentUseCase(supportTicketRepo),
+  // Gallery
+  uploadGalleryPhotoUseCase: new UploadGalleryPhotoUseCase(userRepo, storageService),
+  deleteGalleryPhotoUseCase: new DeleteGalleryPhotoUseCase(userRepo, storageService),
+  reorderGalleryPhotosUseCase: new ReorderGalleryPhotosUseCase(userRepo),
+  toggleGalleryUseCase: new ToggleGalleryUseCase(userRepo),
   // Super admin
   getSuperAdminStatsUseCase: new GetSuperAdminStatsUseCase(userRepo),
   getAllUsersUseCase: new GetAllUsersUseCase(userRepo),

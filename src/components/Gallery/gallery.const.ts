@@ -1,0 +1,17 @@
+export const GALLERY_LABELS = {
+  title: 'Galería de fotos',
+  toggleLabel: 'Mostrar galería en tu perfil',
+  toggleHint: 'Cuando está activo, tus visitantes pueden ver las fotos.',
+  addPhoto: 'Agregar foto',
+  addPhotoHint: 'Sube hasta 10 fotos. Se recortan en 1:1.',
+  dragHint: 'Mantén presionado y arrastra para reordenar',
+  counter: (n: number) => `${n} / 10 fotos`,
+  deleteAriaLabel: 'Eliminar foto',
+  dragAriaLabel: 'Arrastrar para reordenar',
+  emptyState: 'Aún no has subido fotos. ¡Agrega la primera!',
+  maxReached: 'Has alcanzado el límite de 10 fotos. Elimina una para agregar más.',
+  uploadImageLabel: 'Subir imagen de galería',
+  deleteConfirm: '¿Eliminar esta foto de la galería?',
+  saving: 'Guardando...',
+  reorderSaved: 'Orden guardado',
+};

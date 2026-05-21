@@ -7,6 +7,7 @@ export const PERMISSIONS = {
 	CALENDAR: "calendar:manage",
 	LEADS_VIEW: "leads:view",
 	ANALYTICS_VIEW: "analytics:view",
+	GALLERY_MANAGE: "gallery:manage",
 } as const;
 
 export type Permission = (typeof PERMISSIONS)[keyof typeof PERMISSIONS];
@@ -19,6 +20,7 @@ export const PLAN_PERMISSIONS: Record<Plan, Permission[]> = {
 		PERMISSIONS.CONTACT_FORM,
 		PERMISSIONS.CALENDAR,
 		PERMISSIONS.LEADS_VIEW,
+		PERMISSIONS.GALLERY_MANAGE,
 	],
 	team: [
 		PERMISSIONS.LINKS_EDIT,
@@ -27,6 +29,7 @@ export const PLAN_PERMISSIONS: Record<Plan, Permission[]> = {
 		PERMISSIONS.CALENDAR,
 		PERMISSIONS.LEADS_VIEW,
 		PERMISSIONS.ANALYTICS_VIEW,
+		PERMISSIONS.GALLERY_MANAGE,
 	],
 };
 

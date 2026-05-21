@@ -12,6 +12,8 @@ function createMockUser(overrides: Partial<User> = {}): User {
 		username: 'juanperez',
 		contactFormEnabled: true,
 		calendarEnabled: false,
+		galleryEnabled: false,
+		galleryPhotos: [],
 		links: [
 			{ id: 'link-1', title: 'Mi sitio', url: 'https://example.com' },
 			{ id: 'link-2', title: 'GitHub', url: 'https://github.com/juanperez' }
@@ -43,7 +45,10 @@ function createMockUserRepository(
 		updateTheme: vi.fn(),
 		updatePlan: vi.fn(),
 		updateSubscriptionFlags: vi.fn(),
-		updateLastVerificationEmailSentAt: vi.fn()
+		updateLastVerificationEmailSentAt: vi.fn(),
+		updateGalleryEnabled: vi.fn(),
+		updateGalleryPhotos: vi.fn(),
+		findAll: vi.fn(),
 	};
 }
 
@@ -89,6 +94,8 @@ describe('GetPublicProfileUseCase', () => {
 			planExpiredAt: null,
 			contactFormEnabled: true,
 			calendarEnabled: false,
+			galleryEnabled: false,
+			galleryPhotos: [],
 			theme: undefined,
 			links: [
 				{ id: 'link-1', title: 'Mi sitio', url: 'https://example.com' },

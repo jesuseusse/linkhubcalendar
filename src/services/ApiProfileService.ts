@@ -15,6 +15,7 @@ import {
   LeadStatus,
   CreateLeadDto,
   PaginatedLeadsDto,
+  GalleryPhotoDto,
 } from '@/dtos/user.dto';
 import type { GetLeadsPaginatedParams } from '@/interfaces/IProfileService';
 
@@ -119,5 +120,29 @@ export class ApiProfileService implements IProfileService {
 
   async sendVerificationEmail(): Promise<void> {
     return apiClient('/api/auth/verify-email', { method: 'POST' });
+  }
+
+  async uploadGalleryPhoto(_token: string, file: File): Promise<GalleryPhotoDto[]> {
+    const formData = new FormData();
+    formData.append('photo', file);
+    const res = await apiClient('/api/gallery', { method: 'POST', body: formData });
+    return res.photos;
+  }
+
+  async deleteGalleryPhoto(_token: string, photoId: string): Promise<GalleryPhotoDto[]> {
+    const res = await apiClient(`/api/gallery/${photoId}`, { method: 'DELETE' });
+    return res.photos;
+  }
+
+  async reorderGalleryPhotos(_token: string, orderedIds: string[]): Promise<GalleryPhotoDto[]> {
+    const res = await apiClient('/api/gallery/reorder', {
+      method: 'PUT',
+      body: JSON.stringify({ orderedIds }),
+    });
+    return res.photos;
+  }
+
+  async toggleGallery(_token: string, enabled: boolean): Promise<UserDto> {
+    return apiClient('/api/gallery/toggle', { method: 'PUT', body: JSON.stringify({ enabled }) });
   }
 }

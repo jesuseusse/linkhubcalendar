@@ -1,3 +1,9 @@
+export interface GalleryPhoto {
+  id: string;
+  url: string;
+  order: number;
+}
+
 export interface Link {
   id: string;
   title: string;
@@ -40,6 +46,8 @@ export interface User {
   referredBy?: string;
   contactFormEnabled: boolean;
   calendarEnabled: boolean;
+  galleryEnabled: boolean;
+  galleryPhotos: GalleryPhoto[];
   theme?: ThemeConfig;
   links: Link[];
   lastVerificationEmailSentAt?: number;

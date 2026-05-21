@@ -16,6 +16,15 @@ export class FirebaseStorageService implements IFileStorageService {
     return `https://storage.googleapis.com/${bucket.name}/${filename}`;
   }
 
+  async saveGalleryFile(tenantId: string, userId: string, file: FileInput): Promise<string> {
+    const bucket = adminStorage.bucket();
+    const filename = `${tenantId}/gallery/${userId}/${Date.now()}-${file.originalName}`;
+    const fileRef = bucket.file(filename);
+    await fileRef.save(file.buffer, { metadata: { contentType: file.mimeType } });
+    await fileRef.makePublic();
+    return `https://storage.googleapis.com/${bucket.name}/${filename}`;
+  }
+
   async deleteFile(tenantId: string, filePath: string): Promise<void> {
     try {
       const bucket = adminStorage.bucket();

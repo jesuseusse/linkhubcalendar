@@ -6,5 +6,6 @@ export interface FileInput {
 
 export interface IFileStorageService {
   saveFile(tenantId: string, file: FileInput): Promise<string>;
+  saveGalleryFile(tenantId: string, userId: string, file: FileInput): Promise<string>;
   deleteFile(tenantId: string, filePath: string): Promise<void>;
 }

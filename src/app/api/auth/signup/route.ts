@@ -14,6 +14,8 @@ export async function POST(req: NextRequest) {
       links: [],
       calendarEnabled: false,
       contactFormEnabled: false,
+      galleryEnabled: false,
+      galleryPhotos: [],
       plan: "free",
     });
     const result = await container.getProfileUseCase.execute(tenantId, userId);

@@ -1,6 +1,12 @@
 import { Plan } from '../permissions/plans';
 import { LinkDto } from './link.dto';
 
+export interface GalleryPhotoDto {
+	id: string;
+	url: string;
+	order: number;
+}
+
 export interface CalendarSlotDto {
 	id: string;
 	date: string;
@@ -40,6 +46,8 @@ export interface UserDto {
 	referredBy?: string;
 	contactFormEnabled: boolean;
 	calendarEnabled: boolean;
+	galleryEnabled: boolean;
+	galleryPhotos: GalleryPhotoDto[];
 	theme?: ThemeDto;
 	links: LinkDto[];
 	calendarSlots: CalendarSlotDto[];
@@ -64,6 +72,8 @@ export interface PublicProfileDto {
 	planExpiredAt?: number | null;
 	contactFormEnabled: boolean;
 	calendarEnabled: boolean;
+	galleryEnabled: boolean;
+	galleryPhotos: GalleryPhotoDto[];
 	theme?: ThemeDto;
 	links: LinkDto[];
 	calendarSlots: CalendarSlotDto[];

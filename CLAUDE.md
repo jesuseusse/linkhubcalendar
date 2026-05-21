@@ -327,6 +327,47 @@ SupportPage
 - UI constants: `src/components/Support/support.const.ts`
 - Dashboard page: `src/app/tenants/[tenantRegistryId]/u/admin/dashboard/support/page.tsx`
 
+## Gallery
+
+Pro users can upload up to **10 photos** displayed as a horizontal scroll carousel on their public profile page (after the links section).
+
+**Permissions:** `GALLERY_MANAGE` — enabled for `pro` and `team` plans.
+
+**Data model** (stored on User Firestore document):
+- `galleryEnabled: boolean` — whether the gallery is visible on the public profile
+- `galleryPhotos: GalleryPhoto[]` — array of `{ id, url, order }`, max 10 items
+
+**Firebase Storage path:** `{tenantId}/gallery/{userId}/{timestamp}.webp`
+
+**Admin flow:** Dashboard → Galería section (toggle + "Gestionar galería" link) → `/dashboard/gallery` page → upload, drag-to-reorder, delete photos.
+
+**Public profile:** Carousel with CSS scroll-snap. Clicking a photo opens a fullscreen lightbox with prev/next navigation and keyboard support (Escape, ArrowLeft, ArrowRight).
+
+**Component tree:**
+```
+GalleryManager (admin)
+├── Toggle switch (galleryEnabled)
+├── @dnd-kit/sortable grid of SortablePhoto items
+│   └── Delete button per item
+└── ImageCropUpload (add new photo)
+
+GalleryCarousel (public profile)
+├── Scroll-snap row of photo tiles
+├── Dot indicators
+└── Lightbox (fullscreen + prev/next + counter)
+```
+
+**Key files:**
+- Entity field: `src/domain/entities/User.ts` — `GalleryPhoto`, `galleryEnabled`, `galleryPhotos`
+- Use cases: `src/application/use-cases/ManageGalleryUseCase.ts`
+- API routes: `src/app/api/gallery/` (POST upload, DELETE `[photoId]`, PUT `reorder/`, PUT `toggle/`)
+- Hook: `src/hooks/useProfile.ts` — `uploadGalleryPhoto`, `deleteGalleryPhoto`, `reorderGalleryPhotos`, `toggleGallery`
+- Components: `src/components/Gallery/`
+- Dashboard page: `src/app/tenants/[tenantRegistryId]/u/admin/dashboard/gallery/page.tsx`
+- UI strings: `src/components/Gallery/gallery.const.ts`
+
+**Firestore undefined guard:** Same pattern as support tickets — `Object.fromEntries` filter in repo methods; conditional spread in use cases.
+
 ## Super Admin Panel
 
 Accessible only to emails listed in `NEXT_SUPER_ADMINS_EMAILS` (comma-separated env var). The panel is intentionally at a non-obvious route to reduce discoverability.

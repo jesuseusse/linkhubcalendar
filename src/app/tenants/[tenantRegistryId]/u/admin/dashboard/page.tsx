@@ -28,6 +28,7 @@ import { ModalCalendarManager } from '@/components/Calendar/ModalCalendarManager
 import { LeadList } from '@/components/Leads/LeadList';
 import { RequirePermission } from '@/components/Common/RequirePermission';
 import { PERMISSIONS } from '@/permissions/plans';
+import { GALLERY_LABELS } from '@/components/Gallery/gallery.const';
 import { InfoVerifyEmail } from '@/components/Profile/InfoVerifyEmail';
 import { StripeResultModal } from '@/components/Common/StripeResultModal';
 import { QRDownloadButton } from '@/components/QR/QRDownloadButton';
@@ -71,6 +72,7 @@ export default function DashboardPage() {
 		deleteCalendarSlot,
 		releaseCalendarSlot,
 		sendVerificationEmail,
+		toggleGallery,
 		leads,
 		leadsLoading
 	} = useProfile(profileService);
@@ -298,6 +300,47 @@ export default function DashboardPage() {
 							className='inline-block ml-4 mt-4 text-sm text-muted-foreground hover:text-foreground underline'
 						>
 							Ver Citas
+						</Link>
+					</section>
+				</RequirePermission>
+
+				<RequirePermission
+					plan={profile.plan}
+					permission={PERMISSIONS.GALLERY_MANAGE}
+				>
+					<section className='bg-surface border border-border p-6 rounded'>
+						<div className='flex items-center justify-between'>
+							<div>
+								<h2 className='text-sm font-semibold text-foreground uppercase tracking-wider'>
+									{GALLERY_LABELS.title}
+								</h2>
+								<p className='text-xs text-muted-foreground mt-1'>
+									{GALLERY_LABELS.toggleHint}
+								</p>
+							</div>
+							<div className='flex items-center gap-3'>
+								<button
+									type='button'
+									onClick={() => toggleGallery(!profile.galleryEnabled)}
+									disabled={loading}
+									aria-pressed={profile.galleryEnabled}
+									className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary shrink-0 ${
+										profile.galleryEnabled ? 'bg-primary' : 'bg-border'
+									}`}
+								>
+									<span
+										className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
+											profile.galleryEnabled ? 'translate-x-6' : 'translate-x-1'
+										}`}
+									/>
+								</button>
+							</div>
+						</div>
+						<Link
+							href='./gallery'
+							className='inline-block mt-4 text-sm text-muted-foreground hover:text-foreground underline transition-colors'
+						>
+							Gestionar galería
 						</Link>
 					</section>
 				</RequirePermission>

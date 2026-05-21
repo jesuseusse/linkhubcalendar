@@ -18,6 +18,12 @@ export function toUserResponse(user: User, slots: CalendarSlot[] = []): UserResp
     stripeSubscriptionId: user.stripeSubscriptionId,
     contactFormEnabled: user.contactFormEnabled,
     calendarEnabled: user.calendarEnabled,
+    galleryEnabled: user.galleryEnabled,
+    galleryPhotos: (user.galleryPhotos ?? []).map((p) => ({
+      id: p.id,
+      url: p.url,
+      order: p.order,
+    })),
     theme: user.theme
       ? {
           backgroundColor: user.theme.backgroundColor,
