@@ -74,10 +74,10 @@ export class CreateSupportTicketUseCase {
       status: 'open',
       title: dto.title,
       description: dto.description,
-      deviceType: dto.deviceType,
-      deviceOther: dto.deviceOther,
-      screenshotUrl,
-      whatsappPhone: dto.whatsappPhone,
+      ...(dto.deviceType !== undefined && { deviceType: dto.deviceType }),
+      ...(dto.deviceOther !== undefined && { deviceOther: dto.deviceOther }),
+      ...(screenshotUrl !== undefined && { screenshotUrl }),
+      ...(dto.whatsappPhone !== undefined && { whatsappPhone: dto.whatsappPhone }),
     });
 
     if (this.emailSenderService && this.emailConfig) {

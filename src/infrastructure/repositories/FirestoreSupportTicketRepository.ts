@@ -42,9 +42,11 @@ export class FirestoreSupportTicketRepository implements ISupportTicketRepositor
   ): Promise<SupportTicket> {
     const now = Date.now();
     const ref = this.col(tenantId, ticket.userId).doc();
-    const data = { ...ticket, createdAt: now, updatedAt: now };
+    const data = Object.fromEntries(
+      Object.entries({ ...ticket, createdAt: now, updatedAt: now }).filter(([, v]) => v !== undefined)
+    );
     await ref.set(data);
-    return { ...data, id: ref.id, createdAt: now, updatedAt: now };
+    return { ...ticket, id: ref.id, createdAt: now, updatedAt: now };
   }
 
   async findByUserId(tenantId: string, userId: string): Promise<SupportTicket[]> {

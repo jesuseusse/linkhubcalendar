@@ -153,6 +153,123 @@ describe('CreateSupportTicketUseCase', () => {
     expect(repo.create).not.toHaveBeenCalled();
   });
 
+  it('error ticket with deviceType not "other" — repo not called with deviceOther key', async () => {
+    const useCase = new CreateSupportTicketUseCase(repo);
+    await useCase.execute(TENANT_ID, USER_ID, USER_EMAIL, USER_NAME, {
+      type: 'error',
+      title: 'App crash',
+      description: 'Crashes on launch.',
+      deviceType: 'android',
+    });
+
+    const [, ticketArg] = vi.mocked(repo.create).mock.calls[0];
+    expect(ticketArg.deviceType).toBe('android');
+    expect(ticketArg).not.toHaveProperty('deviceOther');
+  });
+
+  it('error ticket with deviceType "other" — deviceOther included in repo call', async () => {
+    const useCase = new CreateSupportTicketUseCase(repo);
+    await useCase.execute(TENANT_ID, USER_ID, USER_EMAIL, USER_NAME, {
+      type: 'error',
+      title: 'App crash',
+      description: 'Crashes on launch.',
+      deviceType: 'other',
+      deviceOther: 'Huawei P30',
+    });
+
+    const [, ticketArg] = vi.mocked(repo.create).mock.calls[0];
+    expect(ticketArg.deviceType).toBe('other');
+    expect(ticketArg.deviceOther).toBe('Huawei P30');
+  });
+
+  it('repo create is never called with undefined-valued fields (Firestore guard)', async () => {
+    const useCase = new CreateSupportTicketUseCase(repo);
+    await useCase.execute(TENANT_ID, USER_ID, USER_EMAIL, USER_NAME, {
+      type: 'error',
+      title: 'Test',
+      description: 'Test',
+      deviceType: 'ios',
+    });
+
+    const [, ticketArg] = vi.mocked(repo.create).mock.calls[0];
+    const undefinedKeys = Object.entries(ticketArg)
+      .filter(([, v]) => v === undefined)
+      .map(([k]) => k);
+    expect(undefinedKeys).toEqual([]);
+  });
+
+  it('passes screenshotUrl to repo when provided', async () => {
+    const useCase = new CreateSupportTicketUseCase(repo);
+    await useCase.execute(
+      TENANT_ID, USER_ID, USER_EMAIL, USER_NAME,
+      { type: 'error', title: 'Test', description: 'Test' },
+      'https://storage.example.com/screenshot.webp'
+    );
+
+    const [, ticketArg] = vi.mocked(repo.create).mock.calls[0];
+    expect(ticketArg.screenshotUrl).toBe('https://storage.example.com/screenshot.webp');
+  });
+
+  it('does not include screenshotUrl in repo call when not provided', async () => {
+    const useCase = new CreateSupportTicketUseCase(repo);
+    await useCase.execute(TENANT_ID, USER_ID, USER_EMAIL, USER_NAME, {
+      type: 'error',
+      title: 'Test',
+      description: 'Test',
+    });
+
+    const [, ticketArg] = vi.mocked(repo.create).mock.calls[0];
+    expect(ticketArg).not.toHaveProperty('screenshotUrl');
+  });
+
+  it('passes whatsappPhone to repo when provided', async () => {
+    const useCase = new CreateSupportTicketUseCase(repo);
+    await useCase.execute(TENANT_ID, USER_ID, USER_EMAIL, USER_NAME, {
+      type: 'suggestion',
+      title: 'Dark mode',
+      description: 'Would love dark mode.',
+      whatsappPhone: '+52 55 1234 5678',
+    });
+
+    const [, ticketArg] = vi.mocked(repo.create).mock.calls[0];
+    expect(ticketArg.whatsappPhone).toBe('+52 55 1234 5678');
+  });
+
+  it('suggestion ticket — repo payload has no deviceType or deviceOther', async () => {
+    vi.mocked(repo.create).mockResolvedValue(makeTicket({ type: 'suggestion' }));
+
+    const useCase = new CreateSupportTicketUseCase(repo);
+    await useCase.execute(TENANT_ID, USER_ID, USER_EMAIL, USER_NAME, {
+      type: 'suggestion',
+      title: 'Dark mode',
+      description: 'Would love dark mode.',
+    });
+
+    const [, ticketArg] = vi.mocked(repo.create).mock.calls[0];
+    expect(ticketArg).not.toHaveProperty('deviceType');
+    expect(ticketArg).not.toHaveProperty('deviceOther');
+    expect(ticketArg.type).toBe('suggestion');
+  });
+
+  it('suggestion ticket with screenshot and whatsapp — no undefined values in repo call', async () => {
+    vi.mocked(repo.create).mockResolvedValue(makeTicket({ type: 'suggestion' }));
+
+    const useCase = new CreateSupportTicketUseCase(repo);
+    await useCase.execute(
+      TENANT_ID, USER_ID, USER_EMAIL, USER_NAME,
+      { type: 'suggestion', title: 'Mejora', description: 'Una mejora.', whatsappPhone: '+52 55 9999 0000' },
+      'https://storage.example.com/suggestion.webp'
+    );
+
+    const [, ticketArg] = vi.mocked(repo.create).mock.calls[0];
+    const undefinedKeys = Object.entries(ticketArg)
+      .filter(([, v]) => v === undefined)
+      .map(([k]) => k);
+    expect(undefinedKeys).toEqual([]);
+    expect(ticketArg.screenshotUrl).toBe('https://storage.example.com/suggestion.webp');
+    expect(ticketArg.whatsappPhone).toBe('+52 55 9999 0000');
+  });
+
   it('email failure does not prevent ticket creation', async () => {
     vi.mocked(emailService.sendSupportTicketNotification).mockRejectedValue(
       new Error('SMTP error')
