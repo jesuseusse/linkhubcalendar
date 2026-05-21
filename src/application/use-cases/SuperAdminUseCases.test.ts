@@ -137,6 +137,13 @@ describe('GetAllUsersUseCase', () => {
     expect((result[0] as Record<string, unknown>).password).toBeUndefined();
   });
 
+  it('includes updatedAt in the DTO', async () => {
+    const user = makeUser({ updatedAt: 9999 });
+    const repo = makeUserRepo([user]);
+    const result = await new GetAllUsersUseCase(repo).execute(TENANT_ID);
+    expect(result[0].updatedAt).toBe(9999);
+  });
+
   it('sorts by createdAt descending', async () => {
     const users = [
       makeUser({ id: 'a', createdAt: 100, email: 'a@example.com' }),

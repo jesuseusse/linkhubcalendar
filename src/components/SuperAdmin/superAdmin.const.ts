@@ -18,10 +18,26 @@ export const USERS_LABELS = {
   colPlan: 'Plan',
   colProfile: 'Perfil',
   colLinks: 'Links',
+  colCreatedAt: 'Creación',
+  colUpdatedAt: 'Modificación',
   viewProfile: 'Ver perfil',
   noUsername: '—',
   empty: 'No hay usuarios registrados.',
   loading: 'Cargando usuarios...',
+  loadMore: 'Cargar más',
+  exportEmails: 'Exportar correos',
+  showing: (visible: number, total: number) => `Mostrando ${visible} de ${total}`,
+} as const;
+
+export const EMAIL_EXPORT_LABELS = {
+  title: 'Exportar correos',
+  copy: 'Copiar contactos',
+  copied: '¡Copiado!',
+  page: (current: number, total: number) => `Página ${current} de ${total}`,
+  prev: 'Anterior',
+  next: 'Siguiente',
+  close: 'Cerrar',
+  hint: 'Lista de correos separados por coma',
 } as const;
 
 export const TICKETS_LABELS = {

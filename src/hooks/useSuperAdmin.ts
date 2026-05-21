@@ -22,6 +22,9 @@ export function useSuperAdmin(service: ISuperAdminService) {
   // Users
   const [users, setUsers] = useState<UserSummaryDto[]>([]);
   const [usersLoading, setUsersLoading] = useState(false);
+  const [usersSortBy, setUsersSortBy] = useState<'createdAt' | 'updatedAt'>('createdAt');
+  const [usersSortOrder, setUsersSortOrder] = useState<'asc' | 'desc'>('desc');
+  const [usersVisibleCount, setUsersVisibleCount] = useState(5);
 
   // Tickets
   const [tickets, setTickets] = useState<SuperAdminTicketDto[]>([]);
@@ -92,6 +95,38 @@ export function useSuperAdmin(service: ISuperAdminService) {
     if (token) loadStats();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
+
+  const sortedUsers = useMemo(() => {
+    return [...users].sort((a, b) => {
+      const aVal = usersSortBy === 'createdAt' ? a.createdAt : a.updatedAt;
+      const bVal = usersSortBy === 'createdAt' ? b.createdAt : b.updatedAt;
+      return usersSortOrder === 'desc' ? bVal - aVal : aVal - bVal;
+    });
+  }, [users, usersSortBy, usersSortOrder]);
+
+  const visibleUsers = useMemo(
+    () => sortedUsers.slice(0, usersVisibleCount),
+    [sortedUsers, usersVisibleCount]
+  );
+
+  const hasMoreUsers = usersVisibleCount < sortedUsers.length;
+
+  const toggleUsersSort = useCallback(
+    (by: 'createdAt' | 'updatedAt') => {
+      setUsersVisibleCount(5);
+      if (usersSortBy === by) {
+        setUsersSortOrder((o) => (o === 'desc' ? 'asc' : 'desc'));
+      } else {
+        setUsersSortBy(by);
+        setUsersSortOrder('desc');
+      }
+    },
+    [usersSortBy]
+  );
+
+  const loadMoreUsers = useCallback(() => {
+    setUsersVisibleCount((prev) => prev + 5);
+  }, []);
 
   const filteredTickets = useMemo(() => {
     let result = tickets;
@@ -178,6 +213,14 @@ export function useSuperAdmin(service: ISuperAdminService) {
     users,
     usersLoading,
     loadUsers,
+    visibleUsers,
+    totalUsersCount: sortedUsers.length,
+    allUserEmails: users.map((u) => u.email),
+    usersSortBy,
+    usersSortOrder,
+    toggleUsersSort,
+    hasMoreUsers,
+    loadMoreUsers,
     tickets,
     ticketsLoading,
     loadTickets,

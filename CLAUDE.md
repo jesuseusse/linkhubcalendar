@@ -374,10 +374,12 @@ Accessible only to emails listed in `NEXT_SUPER_ADMINS_EMAILS` (comma-separated 
 
 **Routes:**
 - `/dashboard/console/hub/` — stats dashboard (total users, paid users)
-- `/dashboard/console/hub/users/` — registered user list with plan, links, profile link
+- `/dashboard/console/hub/users/` — registered user list with plan, links, dates, sorting, pagination (5 at a time), and email export
 - `/dashboard/console/hub/tickets/` — all tenant tickets with filters and detail modal
 
 **Access control:** All API routes call `checkSuperAdmin(req)` which wraps `checkAuth` and additionally validates the caller's email against the allow-list. Non-admins get 403; client pages redirect to `/dashboard/` on 403.
+
+**Users list features:** `createdAt` and `updatedAt` columns; clickable column headers for client-side sort (asc/desc); infinite-scroll pagination (5 at a time, "Cargar más" button); "Exportar correos" modal with comma-separated email list paginated 1000 at a time with a clipboard copy button.
 
 **Ticket filters (client-side):** type (error | suggestion | all), email substring search, sort order (newest/oldest).
 

@@ -197,6 +197,7 @@ export interface UserSummaryDto {
 	planExpiredAt?: number | null;
 	links: LinkDto[];
 	createdAt: number;
+	updatedAt: number;
 }
 
 export interface SuperAdminTicketDto {

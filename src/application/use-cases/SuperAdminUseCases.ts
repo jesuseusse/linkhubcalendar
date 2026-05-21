@@ -38,6 +38,7 @@ export class GetAllUsersUseCase {
       planExpiredAt: u.planExpiredAt,
       links: u.links.map((l) => ({ id: l.id, title: l.title, url: l.url })),
       createdAt: u.createdAt,
+      updatedAt: u.updatedAt,
     }));
     return dtos.sort((a, b) => b.createdAt - a.createdAt);
   }

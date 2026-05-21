@@ -14,7 +14,20 @@ import { SUPER_ADMIN_BADGE, USERS_LABELS } from '@/components/SuperAdmin/superAd
 export default function SuperAdminUsersPage() {
   const router = useRouter();
   const { logout, user } = useAuth(authService);
-  const { users, usersLoading, loadUsers, forbidden, checking } = useSuperAdmin(superAdminService);
+  const {
+    visibleUsers,
+    totalUsersCount,
+    allUserEmails,
+    usersLoading,
+    loadUsers,
+    usersSortBy,
+    usersSortOrder,
+    toggleUsersSort,
+    hasMoreUsers,
+    loadMoreUsers,
+    forbidden,
+    checking,
+  } = useSuperAdmin(superAdminService);
 
   useEffect(() => {
     if (forbidden) router.replace('../../../dashboard');
@@ -48,7 +61,17 @@ export default function SuperAdminUsersPage() {
           <h2 className='text-sm font-semibold text-foreground uppercase tracking-wider mb-4'>
             {USERS_LABELS.title}
           </h2>
-          <UserTable users={users} loading={usersLoading} />
+          <UserTable
+            users={visibleUsers}
+            allEmails={allUserEmails}
+            totalCount={totalUsersCount}
+            loading={usersLoading}
+            sortBy={usersSortBy}
+            sortOrder={usersSortOrder}
+            onSort={toggleUsersSort}
+            hasMore={hasMoreUsers}
+            onLoadMore={loadMoreUsers}
+          />
         </section>
       </main>
     </div>
