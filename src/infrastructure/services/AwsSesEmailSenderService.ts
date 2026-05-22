@@ -144,6 +144,29 @@ export class AwsSesEmailSenderService implements IEmailSenderService {
 		}
 	}
 
+	async sendCampaignEmail(
+		config: EmailSenderConfig,
+		to: string,
+		subject: string,
+		html: string
+	): Promise<void> {
+		const command = new SendEmailCommand({
+			Source: config.fromEmail,
+			Destination: { ToAddresses: [to] },
+			Message: {
+				Subject: { Data: subject, Charset: 'UTF-8' },
+				Body: { Html: { Data: html, Charset: 'UTF-8' } }
+			}
+		});
+		try {
+			await this.client.send(command);
+		} catch (err: unknown) {
+			const message = err instanceof Error ? err.message : 'SES send error';
+			console.error(message);
+			throw new Error('Error al enviar correo');
+		}
+	}
+
 	async sendSupportTicketNotification(
 		config: EmailSenderConfig,
 		adminEmails: string[],

@@ -4,6 +4,7 @@ export const SUPER_ADMIN_NAV = {
   dashboard: 'Dashboard',
   users: 'Usuarios',
   tickets: 'Tickets',
+  campaigns: 'Campañas',
 } as const;
 
 export const STATS_LABELS = {
@@ -66,6 +67,46 @@ export const MODAL_LABELS = {
   screenshot: 'Ver captura',
   whatsapp: 'WhatsApp',
   changeStatus: 'Cambiar estado',
+} as const;
+
+export const CAMPAIGNS_LABELS = {
+  title: 'Campañas de correo',
+  colSubject: 'Asunto',
+  colStatus: 'Estado',
+  colRecipients: 'Destinatarios',
+  colClicks: 'Clics',
+  colSentAt: 'Enviado',
+  statusDraft: 'Borrador',
+  statusSent: 'Enviado',
+  empty: 'No hay campañas enviadas.',
+  loading: 'Cargando campañas...',
+  loadMore: 'Cargar más',
+  newCampaign: 'Nueva campaña',
+} as const;
+
+export const COMPOSER_LABELS = {
+  title: 'Crear campaña',
+  subject: 'Asunto',
+  subjectPlaceholder: 'Ej: ¡Nuevas funciones disponibles!',
+  recipientsTabUsers: 'Usuarios',
+  recipientsTabCustom: 'Ingresar correos',
+  customPlaceholder: 'correo1@ejemplo.com, correo2@ejemplo.com\ncorreo3@ejemplo.com',
+  selectAll: 'Seleccionar todos visibles',
+  htmlEditor: 'HTML del correo',
+  previewTitle: 'Vista previa',
+  send: 'Enviar campaña',
+  sending: 'Enviando...',
+  cancel: 'Cancelar',
+  loadMoreUsers: 'Cargar más usuarios',
+  selectedCount: (n: number) => `${n} destinatario${n !== 1 ? 's' : ''} seleccionado${n !== 1 ? 's' : ''}`,
+  successMessage: (sent: number, failed: number) =>
+    failed > 0
+      ? `Campaña enviada a ${sent} destinatario${sent !== 1 ? 's' : ''}. ${failed} envío${failed !== 1 ? 's' : ''} fallaron.`
+      : `Campaña enviada a ${sent} destinatario${sent !== 1 ? 's' : ''}.`,
+  errorNoRecipients: 'Selecciona al menos un destinatario.',
+  errorNoSubject: 'El asunto es obligatorio.',
+  errorNoHtml: 'El contenido del correo es obligatorio.',
+  htmlSizeWarning: 'El HTML es muy grande. Considera reducirlo para evitar problemas de entrega.',
 } as const;
 
 export const FORBIDDEN_MESSAGE = 'No tienes acceso a esta sección.';

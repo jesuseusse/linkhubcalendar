@@ -396,6 +396,43 @@ Accessible only to emails listed in `NEXT_SUPER_ADMINS_EMAILS` (comma-separated 
 - Components: `src/components/SuperAdmin/`
 - Pages: `src/app/tenants/[tenantRegistryId]/u/admin/dashboard/console/hub/`
 
+## Email Campaigns
+
+Super admins can send bulk marketing emails to tenant users from the campaign hub at `/dashboard/console/hub/campaigns/`.
+
+**Firestore paths:**
+- Campaigns: `tenants/{tenantId}/campaigns/{campaignId}`
+- Clicks: `tenants/{tenantId}/campaigns/{campaignId}/clicks/{clickId}`
+
+**Link tracking:**
+- Before sending, all `href` attributes in the HTML body are replaced server-side with tracking URLs
+- Tracking token: `base64url(JSON.stringify({ c: campaignId, t: tenantId, e: email, u: originalUrl }))`
+- Public redirect (no auth required): `GET /api/track?r=<token>` — records click in Firestore then 302 redirects to original URL. Only `http:` / `https:` URLs are allowed; others redirect to `/`
+- Tracking utility: `src/lib/campaign/trackingUrl.ts` — `injectTrackingLinks`, `encodeTrackingToken`, `decodeTrackingToken`, `buildTrackingUrl`
+
+**Send architecture:**
+- MVP: synchronous per-recipient loop in the API route. Practical up to ~100 recipients (Vercel function timeout)
+- `SendCampaignUseCase` is constructed ad-hoc per request with tenant email config (same pattern as `BookAppointmentUseCase`)
+- Email send failures per recipient are collected; `failedCount` is returned to caller. Campaign is always marked `sent` for audit purposes
+- Limit: 200 recipients per campaign (enforced server-side in use case)
+
+**Recipient selection:**
+- Tab A: cursor-paginated tenant user list with checkboxes (10/page via `GET /api/super-admin/users/paginated`)
+- Tab B: raw textarea for comma/newline-separated custom emails
+
+**Key files:**
+- Entity: `src/domain/entities/Campaign.ts`
+- Repository interface: `src/domain/interfaces/ICampaignRepository.ts`
+- Firestore repo: `src/infrastructure/repositories/FirestoreCampaignRepository.ts`
+- Use cases: `src/application/use-cases/CampaignUseCases.ts` (`SendCampaignUseCase`, `GetCampaignsPaginatedUseCase`, `GetCampaignDetailUseCase`)
+- SuperAdmin use cases: `GetUsersPaginatedUseCase` added to `src/application/use-cases/SuperAdminUseCases.ts`
+- Tracking utility: `src/lib/campaign/trackingUrl.ts`
+- API routes: `src/app/api/super-admin/campaigns/` (GET list, POST send), `src/app/api/super-admin/campaigns/[campaignId]/` (GET detail), `src/app/api/super-admin/users/paginated/` (GET), `src/app/api/track/` (GET, public)
+- Hook additions: `src/hooks/useSuperAdmin.ts` — campaign list, compose, recipient user picker state
+- Components: `src/components/SuperAdmin/CampaignList.tsx`, `src/components/SuperAdmin/CampaignComposer.tsx`
+- UI strings: `src/components/SuperAdmin/superAdmin.const.ts` (`CAMPAIGNS_LABELS`, `COMPOSER_LABELS`)
+- Dashboard page: `src/app/tenants/[tenantRegistryId]/u/admin/dashboard/console/hub/campaigns/page.tsx`
+
 ## Commands
 
 ```bash

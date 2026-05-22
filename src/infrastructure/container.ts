@@ -3,6 +3,7 @@ import { FirestoreUserRepository } from './repositories/FirestoreUserRepository'
 import { FirestoreAppointmentRepository } from './repositories/FirestoreAppointmentRepository';
 import { FirestoreLeadRepository } from './repositories/FirestoreLeadRepository';
 import { FirestoreSupportTicketRepository } from './repositories/FirestoreSupportTicketRepository';
+import { FirestoreCampaignRepository } from './repositories/FirestoreCampaignRepository';
 import { FirebaseStorageService } from './services/FirebaseStorageService';
 import { FirebaseEmailVerificationService } from './services/FirebaseEmailVerificationService';
 import { GetProfileUseCase } from '@/application/use-cases/GetProfileUseCase';
@@ -46,7 +47,12 @@ import {
   GetSuperAdminStatsUseCase,
   GetAllUsersUseCase,
   GetAllTicketsUseCase,
+  GetUsersPaginatedUseCase,
 } from '@/application/use-cases/SuperAdminUseCases';
+import {
+  GetCampaignsPaginatedUseCase,
+  GetCampaignDetailUseCase,
+} from '@/application/use-cases/CampaignUseCases';
 import {
   UploadGalleryPhotoUseCase,
   DeleteGalleryPhotoUseCase,
@@ -59,6 +65,7 @@ export const userRepo = new FirestoreUserRepository();
 export const appointmentRepo = new FirestoreAppointmentRepository();
 export const leadRepo = new FirestoreLeadRepository();
 export const supportTicketRepo = new FirestoreSupportTicketRepository();
+export const campaignRepo = new FirestoreCampaignRepository();
 const storageService = new FirebaseStorageService();
 export const emailVerificationService = new FirebaseEmailVerificationService();
 
@@ -105,4 +112,9 @@ export const container = {
   getSuperAdminStatsUseCase: new GetSuperAdminStatsUseCase(userRepo),
   getAllUsersUseCase: new GetAllUsersUseCase(userRepo),
   getAllTicketsUseCase: new GetAllTicketsUseCase(userRepo, supportTicketRepo),
+  getUsersPaginatedUseCase: new GetUsersPaginatedUseCase(userRepo),
+  // Campaigns — SendCampaignUseCase is constructed ad-hoc in the API route (needs tenant email config)
+  campaignRepo,
+  getCampaignsPaginatedUseCase: new GetCampaignsPaginatedUseCase(campaignRepo),
+  getCampaignDetailUseCase: new GetCampaignDetailUseCase(campaignRepo),
 };

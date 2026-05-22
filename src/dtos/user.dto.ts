@@ -221,3 +221,43 @@ export interface SuperAdminStatsDto {
 	totalUsers: number;
 	usersWithActivePaidPlan: number;
 }
+
+// ---------------------------------------------------------------------------
+// Email campaigns
+// ---------------------------------------------------------------------------
+
+export type CampaignStatus = 'draft' | 'sent';
+
+export interface CampaignDto {
+	id: string;
+	subject: string;
+	htmlBody: string;
+	recipients: string[];
+	status: CampaignStatus;
+	createdAt: number;
+	sentAt?: number;
+	stats: { totalRecipients: number; clicksCount: number };
+}
+
+export interface PaginatedCampaignsDto {
+	campaigns: CampaignDto[];
+	cursor: string | null;
+	hasMore: boolean;
+}
+
+export interface SendCampaignDto {
+	subject: string;
+	htmlBody: string;
+	recipientEmails: string[];
+}
+
+export interface SendCampaignResultDto {
+	campaign: CampaignDto;
+	failedCount: number;
+}
+
+export interface PaginatedUsersDto {
+	users: UserSummaryDto[];
+	cursor: string | null;
+	hasMore: boolean;
+}

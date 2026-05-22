@@ -17,6 +17,7 @@ export function SuperAdminNav() {
     { label: SUPER_ADMIN_NAV.dashboard, href: hubBase },
     { label: SUPER_ADMIN_NAV.users, href: `${hubBase}/users` },
     { label: SUPER_ADMIN_NAV.tickets, href: `${hubBase}/tickets` },
+    { label: SUPER_ADMIN_NAV.campaigns, href: `${hubBase}/campaigns` },
   ];
 
   return (

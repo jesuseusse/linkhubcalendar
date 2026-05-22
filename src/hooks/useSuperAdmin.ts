@@ -9,6 +9,9 @@ import {
   TicketDetailDto,
   TicketStatus,
   TicketType,
+  CampaignDto,
+  SendCampaignDto,
+  SendCampaignResultDto,
 } from '@/dtos/user.dto';
 import { useAuthContext } from '@/context/AuthContext';
 
@@ -39,6 +42,23 @@ export function useSuperAdmin(service: ISuperAdminService) {
   const [selectedTicket, setSelectedTicket] = useState<SuperAdminTicketDto | null>(null);
   const [ticketDetail, setTicketDetail] = useState<TicketDetailDto | null>(null);
   const [loadingDetail, setLoadingDetail] = useState(false);
+
+  // Campaigns list
+  const [campaigns, setCampaigns] = useState<CampaignDto[]>([]);
+  const [campaignsCursor, setCampaignsCursor] = useState<string | null>(null);
+  const [campaignsHasMore, setCampaignsHasMore] = useState(false);
+  const [campaignsLoading, setCampaignsLoading] = useState(false);
+
+  // Campaign compose
+  const [sendLoading, setSendLoading] = useState(false);
+  const [sendResult, setSendResult] = useState<SendCampaignResultDto | null>(null);
+  const [sendError, setSendError] = useState<string | null>(null);
+
+  // Recipient user picker
+  const [recipientUsers, setRecipientUsers] = useState<UserSummaryDto[]>([]);
+  const [recipientUsersCursor, setRecipientUsersCursor] = useState<string | null>(null);
+  const [recipientUsersHasMore, setRecipientUsersHasMore] = useState(false);
+  const [recipientUsersLoading, setRecipientUsersLoading] = useState(false);
 
   // Access control
   const [forbidden, setForbidden] = useState(false);
@@ -207,6 +227,85 @@ export function useSuperAdmin(service: ISuperAdminService) {
     [token, service, selectedTicket]
   );
 
+  const loadCampaigns = useCallback(async () => {
+    if (!token) return;
+    setCampaignsLoading(true);
+    try {
+      const result = await service.getCampaigns(token);
+      setCampaigns(result.campaigns);
+      setCampaignsCursor(result.cursor);
+      setCampaignsHasMore(result.hasMore);
+    } catch (err) {
+      handleError(err);
+    } finally {
+      setCampaignsLoading(false);
+    }
+  }, [token, service, handleError]);
+
+  const loadMoreCampaigns = useCallback(async () => {
+    if (!token || !campaignsCursor) return;
+    setCampaignsLoading(true);
+    try {
+      const result = await service.getCampaigns(token, campaignsCursor);
+      setCampaigns((prev) => [...prev, ...result.campaigns]);
+      setCampaignsCursor(result.cursor);
+      setCampaignsHasMore(result.hasMore);
+    } catch (err) {
+      handleError(err);
+    } finally {
+      setCampaignsLoading(false);
+    }
+  }, [token, service, campaignsCursor, handleError]);
+
+  const submitCampaign = useCallback(
+    async (data: SendCampaignDto) => {
+      if (!token) return;
+      setSendLoading(true);
+      setSendError(null);
+      setSendResult(null);
+      try {
+        const result = await service.sendCampaign(token, data);
+        setSendResult(result);
+        setCampaigns((prev) => [result.campaign, ...prev]);
+      } catch (err) {
+        setSendError(err instanceof Error ? err.message : 'Error al enviar campaña');
+      } finally {
+        setSendLoading(false);
+      }
+    },
+    [token, service]
+  );
+
+  const loadRecipientUsers = useCallback(async () => {
+    if (!token) return;
+    setRecipientUsersLoading(true);
+    try {
+      const result = await service.getUsersPaginated(token);
+      setRecipientUsers(result.users);
+      setRecipientUsersCursor(result.cursor);
+      setRecipientUsersHasMore(result.hasMore);
+    } catch (err) {
+      handleError(err);
+    } finally {
+      setRecipientUsersLoading(false);
+    }
+  }, [token, service, handleError]);
+
+  const loadMoreRecipientUsers = useCallback(async () => {
+    if (!token || !recipientUsersCursor) return;
+    setRecipientUsersLoading(true);
+    try {
+      const result = await service.getUsersPaginated(token, recipientUsersCursor);
+      setRecipientUsers((prev) => [...prev, ...result.users]);
+      setRecipientUsersCursor(result.cursor);
+      setRecipientUsersHasMore(result.hasMore);
+    } catch (err) {
+      handleError(err);
+    } finally {
+      setRecipientUsersLoading(false);
+    }
+  }, [token, service, recipientUsersCursor, handleError]);
+
   return {
     stats,
     statsLoading,
@@ -238,6 +337,20 @@ export function useSuperAdmin(service: ISuperAdminService) {
     clearSelectedTicket,
     updateTicketStatus,
     addComment,
+    campaigns,
+    campaignsLoading,
+    campaignsHasMore,
+    loadCampaigns,
+    loadMoreCampaigns,
+    sendLoading,
+    sendResult,
+    sendError,
+    submitCampaign,
+    recipientUsers,
+    recipientUsersHasMore,
+    recipientUsersLoading,
+    loadRecipientUsers,
+    loadMoreRecipientUsers,
     forbidden,
     checking,
   };

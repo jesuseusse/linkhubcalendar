@@ -20,4 +20,9 @@ export interface IUserRepository {
   updateGalleryEnabled(tenantId: string, userId: string, enabled: boolean): Promise<User | null>;
   updateGalleryPhotos(tenantId: string, userId: string, photos: GalleryPhoto[]): Promise<User | null>;
   findAll(tenantId: string): Promise<User[]>;
+  findAllPaginated(tenantId: string, opts: { cursor?: string; limit: number }): Promise<{
+    users: User[];
+    cursor: string | null;
+    hasMore: boolean;
+  }>;
 }

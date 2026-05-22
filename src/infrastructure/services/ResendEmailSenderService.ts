@@ -99,6 +99,24 @@ export class ResendEmailSenderService implements IEmailSenderService {
 		}
 	}
 
+	async sendCampaignEmail(
+		config: EmailSenderConfig,
+		to: string,
+		subject: string,
+		html: string
+	): Promise<void> {
+		const resend = new Resend(config.apiKey);
+		const { error } = await resend.emails.send({
+			from: config.fromEmail,
+			to,
+			subject,
+			html
+		});
+		if (error) {
+			throw new Error(`Error al enviar correo: ${error.message}`);
+		}
+	}
+
 	async sendSupportTicketNotification(
 		config: EmailSenderConfig,
 		adminEmails: string[],

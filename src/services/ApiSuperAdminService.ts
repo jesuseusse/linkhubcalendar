@@ -8,6 +8,11 @@ import {
   SupportTicketDto,
   TicketCommentDto,
   TicketStatus,
+  CampaignDto,
+  PaginatedCampaignsDto,
+  SendCampaignDto,
+  SendCampaignResultDto,
+  PaginatedUsersDto,
 } from '@/dtos/user.dto';
 
 export class ApiSuperAdminService implements ISuperAdminService {
@@ -53,5 +58,26 @@ export class ApiSuperAdminService implements ISuperAdminService {
       method: 'POST',
       body: JSON.stringify({ userId, content }),
     });
+  }
+
+  async getCampaigns(_token: string, cursor?: string): Promise<PaginatedCampaignsDto> {
+    const params = cursor ? `?cursor=${encodeURIComponent(cursor)}` : '';
+    return apiClient(`/api/super-admin/campaigns${params}`);
+  }
+
+  async getCampaignDetail(_token: string, campaignId: string): Promise<CampaignDto> {
+    return apiClient(`/api/super-admin/campaigns/${encodeURIComponent(campaignId)}`);
+  }
+
+  async sendCampaign(_token: string, data: SendCampaignDto): Promise<SendCampaignResultDto> {
+    return apiClient('/api/super-admin/campaigns', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+  }
+
+  async getUsersPaginated(_token: string, cursor?: string): Promise<PaginatedUsersDto> {
+    const params = cursor ? `?cursor=${encodeURIComponent(cursor)}` : '';
+    return apiClient(`/api/super-admin/users/paginated${params}`);
   }
 }

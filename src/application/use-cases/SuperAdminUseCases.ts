@@ -1,6 +1,6 @@
 import { IUserRepository } from '@/domain/interfaces/IUserRepository';
 import { ISupportTicketRepository } from '@/domain/interfaces/ISupportTicketRepository';
-import { UserSummaryDto, SuperAdminStatsDto, SuperAdminTicketDto } from '@/dtos/user.dto';
+import { UserSummaryDto, SuperAdminStatsDto, SuperAdminTicketDto, PaginatedUsersDto } from '@/dtos/user.dto';
 
 // ---------------------------------------------------------------------------
 // GetSuperAdminStatsUseCase
@@ -41,6 +41,33 @@ export class GetAllUsersUseCase {
       updatedAt: u.updatedAt,
     }));
     return dtos.sort((a, b) => b.createdAt - a.createdAt);
+  }
+}
+
+// ---------------------------------------------------------------------------
+// GetUsersPaginatedUseCase
+// ---------------------------------------------------------------------------
+
+export class GetUsersPaginatedUseCase {
+  constructor(private userRepo: IUserRepository) {}
+
+  async execute(
+    tenantId: string,
+    opts: { cursor?: string; limit: number }
+  ): Promise<PaginatedUsersDto> {
+    const result = await this.userRepo.findAllPaginated(tenantId, opts);
+    const users: UserSummaryDto[] = result.users.map((u) => ({
+      id: u.id,
+      email: u.email,
+      name: u.name,
+      username: u.username,
+      plan: u.plan,
+      planExpiredAt: u.planExpiredAt,
+      links: u.links.map((l) => ({ id: l.id, title: l.title, url: l.url })),
+      createdAt: u.createdAt,
+      updatedAt: u.updatedAt,
+    }));
+    return { users, cursor: result.cursor, hasMore: result.hasMore };
   }
 }
 

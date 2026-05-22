@@ -264,6 +264,31 @@ export class FirestoreUserRepository implements IUserRepository {
 		return snap.docs.map((doc) => docToUser(doc.id, doc.data()));
 	}
 
+	async findAllPaginated(
+		tenantId: string,
+		opts: { cursor?: string; limit: number }
+	): Promise<{ users: User[]; cursor: string | null; hasMore: boolean }> {
+		let query: FirebaseFirestore.Query<FirebaseFirestore.DocumentData> =
+			this.col(tenantId).orderBy('createdAt', 'desc');
+
+		if (opts.cursor) {
+			const cursorDoc = await this.col(tenantId).doc(opts.cursor).get();
+			if (cursorDoc.exists) {
+				query = query.startAfter(cursorDoc);
+			}
+		}
+
+		const snap = await query.limit(opts.limit + 1).get();
+		const hasMore = snap.docs.length > opts.limit;
+		const docs = hasMore ? snap.docs.slice(0, opts.limit) : snap.docs;
+
+		return {
+			users: docs.map((doc) => docToUser(doc.id, doc.data())),
+			cursor: hasMore ? docs[docs.length - 1].id : null,
+			hasMore,
+		};
+	}
+
 	async updateGalleryEnabled(
 		tenantId: string,
 		userId: string,

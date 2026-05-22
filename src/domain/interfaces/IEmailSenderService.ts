@@ -79,4 +79,11 @@ export interface IEmailSenderService {
     data: SupportTicketNotificationData,
     companyName?: string
   ): Promise<void>;
+
+  sendCampaignEmail(
+    config: EmailSenderConfig,
+    to: string,
+    subject: string,
+    html: string
+  ): Promise<void>;
 }
