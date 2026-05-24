@@ -3,4 +3,5 @@ export interface StripeConfig {
 	secretKey: string;
 	publishableKey: string;
 	webhookSecret: string;
+	customerPortalLink?: string;
 }
