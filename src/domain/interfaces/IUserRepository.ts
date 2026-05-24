@@ -17,6 +17,7 @@ export interface IUserRepository {
   updatePlan(tenantId: string, id: string, plan: string, planExpiredAt?: number | null, stripeSubscriptionId?: string | null): Promise<User | null>;
   updateSubscriptionFlags(tenantId: string, id: string, flags: { subscriptionCancelAtPeriodEnd?: boolean | null; subscriptionStatus?: string | null }): Promise<User | null>;
   updateLastVerificationEmailSentAt(tenantId: string, id: string): Promise<User | null>;
+  updatePromoRateLimit(tenantId: string, id: string, data: { promoInvalidAttempts?: number; promoInvalidAttemptsDate?: string; promoLastAppliedAt?: number }): Promise<void>;
   updateGalleryEnabled(tenantId: string, userId: string, enabled: boolean): Promise<User | null>;
   updateGalleryPhotos(tenantId: string, userId: string, photos: GalleryPhoto[]): Promise<User | null>;
   findAll(tenantId: string): Promise<User[]>;

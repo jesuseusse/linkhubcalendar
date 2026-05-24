@@ -39,6 +39,7 @@ function formatPromoSuccess(discount: DiscountInfo | null): string {
 export function BillingClient() {
 	const { user, token } = useAuthContext();
 	const [portalUrl, setPortalUrl] = useState<string | null>(null);
+	const [showPromoInput, setShowPromoInput] = useState(false);
 	const [promoCode, setPromoCode] = useState('');
 	const [promoLoading, setPromoLoading] = useState(false);
 	const [promoError, setPromoError] = useState<string | null>(null);
@@ -79,6 +80,7 @@ export function BillingClient() {
 			if (!res.ok) throw new Error(data.error ?? 'Error al aplicar el código');
 			setPromoSuccess(data.discount);
 			setPromoCode('');
+			setShowPromoInput(false);
 		} catch (err) {
 			setPromoError(err instanceof Error ? err.message : 'Error al aplicar el código');
 		} finally {
@@ -131,29 +133,41 @@ export function BillingClient() {
 				</p>
 			)}
 
-			{/* Promo code form — only for active pro subscribers */}
+			{/* Promo code — only for active pro subscribers */}
 			{showPromoForm && (
 				<div className='pt-2'>
-					<p className='text-xs font-medium text-foreground mb-1'>Código de promoción</p>
-					<form onSubmit={handleApplyPromo} className='flex gap-2'>
-						<input
-							type='text'
-							value={promoCode}
-							onChange={e => setPromoCode(e.target.value.toUpperCase())}
-							placeholder='Ej. SAVE20'
-							disabled={promoLoading}
-							className='flex-1 min-w-0 px-3 py-1.5 text-sm border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-border disabled:opacity-50'
-						/>
+					{!showPromoInput ? (
 						<button
-							type='submit'
-							disabled={promoLoading || !promoCode.trim()}
-							className='px-3 py-1.5 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50'
+							type='button'
+							onClick={() => setShowPromoInput(true)}
+							className='text-xs text-muted-foreground hover:text-foreground underline underline-offset-2 transition-colors'
 						>
-							{promoLoading ? 'Aplicando...' : 'Aplicar'}
+							Tengo un código de promoción
 						</button>
-					</form>
-					{promoError && (
-						<p className='mt-1.5 text-xs text-error'>{promoError}</p>
+					) : (
+						<>
+							<p className='text-xs font-medium text-foreground mb-1'>Código de promoción</p>
+							<form onSubmit={handleApplyPromo} className='flex gap-2'>
+								<input
+									type='text'
+									value={promoCode}
+									onChange={e => setPromoCode(e.target.value.toUpperCase())}
+									placeholder='Ej. SAVE20'
+									disabled={promoLoading}
+									className='flex-1 min-w-0 px-3 py-1.5 text-sm border border-border bg-background text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-border disabled:opacity-50'
+								/>
+								<button
+									type='submit'
+									disabled={promoLoading || !promoCode.trim()}
+									className='px-3 py-1.5 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors disabled:opacity-50'
+								>
+									{promoLoading ? 'Aplicando...' : 'Aplicar'}
+								</button>
+							</form>
+							{promoError && (
+								<p className='mt-1.5 text-xs text-error'>{promoError}</p>
+							)}
+						</>
 					)}
 					{promoSuccess !== null && (
 						<p className='mt-1.5 text-xs text-green-700'>

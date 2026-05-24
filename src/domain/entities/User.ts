@@ -50,6 +50,9 @@ export interface User {
   galleryPhotos: GalleryPhoto[];
   theme?: ThemeConfig;
   links: Link[];
+  promoInvalidAttempts?: number;
+  promoInvalidAttemptsDate?: string;
+  promoLastAppliedAt?: number;
   lastVerificationEmailSentAt?: number;
   createdAt: number;
   updatedAt: number;

@@ -32,6 +32,9 @@ function docToUser(id: string, data: FirebaseFirestore.DocumentData): User {
 		galleryPhotos: data.galleryPhotos ?? [],
 		theme: data.theme,
 		links: data.links ?? [],
+		promoInvalidAttempts: typeof data.promoInvalidAttempts === 'number' ? data.promoInvalidAttempts : undefined,
+		promoInvalidAttemptsDate: typeof data.promoInvalidAttemptsDate === 'string' ? data.promoInvalidAttemptsDate : undefined,
+		promoLastAppliedAt: toMillis(data.promoLastAppliedAt),
 		lastVerificationEmailSentAt: toMillis(data.lastVerificationEmailSentAt),
 		referredBy: typeof data.referredBy === 'string' ? data.referredBy : undefined,
 		createdAt: toMillis(data.createdAt) ?? Date.now(),
@@ -333,5 +336,17 @@ export class FirestoreUserRepository implements IUserRepository {
 		await ref.update(updateData);
 		const updated = await ref.get();
 		return docToUser(id, updated.data()!);
+	}
+
+	async updatePromoRateLimit(
+		tenantId: string,
+		id: string,
+		data: { promoInvalidAttempts?: number; promoInvalidAttemptsDate?: string; promoLastAppliedAt?: number }
+	): Promise<void> {
+		const update: Record<string, unknown> = { updatedAt: Date.now() };
+		if (data.promoInvalidAttempts !== undefined) update.promoInvalidAttempts = data.promoInvalidAttempts;
+		if (data.promoInvalidAttemptsDate !== undefined) update.promoInvalidAttemptsDate = data.promoInvalidAttemptsDate;
+		if (data.promoLastAppliedAt !== undefined) update.promoLastAppliedAt = data.promoLastAppliedAt;
+		await this.col(tenantId).doc(id).update(update);
 	}
 }

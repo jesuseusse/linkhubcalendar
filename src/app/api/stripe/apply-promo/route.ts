@@ -3,6 +3,9 @@ import Stripe from 'stripe';
 import { checkAuth } from '@/lib/auth/checkAuth';
 import { container } from '@/infrastructure/container';
 
+const ONE_MONTH_MS = 30 * 24 * 60 * 60 * 1000;
+const MAX_INVALID_PER_DAY = 3;
+
 export async function POST(req: NextRequest) {
 	try {
 		const { userId, tenantId, tenantRegistry } = await checkAuth(req);
@@ -45,10 +48,39 @@ export async function POST(req: NextRequest) {
 			);
 		}
 
+		// Monthly valid-apply limit: 1 per 30 days
+		if (user.promoLastAppliedAt && Date.now() - user.promoLastAppliedAt < ONE_MONTH_MS) {
+			return NextResponse.json(
+				{ error: 'Ya aplicaste un código este mes. Puedes aplicar uno nuevo el próximo mes.' },
+				{ status: 429 }
+			);
+		}
+
+		// Daily invalid-attempt limit: 3 per day
+		const today = new Date().toISOString().slice(0, 10);
+		const todayAttempts =
+			user.promoInvalidAttemptsDate === today ? (user.promoInvalidAttempts ?? 0) : 0;
+		if (todayAttempts >= MAX_INVALID_PER_DAY) {
+			return NextResponse.json(
+				{ error: 'Demasiados intentos fallidos hoy. Vuelve mañana.' },
+				{ status: 429 }
+			);
+		}
+
 		const stripe = new Stripe(stripeConfig.secretKey);
 
-		const promoCodes = await stripe.promotionCodes.list({ code, active: true, limit: 1 });
+		const promoCodes = await stripe.promotionCodes.list({
+			code,
+			active: true,
+			limit: 1,
+			expand: ['data.promotion.coupon']
+		});
+
 		if (promoCodes.data.length === 0) {
+			await container.userRepo.updatePromoRateLimit(tenantId, userId, {
+				promoInvalidAttempts: todayAttempts + 1,
+				promoInvalidAttemptsDate: today
+			});
 			return NextResponse.json(
 				{ error: 'El código de promoción no es válido o ha expirado' },
 				{ status: 400 }
@@ -59,6 +91,12 @@ export async function POST(req: NextRequest) {
 
 		await stripe.subscriptions.update(user.stripeSubscriptionId, {
 			discounts: [{ promotion_code: promoCode.id }]
+		});
+
+		await container.userRepo.updatePromoRateLimit(tenantId, userId, {
+			promoLastAppliedAt: Date.now(),
+			promoInvalidAttempts: 0,
+			promoInvalidAttemptsDate: today
 		});
 
 		const couponData = promoCode.promotion.coupon;
