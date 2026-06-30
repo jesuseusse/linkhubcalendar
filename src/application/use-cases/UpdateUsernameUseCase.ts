@@ -4,7 +4,9 @@ import { toUserResponse } from './mappers';
 import { RESERVED_USERNAMES } from '../../lib/constants';
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
-const USERNAME_REGEX = /^[a-z0-9_-]{3,30}$/;
+// Allows lowercase letters, numbers, hyphen, underscore, and dot.
+// Must start and end with alphanumeric; no consecutive dots; length 3–30.
+const USERNAME_REGEX = /^(?!.*\.\.)[a-z0-9][a-z0-9._-]{1,28}[a-z0-9]$/;
 
 export class UpdateUsernameUseCase {
 	constructor(private userRepository: IUserRepository) {}
@@ -16,7 +18,7 @@ export class UpdateUsernameUseCase {
 	): Promise<UserResponseDto> {
 		if (!USERNAME_REGEX.test(username)) {
 			throw new Error(
-				'Username must be 3-30 characters and contain only letters, numbers, hyphens, or underscores'
+				'El usuario debe tener 3-30 caracteres, solo letras minúsculas, números, punto, guión y guión bajo, e iniciar y terminar con letra o número'
 			);
 		}
 

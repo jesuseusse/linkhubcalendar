@@ -2,7 +2,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 
 export const config = {
-	matcher: ['/((?!api|_next|static|favicon.ico|.*\\..*).*)']
+	// Excludes only known static file extensions, not all paths containing a dot.
+	// This allows usernames like "lic.santacota" or "dr.smith" to reach the tenant rewrite.
+	matcher: [
+		'/((?!api|_next|static|favicon\\.ico|.*\\.(?:css|js|mjs|jsx|ts|tsx|png|jpg|jpeg|gif|svg|ico|woff2?|ttf|eot|json|xml|txt|html?|webp|avif|mp4|webm|pdf|zip|map)).*)'
+	]
 };
 
 export async function proxy(req: NextRequest) {

@@ -73,8 +73,8 @@ export function UsernameForm({
 						value={value}
 						onChange={e => setValue(e.target.value.toLowerCase())}
 						placeholder='usuario'
-						pattern='[a-z0-9_-]{3,30}'
-						title='Solo letras minúsculas, números, guiones y guiones bajos (3-30 caracteres)'
+						pattern='(?!.*\.\.)[a-z0-9][a-z0-9._\-]{1,28}[a-z0-9]'
+						title='3-30 caracteres. Letras minúsculas, números, punto, guión o guión bajo. Debe iniciar y terminar con letra o número.'
 						required
 						disabled={isLocked}
 						className='px-1 py-2 text-sm focus:outline-none'
