@@ -43,6 +43,7 @@ export interface UserDto {
 	subscriptionCancelAtPeriodEnd?: boolean;
 	subscriptionStatus?: string;
 	stripeSubscriptionId?: string;
+	billingInterval?: 'month' | 'year';
 	referredBy?: string;
 	contactFormEnabled: boolean;
 	calendarEnabled: boolean;
@@ -193,6 +194,7 @@ export interface UserSummaryDto {
 	email: string;
 	name: string;
 	username?: string;
+	profilePhoto?: string;
 	plan?: Plan;
 	planExpiredAt?: number | null;
 	links: LinkDto[];

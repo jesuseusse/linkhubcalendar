@@ -14,14 +14,14 @@ export interface IUserRepository {
   updateLink(tenantId: string, userId: string, linkId: string, link: Omit<Link, "id">): Promise<User | null>;
   deleteLink(tenantId: string, userId: string, linkId: string): Promise<User | null>;
   updateTheme(tenantId: string, id: string, theme: ThemeConfig): Promise<User | null>;
-  updatePlan(tenantId: string, id: string, plan: string, planExpiredAt?: number | null, stripeSubscriptionId?: string | null): Promise<User | null>;
+  updatePlan(tenantId: string, id: string, plan: string, planExpiredAt?: number | null, stripeSubscriptionId?: string | null, billingInterval?: 'month' | 'year'): Promise<User | null>;
   updateSubscriptionFlags(tenantId: string, id: string, flags: { subscriptionCancelAtPeriodEnd?: boolean | null; subscriptionStatus?: string | null }): Promise<User | null>;
   updateLastVerificationEmailSentAt(tenantId: string, id: string): Promise<User | null>;
   updatePromoRateLimit(tenantId: string, id: string, data: { promoInvalidAttempts?: number; promoInvalidAttemptsDate?: string; promoLastAppliedAt?: number }): Promise<void>;
   updateGalleryEnabled(tenantId: string, userId: string, enabled: boolean): Promise<User | null>;
   updateGalleryPhotos(tenantId: string, userId: string, photos: GalleryPhoto[]): Promise<User | null>;
   findAll(tenantId: string): Promise<User[]>;
-  findAllPaginated(tenantId: string, opts: { cursor?: string; limit: number }): Promise<{
+  findAllPaginated(tenantId: string, opts: { cursor?: string; limit: number; plan?: string }): Promise<{
     users: User[];
     cursor: string | null;
     hasMore: boolean;

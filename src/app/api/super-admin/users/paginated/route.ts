@@ -8,7 +8,8 @@ export async function GET(req: NextRequest) {
     const url = new URL(req.url);
     const cursor = url.searchParams.get('cursor') ?? undefined;
     const limit = Math.min(parseInt(url.searchParams.get('limit') ?? '10', 10), 100);
-    const result = await container.getUsersPaginatedUseCase.execute(tenantId, { cursor, limit });
+    const plan = url.searchParams.get('plan') ?? undefined;
+    const result = await container.getUsersPaginatedUseCase.execute(tenantId, { cursor, limit, plan });
     return NextResponse.json(result);
   } catch (err) {
     if (err instanceof ForbiddenError) {

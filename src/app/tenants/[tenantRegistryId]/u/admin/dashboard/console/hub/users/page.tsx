@@ -27,6 +27,8 @@ export default function SuperAdminUsersPage() {
     loadMoreUsers,
     forbidden,
     checking,
+    planFilter,
+    setPlanFilter,
   } = useSuperAdmin(superAdminService);
 
   useEffect(() => {
@@ -71,6 +73,8 @@ export default function SuperAdminUsersPage() {
             onSort={toggleUsersSort}
             hasMore={hasMoreUsers}
             onLoadMore={loadMoreUsers}
+            planFilter={planFilter}
+            onPlanFilterChange={setPlanFilter}
           />
         </section>
       </main>

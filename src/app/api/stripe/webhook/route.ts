@@ -139,7 +139,7 @@ export async function POST(req: NextRequest) {
 // ---------------------------------------------------------------------------
 // checkout.session.completed
 // Fired right after a user completes the Stripe checkout flow.
-// session.metadata carries { email, tenantId, domain } set at checkout creation.
+// session.metadata carries { email, tenantId, domain, interval } set at checkout creation.
 // ---------------------------------------------------------------------------
 async function handleCheckoutCompleted(
 	stripe: Stripe,
@@ -147,7 +147,7 @@ async function handleCheckoutCompleted(
 	domain: string,
 	stripeConfig: StripeConfig
 ) {
-	const { email, tenantId } = session.metadata ?? {};
+	const { email, tenantId, interval } = session.metadata ?? {};
 	if (!email || !tenantId) {
 		console.warn('[stripe-webhook] checkout.session.completed: missing metadata');
 		return;
@@ -164,21 +164,27 @@ async function handleCheckoutCompleted(
 	const priceId = item?.price?.id;
 	const currentPeriodEnd = item?.current_period_end; // Unix seconds
 
+	const billingInterval: 'month' | 'year' = interval === 'year' ? 'year' : 'month';
+
 	// Propagate metadata to the subscription so future renewal events can resolve the tenant
 	await stripe.subscriptions.update(subscriptionId, {
-		metadata: { tenantId, domain, email }
+		metadata: { tenantId, domain, email, interval: billingInterval }
 	});
 
-	if (priceId !== stripeConfig.proPriceId) {
+	const isProPrice =
+		priceId === stripeConfig.proPriceId ||
+		(stripeConfig.proAnnualPriceId && priceId === stripeConfig.proAnnualPriceId);
+
+	if (!isProPrice) {
 		console.log(
-			`[stripe-webhook] priceId ${priceId} ≠ proPriceId ${stripeConfig.proPriceId} — skipping upgrade`
+			`[stripe-webhook] priceId ${priceId} does not match any configured pro price — skipping upgrade`
 		);
 		return;
 	}
 
 	if (!currentPeriodEnd) return;
 
-	await updateUserPlan(tenantId, email, 'pro', currentPeriodEnd * 1000, subscriptionId);
+	await updateUserPlan(tenantId, email, 'pro', currentPeriodEnd * 1000, subscriptionId, billingInterval);
 }
 
 // ---------------------------------------------------------------------------
@@ -238,11 +244,18 @@ async function handleSubscriptionUpdated(
 	const priceId = item?.price?.id;
 	const currentPeriodEnd = item?.current_period_end;
 
-	if (priceId !== stripeConfig.proPriceId || !currentPeriodEnd) return;
+	const isProPrice =
+		priceId === stripeConfig.proPriceId ||
+		(stripeConfig.proAnnualPriceId && priceId === stripeConfig.proAnnualPriceId);
 
-	await container.userRepo.updatePlan(tenantId, user.id, 'pro', currentPeriodEnd * 1000);
+	if (!isProPrice || !currentPeriodEnd) return;
+
+	const billingInterval: 'month' | 'year' =
+		subscription.metadata?.interval === 'year' ? 'year' : 'month';
+
+	await container.userRepo.updatePlan(tenantId, user.id, 'pro', currentPeriodEnd * 1000, undefined, billingInterval);
 	console.log(
-		`[stripe-webhook] Updated user ${email} (tenant ${tenantId}) → plan: pro, expires: ${new Date(currentPeriodEnd * 1000).toISOString()}`
+		`[stripe-webhook] Updated user ${email} (tenant ${tenantId}) → plan: pro, interval: ${billingInterval}, expires: ${new Date(currentPeriodEnd * 1000).toISOString()}`
 	);
 }
 
@@ -300,9 +313,16 @@ async function handleInvoicePaymentSucceeded(
 	const priceId = item?.price?.id;
 	const currentPeriodEnd = item?.current_period_end;
 
-	if (priceId !== stripeConfig.proPriceId || !currentPeriodEnd) return;
+	const isProPrice =
+		priceId === stripeConfig.proPriceId ||
+		(stripeConfig.proAnnualPriceId && priceId === stripeConfig.proAnnualPriceId);
 
-	await updateUserPlan(tenantId, email, 'pro', currentPeriodEnd * 1000);
+	if (!isProPrice || !currentPeriodEnd) return;
+
+	const billingInterval: 'month' | 'year' =
+		subscription.metadata?.interval === 'year' ? 'year' : 'month';
+
+	await updateUserPlan(tenantId, email, 'pro', currentPeriodEnd * 1000, undefined, billingInterval);
 }
 
 // ---------------------------------------------------------------------------
@@ -367,7 +387,8 @@ async function updateUserPlan(
 	email: string,
 	plan: string,
 	planExpiredAt: number,
-	stripeSubscriptionId?: string | null
+	stripeSubscriptionId?: string | null,
+	billingInterval?: 'month' | 'year'
 ) {
 	const user = await container.userRepo.findByEmail(tenantId, email);
 	if (!user) {
@@ -377,8 +398,8 @@ async function updateUserPlan(
 		return;
 	}
 
-	await container.userRepo.updatePlan(tenantId, user.id, plan, planExpiredAt, stripeSubscriptionId);
+	await container.userRepo.updatePlan(tenantId, user.id, plan, planExpiredAt, stripeSubscriptionId, billingInterval);
 	console.log(
-		`[stripe-webhook] Updated user ${email} (tenant ${tenantId}) → plan: ${plan}, expires: ${new Date(planExpiredAt).toISOString()}`
+		`[stripe-webhook] Updated user ${email} (tenant ${tenantId}) → plan: ${plan}, interval: ${billingInterval ?? 'month'}, expires: ${new Date(planExpiredAt).toISOString()}`
 	);
 }

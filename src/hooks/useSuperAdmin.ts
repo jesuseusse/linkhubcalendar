@@ -27,7 +27,9 @@ export function useSuperAdmin(service: ISuperAdminService) {
   const [usersLoading, setUsersLoading] = useState(false);
   const [usersSortBy, setUsersSortBy] = useState<'createdAt' | 'updatedAt'>('createdAt');
   const [usersSortOrder, setUsersSortOrder] = useState<'asc' | 'desc'>('desc');
-  const [usersVisibleCount, setUsersVisibleCount] = useState(5);
+  const [usersCursor, setUsersCursor] = useState<string | null>(null);
+  const [usersHasMore, setUsersHasMore] = useState(false);
+  const [planFilter, setPlanFilterState] = useState<string>('');
 
   // Tickets
   const [tickets, setTickets] = useState<SuperAdminTicketDto[]>([]);
@@ -84,18 +86,28 @@ export function useSuperAdmin(service: ISuperAdminService) {
     }
   }, [token, service, handleError]);
 
-  const loadUsers = useCallback(async () => {
+  const loadUsers = useCallback(async (plan?: string) => {
     if (!token) return;
     setUsersLoading(true);
     try {
-      const result = await service.getUsers(token);
-      setUsers(result);
+      const result = await service.getUsersPaginated(token, undefined, plan);
+      setUsers(result.users);
+      setUsersCursor(result.cursor);
+      setUsersHasMore(result.hasMore);
     } catch (err) {
       handleError(err);
     } finally {
       setUsersLoading(false);
     }
   }, [token, service, handleError]);
+
+  const setPlanFilter = useCallback((plan: string) => {
+    setPlanFilterState(plan);
+    setUsers([]);
+    setUsersCursor(null);
+    setUsersHasMore(false);
+    loadUsers(plan);
+  }, [loadUsers]);
 
   const loadTickets = useCallback(async () => {
     if (!token) return;
@@ -124,16 +136,8 @@ export function useSuperAdmin(service: ISuperAdminService) {
     });
   }, [users, usersSortBy, usersSortOrder]);
 
-  const visibleUsers = useMemo(
-    () => sortedUsers.slice(0, usersVisibleCount),
-    [sortedUsers, usersVisibleCount]
-  );
-
-  const hasMoreUsers = usersVisibleCount < sortedUsers.length;
-
   const toggleUsersSort = useCallback(
     (by: 'createdAt' | 'updatedAt') => {
-      setUsersVisibleCount(5);
       if (usersSortBy === by) {
         setUsersSortOrder((o) => (o === 'desc' ? 'asc' : 'desc'));
       } else {
@@ -144,9 +148,20 @@ export function useSuperAdmin(service: ISuperAdminService) {
     [usersSortBy]
   );
 
-  const loadMoreUsers = useCallback(() => {
-    setUsersVisibleCount((prev) => prev + 5);
-  }, []);
+  const loadMoreUsers = useCallback(async () => {
+    if (!token || !usersCursor) return;
+    setUsersLoading(true);
+    try {
+      const result = await service.getUsersPaginated(token, usersCursor, planFilter || undefined);
+      setUsers((prev) => [...prev, ...result.users]);
+      setUsersCursor(result.cursor);
+      setUsersHasMore(result.hasMore);
+    } catch (err) {
+      handleError(err);
+    } finally {
+      setUsersLoading(false);
+    }
+  }, [token, service, usersCursor, planFilter, handleError]);
 
   const filteredTickets = useMemo(() => {
     let result = tickets;
@@ -312,14 +327,16 @@ export function useSuperAdmin(service: ISuperAdminService) {
     users,
     usersLoading,
     loadUsers,
-    visibleUsers,
-    totalUsersCount: sortedUsers.length,
+    visibleUsers: sortedUsers,
+    totalUsersCount: users.length,
     allUserEmails: users.map((u) => u.email),
     usersSortBy,
     usersSortOrder,
     toggleUsersSort,
-    hasMoreUsers,
+    hasMoreUsers: usersHasMore,
     loadMoreUsers,
+    planFilter,
+    setPlanFilter,
     tickets,
     ticketsLoading,
     loadTickets,

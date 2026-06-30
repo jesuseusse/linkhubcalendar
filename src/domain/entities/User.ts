@@ -43,6 +43,7 @@ export interface User {
   subscriptionCancelAtPeriodEnd?: boolean;
   subscriptionStatus?: string;
   stripeSubscriptionId?: string;
+  billingInterval?: 'month' | 'year';
   referredBy?: string;
   contactFormEnabled: boolean;
   calendarEnabled: boolean;

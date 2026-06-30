@@ -23,5 +23,5 @@ export interface ISuperAdminService {
   getCampaigns(token: string, cursor?: string): Promise<PaginatedCampaignsDto>;
   getCampaignDetail(token: string, campaignId: string): Promise<CampaignDto>;
   sendCampaign(token: string, data: SendCampaignDto): Promise<SendCampaignResultDto>;
-  getUsersPaginated(token: string, cursor?: string): Promise<PaginatedUsersDto>;
+  getUsersPaginated(token: string, cursor?: string, plan?: string): Promise<PaginatedUsersDto>;
 }

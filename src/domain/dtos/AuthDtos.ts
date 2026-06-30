@@ -22,6 +22,7 @@ export interface UserResponseDto {
   subscriptionCancelAtPeriodEnd?: boolean;
   subscriptionStatus?: string;
   stripeSubscriptionId?: string;
+  billingInterval?: 'month' | 'year';
   contactFormEnabled: boolean;
   calendarEnabled: boolean;
   galleryEnabled: boolean;

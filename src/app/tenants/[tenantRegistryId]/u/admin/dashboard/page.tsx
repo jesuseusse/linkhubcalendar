@@ -32,6 +32,8 @@ import { GALLERY_LABELS } from '@/components/Gallery/gallery.const';
 import { InfoVerifyEmail } from '@/components/Profile/InfoVerifyEmail';
 import { StripeResultModal } from '@/components/Common/StripeResultModal';
 import { QRDownloadButton } from '@/components/QR/QRDownloadButton';
+import { ProBanner } from '@/components/Billing/ProBanner';
+import { UpgradeModal } from '@/components/Common/UpgradeModal';
 
 export default function DashboardPage() {
 	const { logout } = useAuth(authService);
@@ -42,6 +44,7 @@ export default function DashboardPage() {
 	const [whatsappModalOpen, setWhatsappModalOpen] = useState(false);
 	const [instagramModalOpen, setInstagramModalOpen] = useState(false);
 	const [tiktokModalOpen, setTiktokModalOpen] = useState(false);
+	const [upgradeModalOpen, setUpgradeModalOpen] = useState(false);
 
 	const stripeParam = searchParams.get('successStripe');
 	const stripeModal =
@@ -107,6 +110,12 @@ export default function DashboardPage() {
 				/>
 			)}
 			<Header userName={profile.name} isAuthenticated onLogout={logout} />
+			{(profile.plan === 'free' || !profile.plan) && (
+				<ProBanner onUpgrade={() => setUpgradeModalOpen(true)} />
+			)}
+			{upgradeModalOpen && (
+				<UpgradeModal onClose={() => setUpgradeModalOpen(false)} />
+			)}
 			<main className='max-w-5xl mx-auto py-8 px-4 space-y-6'>
 				{profile.emailVerified === false && (
 					<InfoVerifyEmail

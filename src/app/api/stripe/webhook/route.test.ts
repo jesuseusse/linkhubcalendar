@@ -244,7 +244,8 @@ describe('POST /api/stripe/webhook — checkout.session.completed', () => {
 			USER_ID,
 			'pro',
 			CURRENT_PERIOD_END * 1000, // Stripe seconds → JS milliseconds
-			SUBSCRIPTION_ID
+			SUBSCRIPTION_ID,
+			'month' // billingInterval defaults to 'month' when metadata.interval is absent
 		);
 	});
 
@@ -377,7 +378,9 @@ describe('POST /api/stripe/webhook — customer.subscription.updated', () => {
 			TENANT_ID,
 			USER_ID,
 			'pro',
-			CURRENT_PERIOD_END * 1000
+			CURRENT_PERIOD_END * 1000,
+			undefined,
+			'month' // billingInterval defaults to 'month' when metadata.interval is absent
 		);
 	});
 
@@ -520,13 +523,14 @@ describe('POST /api/stripe/webhook — invoice.payment_succeeded via ?tenant= qu
 		expect(res.status).toBe(200);
 		expect(mockGetByHostname).toHaveBeenCalledWith(TENANT_DOMAIN);
 		expect(mockSubscriptionsRetrieve).toHaveBeenCalledWith(INVOICE_SUBSCRIPTION_ID);
-		// invoice renewals don't pass stripeSubscriptionId (undefined 5th arg)
+		// invoice renewals don't pass stripeSubscriptionId (undefined 5th arg); billingInterval defaults to 'month'
 		expect(mockUpdatePlan).toHaveBeenCalledWith(
 			TENANT_ID,
 			USER_ID,
 			'pro',
 			CURRENT_PERIOD_END * 1000,
-			undefined
+			undefined,
+			'month'
 		);
 	});
 });

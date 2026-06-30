@@ -90,10 +90,14 @@ export function BillingClient() {
 
 	return (
 		<div className='space-y-4'>
-			{/* Plan name + status badge */}
+			{/* Plan name + billing interval + status badge */}
 			<div className='flex flex-wrap items-center gap-3'>
 				<span className='text-sm font-semibold text-foreground capitalize'>
-					Plan {plan}
+					{isPro
+						? user.billingInterval === 'year'
+							? 'Plan Anual · $900/año'
+							: 'Plan Mensual · $200/mes'
+						: 'Plan free'}
 				</span>
 				<span
 					className={`inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full border ${

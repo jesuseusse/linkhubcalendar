@@ -164,28 +164,37 @@ Gated in UI via `<RequirePermission>` wrapper component. Public pages check perm
 
 ## Stripe & Billing
 
-Stripe is integrated per-tenant. Each tenant registry document in Firestore stores its own Stripe config (`IStripeConfig`: `secretKey`, `publishableKey`, `webhookSecret`, `proPriceId`).
+Stripe is integrated per-tenant. Each tenant registry document in Firestore stores its own Stripe config (`IStripeConfig`: `secretKey`, `publishableKey`, `webhookSecret`, `proPriceId`, `proAnnualPriceId?`, `customerPortalLink?`).
+
+**Plans & pricing:**
+- Monthly Pro: `proPriceId` — 200 MXN/mes
+- Annual Pro: `proAnnualPriceId` — 900 MXN/año (50% off vs 1,800 MXN)
+- Both plans include a **90-day free trial** applied programmatically in the checkout session (`subscription_data.trial_period_days: 90`). Do NOT configure trial in Stripe product itself.
 
 **API routes:**
-- `POST /api/stripe/checkout` — creates a Stripe Checkout session
+- `POST /api/stripe/checkout` — creates a Stripe Checkout session; accepts `{ interval: 'month' | 'year' }` in body (defaults to `'month'`); returns 400 if `interval=year` but `proAnnualPriceId` is not configured
 - `POST /api/stripe/cancel` — cancels subscription at period end (reads `user.stripeSubscriptionId`)
-- `POST /api/stripe/webhook` — handles Stripe events (idempotent via `saveStripeEvent`)
+- `POST /api/stripe/webhook` — handles Stripe events (idempotent via `saveStripeEvent`); domain resolved from `?tenant=hostname` URL param (primary) or `event.data.object.metadata.domain` (fallback)
 
 **Webhook events handled:**
 
 | Event | Behavior |
 |---|---|
-| `checkout.session.completed` | Upgrade user to pro; propagate metadata to subscription |
-| `customer.subscription.updated` | cancel_at_period_end → flag; unpaid → downgrade; past_due → flag; active → renew |
+| `checkout.session.completed` | Upgrade user to pro; propagate metadata + interval to subscription |
+| `customer.subscription.updated` | cancel_at_period_end → flag; unpaid → downgrade; past_due → flag; active → renew (checks both monthly and annual priceIds) |
 | `customer.subscription.deleted` | Downgrade to free, clear subscription flags |
-| `invoice.payment_succeeded` | Renew pro plan |
+| `invoice.payment_succeeded` | Renew pro plan (checks both monthly and annual priceIds) |
 
 **User entity subscription fields:**
 - `stripeSubscriptionId?: string`
+- `billingInterval?: 'month' | 'year'` — set when plan is upgraded; tracks monthly vs annual
 - `subscriptionCancelAtPeriodEnd?: boolean`
 - `subscriptionStatus?: string` (e.g. `'past_due'`)
 
-**UI:** `src/components/Billing/BillingClient.tsx` + `dashboard/billing/page.tsx`
+**UI:**
+- `src/components/Billing/BillingClient.tsx` + `dashboard/billing/page.tsx` — shows "Plan Anual · $900/año" or "Plan Mensual · $200/mes" depending on `user.billingInterval`
+- `src/components/Common/UpgradeModal.tsx` — monthly/annual toggle; both enabled; "3 MESES GRATIS" badge; benefit list; disclaimer
+- `src/components/Billing/ProBanner.tsx` — full-width promotional banner shown to `plan === 'free'` users at the top of the dashboard; dismissable per session via `sessionStorage`; opens `UpgradeModal` on CTA click
 
 ## Referral System
 
@@ -379,7 +388,7 @@ Accessible only to emails listed in `NEXT_SUPER_ADMINS_EMAILS` (comma-separated 
 
 **Access control:** All API routes call `checkSuperAdmin(req)` which wraps `checkAuth` and additionally validates the caller's email against the allow-list. Non-admins get 403; client pages redirect to `/dashboard/` on 403.
 
-**Users list features:** `createdAt` and `updatedAt` columns; clickable column headers for client-side sort (asc/desc); infinite-scroll pagination (5 at a time, "Cargar más" button); "Exportar correos" modal with comma-separated email list paginated 1000 at a time with a clipboard copy button.
+**Users list features:** `createdAt` and `updatedAt` columns; clickable column headers for client-side sort (asc/desc); server-side cursor pagination (100 users per batch via `/api/super-admin/users/paginated`, "Cargar más" button appends next batch); server-side plan filter dropdown (free/pro/team/all — `plan` query param, requires Firestore composite index `plan ASC + createdAt DESC` on `users` collection group, defined in `firestore.indexes.json`); 32px profile photo thumbnail per row with initial-letter fallback; "Exportar correos" modal with comma-separated email list paginated 1000 at a time with a clipboard copy button.
 
 **Ticket filters (client-side):** type (error | suggestion | all), email substring search, sort order (newest/oldest).
 

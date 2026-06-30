@@ -15,6 +15,7 @@ export const STATS_LABELS = {
 
 export const USERS_LABELS = {
   title: 'Usuarios registrados',
+  colPhoto: 'Foto',
   colEmail: 'Email',
   colPlan: 'Plan',
   colProfile: 'Perfil',
@@ -28,6 +29,11 @@ export const USERS_LABELS = {
   loadMore: 'Cargar más',
   exportEmails: 'Exportar correos',
   showing: (visible: number, total: number) => `Mostrando ${visible} de ${total}`,
+  filterPlanLabel: 'Plan',
+  filterPlanAll: 'Todos',
+  filterPlanFree: 'Free',
+  filterPlanPro: 'Pro',
+  filterPlanTeam: 'Team',
 } as const;
 
 export const EMAIL_EXPORT_LABELS = {

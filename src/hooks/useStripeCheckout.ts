@@ -3,7 +3,7 @@
 import { useState, useCallback } from 'react';
 import { useAuthContext } from '@/context/AuthContext';
 
-export function useStripeCheckout() {
+export function useStripeCheckout(interval: 'month' | 'year' = 'month') {
 	const { user, token } = useAuthContext();
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
@@ -19,8 +19,10 @@ export function useStripeCheckout() {
 			const res = await fetch('/api/stripe/checkout', {
 				method: 'POST',
 				headers: {
-					Authorization: `Bearer ${token}`
-				}
+					Authorization: `Bearer ${token}`,
+					'Content-Type': 'application/json'
+				},
+				body: JSON.stringify({ interval })
 			});
 			const data = await res.json();
 			if (!res.ok) throw new Error(data.error ?? 'Error al iniciar el pago');
@@ -30,7 +32,7 @@ export function useStripeCheckout() {
 		} finally {
 			setLoading(false);
 		}
-	}, [user, token]);
+	}, [user, token, interval]);
 
 	return { checkout, loading, error };
 }

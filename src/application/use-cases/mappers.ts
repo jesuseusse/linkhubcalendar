@@ -16,6 +16,7 @@ export function toUserResponse(user: User, slots: CalendarSlot[] = []): UserResp
     subscriptionCancelAtPeriodEnd: user.subscriptionCancelAtPeriodEnd,
     subscriptionStatus: user.subscriptionStatus,
     stripeSubscriptionId: user.stripeSubscriptionId,
+    billingInterval: user.billingInterval,
     contactFormEnabled: user.contactFormEnabled,
     calendarEnabled: user.calendarEnabled,
     galleryEnabled: user.galleryEnabled,

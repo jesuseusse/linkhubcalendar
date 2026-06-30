@@ -15,6 +15,8 @@ interface Props {
   onSort: (by: 'createdAt' | 'updatedAt') => void;
   hasMore: boolean;
   onLoadMore: () => void;
+  planFilter: string;
+  onPlanFilterChange: (plan: string) => void;
 }
 
 function SortHeader({
@@ -59,24 +61,39 @@ export function UserTable({
   onSort,
   hasMore,
   onLoadMore,
+  planFilter,
+  onPlanFilterChange,
 }: Props) {
   const [showExport, setShowExport] = useState(false);
 
-  if (loading) {
+  if (loading && users.length === 0) {
     return <p className='text-sm text-muted-foreground py-4'>{LOADING_TEXT}</p>;
   }
 
-  if (totalCount === 0) {
+  if (!loading && totalCount === 0) {
     return <p className='text-sm text-muted-foreground py-4'>{USERS_LABELS.empty}</p>;
   }
 
   return (
     <div className='space-y-3'>
       {/* Controls bar */}
-      <div className='flex items-center justify-between gap-3'>
-        <span className='text-xs text-muted-foreground'>
-          {USERS_LABELS.showing(users.length, totalCount)}
-        </span>
+      <div className='flex items-center justify-between gap-3 flex-wrap'>
+        <div className='flex items-center gap-3'>
+          <span className='text-xs text-muted-foreground'>
+            {USERS_LABELS.showing(users.length, totalCount)}
+          </span>
+          <select
+            value={planFilter}
+            onChange={(e) => onPlanFilterChange(e.target.value)}
+            className='text-xs border border-border rounded px-2 py-1.5 bg-background text-foreground'
+            aria-label={USERS_LABELS.filterPlanLabel}
+          >
+            <option value=''>{USERS_LABELS.filterPlanAll}</option>
+            <option value='free'>{USERS_LABELS.filterPlanFree}</option>
+            <option value='pro'>{USERS_LABELS.filterPlanPro}</option>
+            <option value='team'>{USERS_LABELS.filterPlanTeam}</option>
+          </select>
+        </div>
         <button
           type='button'
           onClick={() => setShowExport(true)}
@@ -92,6 +109,7 @@ export function UserTable({
         <table className='w-full text-sm'>
           <thead>
             <tr className='border-b border-border text-left'>
+              <th className='py-2 pr-4 font-medium text-muted-foreground text-xs'>{USERS_LABELS.colPhoto}</th>
               <th className='py-2 pr-4 font-medium text-muted-foreground text-xs'>{USERS_LABELS.colEmail}</th>
               <th className='py-2 pr-4 font-medium text-muted-foreground text-xs'>{USERS_LABELS.colPlan}</th>
               <th className='py-2 pr-4 font-medium text-muted-foreground text-xs'>{USERS_LABELS.colLinks}</th>
@@ -115,6 +133,24 @@ export function UserTable({
           <tbody>
             {users.map((user) => (
               <tr key={user.id} className='border-b border-border last:border-0'>
+                <td className='py-3 pr-4'>
+                  {user.profilePhoto ? (
+                    <img
+                      src={user.profilePhoto}
+                      alt={user.name}
+                      width={32}
+                      height={32}
+                      className='w-8 h-8 rounded-full object-cover'
+                    />
+                  ) : (
+                    <span
+                      className='w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-medium text-muted-foreground select-none'
+                      aria-hidden='true'
+                    >
+                      {user.name.charAt(0).toUpperCase()}
+                    </span>
+                  )}
+                </td>
                 <td className='py-3 pr-4 text-foreground text-sm'>{user.email}</td>
                 <td className='py-3 pr-4'>
                   {user.plan ? (
@@ -166,9 +202,10 @@ export function UserTable({
           <button
             type='button'
             onClick={onLoadMore}
-            className='px-4 py-2 text-xs font-medium border border-border text-muted-foreground hover:text-foreground hover:border-foreground rounded transition-colors'
+            disabled={loading}
+            className='px-4 py-2 text-xs font-medium border border-border text-muted-foreground hover:text-foreground hover:border-foreground rounded transition-colors disabled:opacity-50'
           >
-            {USERS_LABELS.loadMore}
+            {loading ? USERS_LABELS.loading : USERS_LABELS.loadMore}
           </button>
         </div>
       )}

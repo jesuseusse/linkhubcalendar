@@ -34,6 +34,7 @@ export class GetAllUsersUseCase {
       email: u.email,
       name: u.name,
       username: u.username,
+      profilePhoto: u.profilePhoto,
       plan: u.plan,
       planExpiredAt: u.planExpiredAt,
       links: u.links.map((l) => ({ id: l.id, title: l.title, url: l.url })),
@@ -53,7 +54,7 @@ export class GetUsersPaginatedUseCase {
 
   async execute(
     tenantId: string,
-    opts: { cursor?: string; limit: number }
+    opts: { cursor?: string; limit: number; plan?: string }
   ): Promise<PaginatedUsersDto> {
     const result = await this.userRepo.findAllPaginated(tenantId, opts);
     const users: UserSummaryDto[] = result.users.map((u) => ({
@@ -61,6 +62,7 @@ export class GetUsersPaginatedUseCase {
       email: u.email,
       name: u.name,
       username: u.username,
+      profilePhoto: u.profilePhoto,
       plan: u.plan,
       planExpiredAt: u.planExpiredAt,
       links: u.links.map((l) => ({ id: l.id, title: l.title, url: l.url })),

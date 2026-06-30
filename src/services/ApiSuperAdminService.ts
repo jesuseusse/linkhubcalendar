@@ -76,8 +76,12 @@ export class ApiSuperAdminService implements ISuperAdminService {
     });
   }
 
-  async getUsersPaginated(_token: string, cursor?: string): Promise<PaginatedUsersDto> {
-    const params = cursor ? `?cursor=${encodeURIComponent(cursor)}` : '';
-    return apiClient(`/api/super-admin/users/paginated${params}`);
+  async getUsersPaginated(_token: string, cursor?: string, plan?: string): Promise<PaginatedUsersDto> {
+    const params = new URLSearchParams();
+    if (cursor) params.set('cursor', cursor);
+    params.set('limit', '100');
+    if (plan) params.set('plan', plan);
+    const qs = params.toString();
+    return apiClient(`/api/super-admin/users/paginated${qs ? `?${qs}` : ''}`);
   }
 }

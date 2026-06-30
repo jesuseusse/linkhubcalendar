@@ -26,6 +26,7 @@ function docToUser(id: string, data: FirebaseFirestore.DocumentData): User {
 		subscriptionCancelAtPeriodEnd: data.subscriptionCancelAtPeriodEnd === true ? true : undefined,
 		subscriptionStatus: typeof data.subscriptionStatus === 'string' ? data.subscriptionStatus : undefined,
 		stripeSubscriptionId: typeof data.stripeSubscriptionId === 'string' ? data.stripeSubscriptionId : undefined,
+		billingInterval: data.billingInterval === 'month' || data.billingInterval === 'year' ? data.billingInterval : undefined,
 		contactFormEnabled: data.contactFormEnabled ?? false,
 		calendarEnabled: data.calendarEnabled ?? false,
 		galleryEnabled: data.galleryEnabled ?? false,
@@ -230,7 +231,8 @@ export class FirestoreUserRepository implements IUserRepository {
 		id: string,
 		plan: string,
 		planExpiredAt?: number | null,
-		stripeSubscriptionId?: string | null
+		stripeSubscriptionId?: string | null,
+		billingInterval?: 'month' | 'year'
 	): Promise<User | null> {
 		const ref = this.col(tenantId).doc(id);
 		const doc = await ref.get();
@@ -241,6 +243,9 @@ export class FirestoreUserRepository implements IUserRepository {
 		}
 		if (stripeSubscriptionId !== undefined) {
 			updateData.stripeSubscriptionId = stripeSubscriptionId ?? null;
+		}
+		if (billingInterval !== undefined) {
+			updateData.billingInterval = billingInterval;
 		}
 		await ref.update(updateData);
 		const updated = await ref.get();
@@ -269,10 +274,15 @@ export class FirestoreUserRepository implements IUserRepository {
 
 	async findAllPaginated(
 		tenantId: string,
-		opts: { cursor?: string; limit: number }
+		opts: { cursor?: string; limit: number; plan?: string }
 	): Promise<{ users: User[]; cursor: string | null; hasMore: boolean }> {
-		let query: FirebaseFirestore.Query<FirebaseFirestore.DocumentData> =
-			this.col(tenantId).orderBy('createdAt', 'desc');
+		let query: FirebaseFirestore.Query<FirebaseFirestore.DocumentData> = this.col(tenantId);
+
+		if (opts.plan) {
+			query = query.where('plan', '==', opts.plan);
+		}
+
+		query = query.orderBy('createdAt', 'desc');
 
 		if (opts.cursor) {
 			const cursorDoc = await this.col(tenantId).doc(opts.cursor).get();
