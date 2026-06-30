@@ -84,9 +84,12 @@ const STRIPE_EVENT = {
 	data: checkoutSessionData
 };
 
-function makeRequest(overrides: { body?: string } = {}) {
+function makeRequest(overrides: { body?: string; tenant?: string } = {}) {
 	const body = overrides.body ?? JSON.stringify(STRIPE_EVENT);
-	return new NextRequest('http://localhost/api/stripe/webhook', {
+	const url = overrides.tenant
+		? `http://localhost/api/stripe/webhook?tenant=${overrides.tenant}`
+		: 'http://localhost/api/stripe/webhook';
+	return new NextRequest(url, {
 		method: 'POST',
 		headers: {
 			'stripe-signature': 'whsec_test_sig_abc123',
@@ -141,12 +144,29 @@ describe('POST /api/stripe/webhook — checkout.session.completed', () => {
 		mockUpdateSubscriptionFlags.mockResolvedValue(undefined);
 	});
 
-	it('returns 400 when domain is missing in event metadata', async () => {
+	it('returns 200 and skips gracefully when domain is missing from both URL and metadata', async () => {
+		// No ?tenant= param, no metadata.domain → returns 200 to stop Stripe retries
 		const body = JSON.stringify({ data: { object: { metadata: {} } } });
 		const res = await POST(makeRequest({ body }));
-		expect(res.status).toBe(400);
+		expect(res.status).toBe(200);
 		const json = await res.json();
-		expect(json.error).toMatch(/domain/i);
+		expect(json).toEqual({ received: true });
+	});
+
+	it('resolves domain from ?tenant= URL query param when metadata is empty', async () => {
+		// Event has no metadata.domain, but domain comes from the URL query param
+		const bodyWithoutDomain = JSON.stringify({
+			...STRIPE_EVENT,
+			data: { object: { ...checkoutSessionData.object, metadata: { email: USER_EMAIL, tenantId: TENANT_ID } } }
+		});
+		mockConstructEvent.mockReturnValue({
+			...STRIPE_EVENT,
+			data: { object: { ...checkoutSessionData.object, metadata: { email: USER_EMAIL, tenantId: TENANT_ID } } }
+		});
+		const res = await POST(makeRequest({ body: bodyWithoutDomain, tenant: TENANT_DOMAIN }));
+		expect(res.status).toBe(200);
+		// Tenant should have been looked up using the URL param domain
+		expect(mockGetByHostname).toHaveBeenCalledWith(TENANT_DOMAIN);
 	});
 
 	it('returns 404 when tenant registry document does not exist', async () => {
@@ -154,7 +174,7 @@ describe('POST /api/stripe/webhook — checkout.session.completed', () => {
 		const res = await POST(makeRequest());
 		expect(res.status).toBe(404);
 		const json = await res.json();
-		expect(json.error).toMatch(/tenant not found/i);
+		expect(json.code).toBe('TENANT_NOT_FOUND');
 	});
 
 	it('returns 400 when Stripe is not configured for the tenant', async () => {
@@ -167,7 +187,7 @@ describe('POST /api/stripe/webhook — checkout.session.completed', () => {
 		const res = await POST(makeRequest());
 		expect(res.status).toBe(400);
 		const json = await res.json();
-		expect(json.error).toMatch(/stripe not configured/i);
+		expect(json.code).toBe('STRIPE_NOT_CONFIGURED');
 	});
 
 	it('returns 400 when Stripe signature verification fails', async () => {
@@ -177,7 +197,7 @@ describe('POST /api/stripe/webhook — checkout.session.completed', () => {
 		const res = await POST(makeRequest());
 		expect(res.status).toBe(400);
 		const json = await res.json();
-		expect(json.error).toMatch(/signature/i);
+		expect(json.code).toBe('SIGNATURE_MISMATCH');
 	});
 
 	it('saves the full Stripe event via tenantRegistryRepo.saveStripeEvent', async () => {
@@ -432,5 +452,81 @@ describe('POST /api/stripe/webhook — customer.subscription.deleted', () => {
 		expect(res.status).toBe(200);
 		expect(mockUpdatePlan).not.toHaveBeenCalled();
 		expect(mockUpdateSubscriptionFlags).not.toHaveBeenCalled();
+	});
+});
+
+// ---------------------------------------------------------------------------
+// invoice.payment_succeeded — domain from URL query param (invoices carry no metadata)
+// ---------------------------------------------------------------------------
+describe('POST /api/stripe/webhook — invoice.payment_succeeded via ?tenant= query param', () => {
+	const INVOICE_SUBSCRIPTION_ID = SUBSCRIPTION_ID;
+
+	function makeInvoiceEvent() {
+		return {
+			id: 'evt_test_invoice_payment_succeeded',
+			object: 'event',
+			type: 'invoice.payment_succeeded',
+			created: 1771552254,
+			livemode: false,
+			data: {
+				object: {
+					// Invoices carry no domain metadata — this is the root cause of the 400 bug
+					metadata: {},
+					amount_due: 19900,
+					currency: 'mxn',
+					next_payment_attempt: 1774144254,
+					parent: {
+						subscription_details: {
+							subscription: INVOICE_SUBSCRIPTION_ID
+						}
+					}
+				}
+			}
+		};
+	}
+
+	beforeEach(() => {
+		vi.clearAllMocks();
+		mockGetByHostname.mockResolvedValue(makeTenantRegistry());
+		mockSaveStripeEvent.mockResolvedValue(undefined);
+		mockFindByEmail.mockResolvedValue(makeUser());
+		mockUpdatePlan.mockResolvedValue(undefined);
+		mockSubscriptionsRetrieve.mockResolvedValue({
+			id: INVOICE_SUBSCRIPTION_ID,
+			metadata: { tenantId: TENANT_ID, email: USER_EMAIL, domain: TENANT_DOMAIN },
+			items: {
+				data: [{ price: { id: PRO_PRICE_ID }, current_period_end: CURRENT_PERIOD_END }]
+			}
+		});
+	});
+
+	it('returns 200 without ?tenant= param because invoice has no metadata.domain', async () => {
+		// This was the root-cause 400 bug: invoice events never had domain in metadata
+		const event = makeInvoiceEvent();
+		mockConstructEvent.mockReturnValue(event);
+		const body = JSON.stringify(event);
+		const res = await POST(makeRequest({ body })); // no tenant param
+		expect(res.status).toBe(200);
+		// Tenant lookup must NOT have been called (domain was unresolvable → graceful skip)
+		expect(mockGetByHostname).not.toHaveBeenCalled();
+	});
+
+	it('processes invoice and renews user plan when ?tenant= param is present', async () => {
+		const event = makeInvoiceEvent();
+		mockConstructEvent.mockReturnValue(event);
+		const body = JSON.stringify(event);
+		const res = await POST(makeRequest({ body, tenant: TENANT_DOMAIN }));
+
+		expect(res.status).toBe(200);
+		expect(mockGetByHostname).toHaveBeenCalledWith(TENANT_DOMAIN);
+		expect(mockSubscriptionsRetrieve).toHaveBeenCalledWith(INVOICE_SUBSCRIPTION_ID);
+		// invoice renewals don't pass stripeSubscriptionId (undefined 5th arg)
+		expect(mockUpdatePlan).toHaveBeenCalledWith(
+			TENANT_ID,
+			USER_ID,
+			'pro',
+			CURRENT_PERIOD_END * 1000,
+			undefined
+		);
 	});
 });

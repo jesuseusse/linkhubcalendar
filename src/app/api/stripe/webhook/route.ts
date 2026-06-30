@@ -4,36 +4,72 @@ import { container } from '@/infrastructure/container';
 import { StripeConfig } from '@/interfaces/IStripeConfig';
 import { createEmailSenderService } from '@/infrastructure/services/emailSenderFactory';
 
+// ---------------------------------------------------------------------------
+// Typed error responses — prevents ad-hoc { error: string } objects
+// ---------------------------------------------------------------------------
+type WebhookErrorCode =
+	| 'INVALID_JSON'
+	| 'TENANT_NOT_FOUND'
+	| 'STRIPE_NOT_CONFIGURED'
+	| 'SIGNATURE_MISMATCH';
+
+interface WebhookErrorResponse {
+	code: WebhookErrorCode;
+	message: string;
+}
+
+function webhookError(
+	code: WebhookErrorCode,
+	message: string,
+	status: number
+): NextResponse<WebhookErrorResponse> {
+	return NextResponse.json({ code, message }, { status });
+}
+
+// Partial Stripe event shape — only the fields read before signature verification.
+interface RawStripeEvent {
+	type?: string;
+	data?: { object?: { metadata?: Record<string, string> } };
+}
+
 export async function POST(req: NextRequest) {
 	const rawBody = await req.text();
 
-	// 1. Parse body without verification to extract domain from event metadata.
+	// 1. Parse body without verification to extract domain.
 	//    Domain identifies which tenant's Stripe config to use for signature verification.
-	let parsedBody: { data?: { object?: { metadata?: Record<string, string> } } } | undefined;
+	let parsedBody: RawStripeEvent | undefined;
 	try {
 		parsedBody = JSON.parse(rawBody);
 	} catch {
-		return NextResponse.json({ error: 'Invalid JSON body' }, { status: 400 });
+		return webhookError('INVALID_JSON', 'Invalid JSON body', 400);
 	}
 
-	const domain = parsedBody?.data?.object?.metadata?.domain;
+	// Domain resolution: URL query param takes precedence (works for all event types,
+	// including invoices which don't carry metadata). Falls back to subscription/session
+	// metadata for backward compatibility with events already in flight.
+	const domain =
+		req.nextUrl.searchParams.get('tenant') ||
+		parsedBody?.data?.object?.metadata?.domain;
+
 	if (!domain) {
-		return NextResponse.json({ error: 'Missing domain in event metadata' }, { status: 400 });
+		// Cannot resolve tenant — returning 200 to stop Stripe retries (permanent failure).
+		console.warn(
+			'[stripe-webhook] Could not resolve tenant domain — event skipped:',
+			parsedBody?.type
+		);
+		return NextResponse.json({ received: true });
 	}
 
 	// 2. Resolve tenant registry — reads stripeConfig and tenantId
 	const tenantRegistry = await container.tenantRegistryRepo.getByHostname(domain);
 	if (!tenantRegistry) {
-		return NextResponse.json({ error: 'Tenant not found' }, { status: 404 });
+		return webhookError('TENANT_NOT_FOUND', `Tenant not found: ${domain}`, 404);
 	}
 
 	const { stripeConfig } = tenantRegistry;
 
 	if (!stripeConfig?.secretKey || !stripeConfig?.webhookSecret) {
-		return NextResponse.json(
-			{ error: 'Stripe not configured for this tenant' },
-			{ status: 400 }
-		);
+		return webhookError('STRIPE_NOT_CONFIGURED', 'Stripe not configured for this tenant', 400);
 	}
 
 	// 3. Verify Stripe webhook signature with tenant-specific secret
@@ -45,10 +81,7 @@ export async function POST(req: NextRequest) {
 		event = stripe.webhooks.constructEvent(rawBody, sig!, stripeConfig.webhookSecret);
 	} catch (err) {
 		const message = err instanceof Error ? err.message : 'Signature mismatch';
-		return NextResponse.json(
-			{ error: `Webhook signature verification failed: ${message}` },
-			{ status: 400 }
-		);
+		return webhookError('SIGNATURE_MISMATCH', `Webhook signature verification failed: ${message}`, 400);
 	}
 
 	// 4. Persist full event object (idempotent — uses event.id as doc ID)
