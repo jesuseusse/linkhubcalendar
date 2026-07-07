@@ -86,22 +86,18 @@ function SortablePhoto({ photo, onDelete, loading }: SortablePhotoProps) {
 
 interface Props {
   photos: GalleryPhotoDto[];
-  galleryEnabled: boolean;
   loading: boolean;
   onUpload: (file: File) => Promise<void>;
   onDelete: (photoId: string) => Promise<void>;
   onReorder: (orderedIds: string[]) => Promise<void>;
-  onToggle: (enabled: boolean) => Promise<void>;
 }
 
 export function GalleryManager({
   photos,
-  galleryEnabled,
   loading,
   onUpload,
   onDelete,
   onReorder,
-  onToggle,
 }: Props) {
   const [localOrder, setLocalOrder] = useState<string[] | null>(null);
   const [showUpload, setShowUpload] = useState(false);
@@ -146,29 +142,6 @@ export function GalleryManager({
 
   return (
     <div className='space-y-5'>
-      {/* Toggle */}
-      <div className='flex items-center justify-between p-4 bg-muted rounded-xl'>
-        <div>
-          <p className='text-sm font-medium text-foreground'>{GALLERY_LABELS.toggleLabel}</p>
-          <p className='text-xs text-muted-foreground mt-0.5'>{GALLERY_LABELS.toggleHint}</p>
-        </div>
-        <button
-          type='button'
-          onClick={() => onToggle(!galleryEnabled)}
-          disabled={loading}
-          aria-pressed={galleryEnabled}
-          className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary shrink-0 ${
-            galleryEnabled ? 'bg-primary' : 'bg-border'
-          }`}
-        >
-          <span
-            className={`inline-block h-4 w-4 transform rounded-full bg-white shadow transition-transform ${
-              galleryEnabled ? 'translate-x-6' : 'translate-x-1'
-            }`}
-          />
-        </button>
-      </div>
-
       {/* Counter + instructions */}
       <div className='flex items-center justify-between'>
         <p className='text-xs text-muted-foreground'>

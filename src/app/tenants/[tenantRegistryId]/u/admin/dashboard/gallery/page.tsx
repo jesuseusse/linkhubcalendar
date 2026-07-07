@@ -18,7 +18,6 @@ export default function GalleryDashboardPage() {
     uploadGalleryPhoto,
     deleteGalleryPhoto,
     reorderGalleryPhotos,
-    toggleGallery,
   } = useProfile(profileService);
 
   if (!user || !profile) {
@@ -46,12 +45,10 @@ export default function GalleryDashboardPage() {
             </h2>
             <GalleryManager
               photos={profile.galleryPhotos ?? []}
-              galleryEnabled={profile.galleryEnabled ?? false}
               loading={loading}
               onUpload={uploadGalleryPhoto}
               onDelete={deleteGalleryPhoto}
               onReorder={reorderGalleryPhotos}
-              onToggle={toggleGallery}
             />
           </section>
         </RequirePermission>
