@@ -85,13 +85,13 @@ export default function DashboardPage() {
 	const url = `${domain}/${profile?.username}`;
 
 	const WHATSAPP_REGEX = /wa\.me|api\.whatsapp\.com|whatsapp\.com/i;
-	const hasWhatsapp = profile?.links.some(l => WHATSAPP_REGEX.test(l.url)) ?? false;
+	const hasWhatsapp = profile?.links?.some(l => WHATSAPP_REGEX.test(l.url)) ?? false;
 
 	const INSTAGRAM_REGEX = /instagram\.com/i;
-	const hasInstagram = profile?.links.some(l => INSTAGRAM_REGEX.test(l.url)) ?? false;
+	const hasInstagram = profile?.links?.some(l => INSTAGRAM_REGEX.test(l.url)) ?? false;
 
 	const TIKTOK_REGEX = /tiktok\.com/i;
-	const hasTiktok = profile?.links.some(l => TIKTOK_REGEX.test(l.url)) ?? false;
+	const hasTiktok = profile?.links?.some(l => TIKTOK_REGEX.test(l.url)) ?? false;
 
 	if (!fetched || !profile) {
 		return (

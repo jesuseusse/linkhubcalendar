@@ -11,7 +11,7 @@ export async function PUT(req: NextRequest) {
       return NextResponse.json({ error: 'enabled must be a boolean' }, { status: 400 });
     }
     const updated = await container.toggleGalleryUseCase.execute(tenantId, userId, enabled);
-    return NextResponse.json({ galleryEnabled: updated.galleryEnabled });
+    return NextResponse.json(updated);
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Toggle failed';
     return NextResponse.json({ error: message }, { status: 400 });
