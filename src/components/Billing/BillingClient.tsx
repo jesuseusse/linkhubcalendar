@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useAuthContext } from '@/context/AuthContext';
+import { BILLING_LABELS } from '@/components/Billing/billing.const';
 
 type DiscountInfo = {
 	percentOff: number | null;
@@ -95,9 +96,9 @@ export function BillingClient() {
 				<span className='text-sm font-semibold text-foreground capitalize'>
 					{isPro
 						? user.billingInterval === 'year'
-							? 'Plan Anual · $900/año'
-							: 'Plan Mensual · $200/mes'
-						: 'Plan free'}
+							? BILLING_LABELS.billingAnnualLabel
+							: BILLING_LABELS.billingMonthlyLabel
+						: BILLING_LABELS.billingFreeLabel}
 				</span>
 				<span
 					className={`inline-flex items-center px-2.5 py-0.5 text-xs font-medium rounded-full border ${
