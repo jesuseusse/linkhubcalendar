@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useAuthContext } from '@/context/AuthContext';
 import { BILLING_LABELS } from '@/components/Billing/billing.const';
+import { CancelSubscriptionModal } from '@/components/Billing/CancelSubscriptionModal';
 
 type DiscountInfo = {
 	percentOff: number | null;
@@ -40,6 +41,7 @@ function formatPromoSuccess(discount: DiscountInfo | null): string {
 export function BillingClient() {
 	const { user, token } = useAuthContext();
 	const [portalUrl, setPortalUrl] = useState<string | null>(null);
+	const [showCancelModal, setShowCancelModal] = useState(false);
 	const [showPromoInput, setShowPromoInput] = useState(false);
 	const [promoCode, setPromoCode] = useState('');
 	const [promoLoading, setPromoLoading] = useState(false);
@@ -182,6 +184,19 @@ export function BillingClient() {
 				</div>
 			)}
 
+			{/* Cancel subscription — only for active pro, not already scheduled */}
+			{isPro && !cancelScheduled && !isPastDue && (
+				<div className='pt-1'>
+					<button
+						type='button'
+						onClick={() => setShowCancelModal(true)}
+						className='text-xs font-medium text-error border border-error/40 px-3 py-1.5 hover:bg-error-light transition-colors'
+					>
+						{BILLING_LABELS.cancelModal.cancelButton}
+					</button>
+				</div>
+			)}
+
 			{/* Stripe customer portal — opens in new tab with email prefilled */}
 			{isPro && portalUrl && (
 				<div className='pt-2 space-y-2'>
@@ -194,9 +209,16 @@ export function BillingClient() {
 						Gestionar facturación
 					</a>
 					<p className='text-xs text-muted-foreground'>
-						Desde aquí puedes cancelar tu suscripción, actualizar tu método de pago o aplicar códigos de descuento.
+						Desde aquí puedes actualizar tu método de pago o aplicar códigos de descuento.
 					</p>
 				</div>
+			)}
+
+			{showCancelModal && (
+				<CancelSubscriptionModal
+					portalUrl={portalUrl}
+					onClose={() => setShowCancelModal(false)}
+				/>
 			)}
 		</div>
 	);

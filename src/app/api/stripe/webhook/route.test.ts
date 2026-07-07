@@ -405,6 +405,19 @@ describe('POST /api/stripe/webhook — customer.subscription.updated', () => {
 		expect(res.status).toBe(200);
 		expect(mockUpdateSubscriptionFlags).not.toHaveBeenCalled();
 	});
+
+	it('clears subscriptionCancelAtPeriodEnd when subscription is reactivated', async () => {
+		// User had previously scheduled cancellation; portal reactivation sets cancel_at_period_end to false
+		mockFindByEmail.mockResolvedValue({ ...makeUser(), subscriptionCancelAtPeriodEnd: true });
+		const event = makeSubscriptionEvent('customer.subscription.updated', { cancel_at_period_end: false });
+		mockConstructEvent.mockReturnValue(event);
+		const res = await POST(makeSubscriptionRequest('customer.subscription.updated', { cancel_at_period_end: false }));
+
+		expect(res.status).toBe(200);
+		expect(mockUpdateSubscriptionFlags).toHaveBeenCalledWith(TENANT_ID, USER_ID, {
+			subscriptionCancelAtPeriodEnd: null
+		});
+	});
 });
 
 // ---------------------------------------------------------------------------

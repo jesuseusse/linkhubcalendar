@@ -216,6 +216,16 @@ async function handleSubscriptionUpdated(
 		return;
 	}
 
+	// Reactivation: user reversed their cancellation in the portal (cancel_at_period_end flipped to false)
+	if (user.subscriptionCancelAtPeriodEnd) {
+		await container.userRepo.updateSubscriptionFlags(tenantId, user.id, {
+			subscriptionCancelAtPeriodEnd: null
+		});
+		console.log(
+			`[stripe-webhook] Subscription reactivated — cleared cancel flag for ${email} (tenant ${tenantId})`
+		);
+	}
+
 	// Immediate downgrade on unpaid (multiple payment retries exhausted)
 	if (subscription.status === 'unpaid') {
 		await container.userRepo.updatePlan(tenantId, user.id, 'free', null);

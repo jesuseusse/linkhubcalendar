@@ -53,6 +53,24 @@ export const BILLING_LABELS = {
 	billingMonthlyLabel: `Plan Mensual · $${BILLING_PRICES.monthly.promo} MXN/mes`,
 	billingAnnualLabel: `Plan Anual · $${BILLING_PRICES.annual.promo} MXN/año`,
 	billingFreeLabel: 'Plan gratuito',
+
+	// Cancel subscription modal
+	cancelModal: {
+		title: 'Cancelar suscripción',
+		subtitle: 'Tu plan permanecerá activo hasta el fin del periodo actual.',
+		stepsHeading: 'Cómo cancelar:',
+		steps: [
+			'Haz click en el botón "Ir al portal de facturación" aquí abajo.',
+			'Revisa tu correo electrónico y abre el enlace que recibirás.',
+			'Selecciona la tarjeta con la que tienes activa tu suscripción.',
+			'Haz click en "Cancelar suscripción".',
+		] as readonly string[],
+		portalCta: 'Ir al portal de facturación',
+		keepCta: 'Mantener mi suscripción',
+		cancelButton: 'Cancelar suscripción',
+		portalNote: 'Se abrirá el portal de facturación en una nueva pestaña.',
+		portalLoading: 'Cargando portal...',
+	},
 } as const;
 
 // ─── Benefits list ───────────────────────────────────────────────────────────
