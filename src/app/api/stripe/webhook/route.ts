@@ -205,8 +205,19 @@ async function handleSubscriptionUpdated(
 		return;
 	}
 
-	// Scheduled cancellation: keep plan active, flag it
-	if (subscription.cancel_at_period_end) {
+	// Stripe uses EITHER cancel_at_period_end OR cancel_at to schedule a future cancellation.
+	// The Customer Portal sets cancel_at (a specific date) with cancel_at_period_end: false,
+	// so we must check both fields to correctly detect a scheduled cancellation.
+	const cancelAt = subscription.cancel_at; // number | null
+	const isCancellationScheduled = subscription.cancel_at_period_end || cancelAt != null;
+
+	if (isCancellationScheduled) {
+		const item = subscription.items.data[0];
+		const expiryTs = cancelAt ?? item?.current_period_end ?? null;
+		if (expiryTs) {
+			// Sync planExpiredAt so "Acceso hasta" in BillingClient shows the correct date
+			await container.userRepo.updatePlan(tenantId, user.id, 'pro', expiryTs * 1000);
+		}
 		await container.userRepo.updateSubscriptionFlags(tenantId, user.id, {
 			subscriptionCancelAtPeriodEnd: true
 		});
@@ -216,8 +227,9 @@ async function handleSubscriptionUpdated(
 		return;
 	}
 
-	// Reactivation: user reversed their cancellation in the portal (cancel_at_period_end flipped to false)
-	if (user.subscriptionCancelAtPeriodEnd) {
+	// True reactivation: user cancelled their scheduled cancellation in the portal.
+	// Requires both cancel_at_period_end === false AND cancel_at === null.
+	if (user.subscriptionCancelAtPeriodEnd && cancelAt == null) {
 		await container.userRepo.updateSubscriptionFlags(tenantId, user.id, {
 			subscriptionCancelAtPeriodEnd: null
 		});

@@ -329,7 +329,7 @@ describe('POST /api/stripe/webhook — customer.subscription.updated', () => {
 		mockUpdateSubscriptionFlags.mockResolvedValue(undefined);
 	});
 
-	it('flags cancel_at_period_end without changing the plan', async () => {
+	it('detects scheduled cancellation via cancel_at_period_end and syncs planExpiredAt', async () => {
 		const event = makeSubscriptionEvent('customer.subscription.updated', {
 			cancel_at_period_end: true
 		});
@@ -337,10 +337,31 @@ describe('POST /api/stripe/webhook — customer.subscription.updated', () => {
 		const res = await POST(makeSubscriptionRequest('customer.subscription.updated', { cancel_at_period_end: true }));
 
 		expect(res.status).toBe(200);
+		expect(mockUpdatePlan).toHaveBeenCalledWith(TENANT_ID, USER_ID, 'pro', CURRENT_PERIOD_END * 1000);
 		expect(mockUpdateSubscriptionFlags).toHaveBeenCalledWith(TENANT_ID, USER_ID, {
 			subscriptionCancelAtPeriodEnd: true
 		});
-		expect(mockUpdatePlan).not.toHaveBeenCalled();
+	});
+
+	it('detects scheduled cancellation via cancel_at (Customer Portal flow)', async () => {
+		// Customer Portal sets cancel_at with cancel_at_period_end: false — the previous code missed this
+		const event = makeSubscriptionEvent('customer.subscription.updated', {
+			cancel_at_period_end: false,
+			cancel_at: CURRENT_PERIOD_END
+		});
+		mockConstructEvent.mockReturnValue(event);
+		const res = await POST(
+			makeSubscriptionRequest('customer.subscription.updated', {
+				cancel_at_period_end: false,
+				cancel_at: CURRENT_PERIOD_END
+			})
+		);
+
+		expect(res.status).toBe(200);
+		expect(mockUpdatePlan).toHaveBeenCalledWith(TENANT_ID, USER_ID, 'pro', CURRENT_PERIOD_END * 1000);
+		expect(mockUpdateSubscriptionFlags).toHaveBeenCalledWith(TENANT_ID, USER_ID, {
+			subscriptionCancelAtPeriodEnd: true
+		});
 	});
 
 	it('flags past_due status without downgrading the plan', async () => {
@@ -407,11 +428,19 @@ describe('POST /api/stripe/webhook — customer.subscription.updated', () => {
 	});
 
 	it('clears subscriptionCancelAtPeriodEnd when subscription is reactivated', async () => {
-		// User had previously scheduled cancellation; portal reactivation sets cancel_at_period_end to false
+		// True reactivation: both cancel_at_period_end and cancel_at must be falsy
 		mockFindByEmail.mockResolvedValue({ ...makeUser(), subscriptionCancelAtPeriodEnd: true });
-		const event = makeSubscriptionEvent('customer.subscription.updated', { cancel_at_period_end: false });
+		const event = makeSubscriptionEvent('customer.subscription.updated', {
+			cancel_at_period_end: false,
+			cancel_at: null
+		});
 		mockConstructEvent.mockReturnValue(event);
-		const res = await POST(makeSubscriptionRequest('customer.subscription.updated', { cancel_at_period_end: false }));
+		const res = await POST(
+			makeSubscriptionRequest('customer.subscription.updated', {
+				cancel_at_period_end: false,
+				cancel_at: null
+			})
+		);
 
 		expect(res.status).toBe(200);
 		expect(mockUpdateSubscriptionFlags).toHaveBeenCalledWith(TENANT_ID, USER_ID, {
