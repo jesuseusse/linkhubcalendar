@@ -414,6 +414,10 @@ interface ScheduleException {
 
 `PublicCalendarClient.tsx` fetches one month at a time via `GET /api/u/{username}/calendar?month=YYYY-MM`. Month navigation buttons ("‹ Anterior" / "Siguiente ›") trigger a new fetch. Loading spinner shown during fetch. Booking sends `{ date, startTime, endTime }` for schedule-based users (detected via `hasWeeklySchedule` on `PublicCalendarDto`), or `{ slotId }` for old slot-doc users (backward compat).
 
+**Slot visibility:** Both available and booked slots are returned. Booked slots carry `booked: true` on `CalendarSlotDto`. The client renders them as greyed-out rows labeled "No disponible" (not clickable, no booking form). Day highlights on the mini-calendar only appear for days with at least one available slot. The "No hay horarios disponibles este mes" message appears only when all slots are booked or none exist.
+
+**SSR + API route dual path:** The server component (`calendar/page.tsx`) calls `GetPublicCalendarUseCase.execute(tenantId, username)` for the initial HTML load, which now also handles `weeklySchedule` users (generates the current month's slots server-side, includes booked ones). Month navigation after initial load uses the API route `GET /api/u/[username]/calendar?month=YYYY-MM` directly from the client.
+
 ### API routes
 
 | Method | Path | Purpose |

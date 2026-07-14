@@ -68,16 +68,17 @@ export function generateSlotsForMonth(
 		const startTimes = generateSlotsForDay(daySchedule);
 		for (const startTime of startTimes) {
 			if (disabledSlots.has(startTime)) continue;
-			if (bookedSlots.has(startTime)) continue;
 
 			const startMin = timeToMinutes(startTime);
 			const endTime = minutesToTime(startMin + daySchedule.durationMinutes);
+			const isBooked = bookedSlots.has(startTime);
 
 			slots.push({
 				id: `${dateStr.replace(/-/g, '')}_${startTime.replace(':', '')}`,
 				date: dateStr,
 				startTime,
 				endTime,
+				...(isBooked ? { booked: true } : {}),
 			});
 		}
 	}

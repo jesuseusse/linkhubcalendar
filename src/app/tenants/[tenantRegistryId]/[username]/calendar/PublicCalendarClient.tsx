@@ -111,6 +111,7 @@ export function PublicCalendarClient({
 
 	const todayStr = format(new Date(), 'yyyy-MM-dd');
 	const visibleSlots = calendar.calendarSlots.filter(slot => slot.date >= todayStr);
+	const availableSlots = visibleSlots.filter(slot => !slot.booked);
 
 	const selectedDateStr = selectedDate
 		? format(selectedDate, 'yyyy-MM-dd')
@@ -119,7 +120,7 @@ export function PublicCalendarClient({
 		visibleSlots.filter(slot => slot.date === selectedDateStr)
 	);
 
-	const highlightedDays = [...new Set(visibleSlots.map(s => s.date))].map(
+	const highlightedDays = [...new Set(availableSlots.map(s => s.date))].map(
 		d => new Date(d + 'T00:00:00')
 	);
 
@@ -142,7 +143,9 @@ export function PublicCalendarClient({
 			setReservedAppointment(stored);
 			setCalendar(prev => ({
 				...prev,
-				calendarSlots: prev.calendarSlots.filter(s => s.id !== slot.id),
+				calendarSlots: prev.calendarSlots.map(s =>
+					s.id === slot.id ? { ...s, booked: true } : s
+				),
 			}));
 			setSelectedSlot(null);
 		} finally {
@@ -251,22 +254,31 @@ export function PublicCalendarClient({
 											<ul className='space-y-2'>
 												{slotsForSelectedDate.map(slot => (
 													<li key={slot.id}>
-														<button
-															onClick={() =>
-																setSelectedSlot(
-																	selectedSlot?.id === slot.id ? null : slot
-																)
-															}
-															className={`cursor-pointer w-full text-left px-4 py-3 text-sm border transition-colors ${selectedSlot?.id === slot.id ? 'bg-primary text-primary-foreground border-primary' : 'bg-surface border-border text-foreground hover:border-primary'}`}
-														>
-															{formatTime(slot.startTime)} - {formatTime(slot.endTime)}
-														</button>
-														{selectedSlot?.id === slot.id && (
-															<AppointmentBookingForm
-																slot={slot}
-																loading={bookingLoading}
-																onSubmit={(data) => handleBook(slot, data)}
-															/>
+														{slot.booked ? (
+															<div className='w-full px-4 py-3 text-sm border border-border bg-muted text-muted-foreground flex items-center justify-between'>
+																<span>{formatTime(slot.startTime)} - {formatTime(slot.endTime)}</span>
+																<span className='text-xs'>No disponible</span>
+															</div>
+														) : (
+															<>
+																<button
+																	onClick={() =>
+																		setSelectedSlot(
+																			selectedSlot?.id === slot.id ? null : slot
+																		)
+																	}
+																	className={`cursor-pointer w-full text-left px-4 py-3 text-sm border transition-colors ${selectedSlot?.id === slot.id ? 'bg-primary text-primary-foreground border-primary' : 'bg-surface border-border text-foreground hover:border-primary'}`}
+																>
+																	{formatTime(slot.startTime)} - {formatTime(slot.endTime)}
+																</button>
+																{selectedSlot?.id === slot.id && (
+																	<AppointmentBookingForm
+																		slot={slot}
+																		loading={bookingLoading}
+																		onSubmit={(data) => handleBook(slot, data)}
+																	/>
+																)}
+															</>
 														)}
 													</li>
 												))}
@@ -288,7 +300,7 @@ export function PublicCalendarClient({
 						</div>
 					)}
 
-					{!monthLoading && visibleSlots.length === 0 && (
+					{!monthLoading && availableSlots.length === 0 && (
 						<p className='text-sm text-muted-foreground text-center py-8'>
 							No hay horarios disponibles este mes.
 						</p>

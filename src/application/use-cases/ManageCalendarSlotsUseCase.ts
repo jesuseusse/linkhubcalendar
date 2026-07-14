@@ -2,6 +2,7 @@ import { IUserRepository } from "../../domain/interfaces/IUserRepository";
 import { IAppointmentRepository } from "../../domain/interfaces/IAppointmentRepository";
 import { UserResponseDto, CreateCalendarSlotDto } from "../../domain/dtos/AuthDtos";
 import { toUserResponse } from "./mappers";
+import { generateSlotsForMonth } from "../../lib/utils/scheduleGenerator";
 
 export class AddCalendarSlotUseCase {
   constructor(
@@ -117,7 +118,7 @@ export class GetPublicCalendarUseCase {
     private appointmentRepository: IAppointmentRepository
   ) {}
 
-  async execute(tenantId: string, username: string) {
+  async execute(tenantId: string, username: string, month?: string) {
     const user = await this.userRepository.findByUsername(tenantId, username);
     if (!user || !user.username) {
       throw new Error("Profile not found");
@@ -129,14 +130,49 @@ export class GetPublicCalendarUseCase {
 
     const todayStr = new Date().toISOString().slice(0, 10);
 
-    const availableSlots = await this.appointmentRepository.findAvailableSlots(tenantId, user.id);
+    if (user.weeklySchedule) {
+      const now = new Date();
+      let year = now.getFullYear();
+      let monthNum = now.getMonth() + 1;
+      if (month) {
+        const [y, m] = month.split('-').map(Number);
+        if (!isNaN(y) && !isNaN(m)) { year = y; monthNum = m; }
+      }
 
+      const appointments = await this.appointmentRepository.findAppointmentsByMonth(tenantId, user.id, year, monthNum);
+      const bookedStartTimes = new Map<string, Set<string>>();
+      for (const appt of appointments) {
+        if (!bookedStartTimes.has(appt.date)) bookedStartTimes.set(appt.date, new Set());
+        bookedStartTimes.get(appt.date)!.add(appt.startTime);
+      }
+
+      const allSlots = generateSlotsForMonth(
+        user.weeklySchedule,
+        year,
+        monthNum,
+        user.scheduleExceptions ?? [],
+        bookedStartTimes,
+      );
+
+      const slots = allSlots.filter((s) => s.date >= todayStr);
+
+      return {
+        name: user.name,
+        username: user.username,
+        profilePhoto: user.profilePhoto,
+        hasWeeklySchedule: true,
+        calendarSlots: slots,
+      };
+    }
+
+    const availableSlots = await this.appointmentRepository.findAvailableSlots(tenantId, user.id);
     const futureDateSlots = availableSlots.filter((slot) => slot.date >= todayStr);
 
     return {
       name: user.name,
       username: user.username,
       profilePhoto: user.profilePhoto,
+      hasWeeklySchedule: false,
       calendarSlots: futureDateSlots.map((slot) => ({
         id: slot.id,
         date: slot.date,

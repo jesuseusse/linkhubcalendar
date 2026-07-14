@@ -78,8 +78,6 @@ export default async function PublicCalendarPage({
 }) {
 	const { username, tenantRegistryId } = await params;
 
-	console.log('tenantRegistry:', tenantRegistryId);
-
 	const tenantConfig =
 		await container.tenantRegistryRepo.getByHostname(tenantRegistryId);
 
