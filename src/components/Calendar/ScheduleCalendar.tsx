@@ -81,9 +81,28 @@ export function ScheduleCalendar({ weeklySchedule, exceptions, onUpdateException
 	}
 
 	const modifiersStyles = {
-		available: { backgroundColor: '#d1fae5', borderRadius: '100%' },
-		partial: { backgroundColor: '#fef3c7', borderRadius: '100%' },
-		disabled: { backgroundColor: '#f3f4f6', borderRadius: '100%', textDecoration: 'line-through', opacity: 0.5 },
+		available: {
+			backgroundColor: 'transparent',
+			border: '2px solid var(--color-primary)',
+			borderRadius: '50%',
+			color: 'var(--color-primary)',
+			fontWeight: '700',
+		},
+		partial: {
+			backgroundColor: 'transparent',
+			border: '2px solid #f97316',
+			borderRadius: '50%',
+			color: '#f97316',
+			fontWeight: '700',
+		},
+		disabled: {
+			backgroundColor: 'transparent',
+			border: '2px solid #ef4444',
+			borderRadius: '50%',
+			color: '#ef4444',
+			fontWeight: '700',
+			opacity: 1,
+		},
 	};
 
 	const selectedException = selectedDate
@@ -123,14 +142,17 @@ export function ScheduleCalendar({ weeklySchedule, exceptions, onUpdateException
 			/>
 
 			<div className='flex gap-4 text-xs text-muted-foreground'>
-				<span className='flex items-center gap-1'>
-					<span className='w-3 h-3 rounded-full bg-green-100 border border-green-200 inline-block' /> Disponible
+				<span className='flex items-center gap-1.5'>
+					<span className='w-3 h-3 rounded-full border-2 inline-block' style={{ borderColor: 'var(--color-primary)' }} />
+					Disponible
 				</span>
-				<span className='flex items-center gap-1'>
-					<span className='w-3 h-3 rounded-full bg-yellow-100 border border-yellow-200 inline-block' /> Parcial
+				<span className='flex items-center gap-1.5'>
+					<span className='w-3 h-3 rounded-full border-2 border-orange-500 inline-block' />
+					Parcial
 				</span>
-				<span className='flex items-center gap-1'>
-					<span className='w-3 h-3 rounded-full bg-gray-100 border border-gray-200 inline-block' /> Desactivado
+				<span className='flex items-center gap-1.5'>
+					<span className='w-3 h-3 rounded-full border-2 border-red-500 inline-block' />
+					Desactivado
 				</span>
 			</div>
 

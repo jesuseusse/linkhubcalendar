@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { useProfile } from '@/hooks/useProfile';
@@ -19,6 +20,8 @@ export default function SchedulePage() {
 		updateScheduleExceptions,
 	} = useProfile(profileService);
 
+	const [reconfiguring, setReconfiguring] = useState(false);
+
 	if (!user || !profile) {
 		return (
 			<p className='text-center text-muted-foreground py-16 text-sm'>Cargando...</p>
@@ -27,17 +30,26 @@ export default function SchedulePage() {
 
 	const handleSaveSchedule = async (schedule: WeeklySchedule) => {
 		await saveWeeklySchedule(schedule);
+		setReconfiguring(false);
 	};
 
 	const handleDeleteSchedule = async () => {
 		if (!confirm('¿Eliminar todos los horarios? Esta acción no se puede deshacer.')) return;
 		clearDraft();
 		await saveWeeklySchedule(null);
+		setReconfiguring(false);
+	};
+
+	const handleReconfigure = () => {
+		clearDraft();
+		setReconfiguring(true);
 	};
 
 	const handleUpdateExceptions = async (exceptions: ScheduleException[]) => {
 		await updateScheduleExceptions(exceptions);
 	};
+
+	const showStepper = reconfiguring || !profile.weeklySchedule;
 
 	return (
 		<div className='min-h-screen bg-background'>
@@ -60,10 +72,26 @@ export default function SchedulePage() {
 				</div>
 
 				<div className='bg-surface border border-border p-6'>
-					{profile.weeklySchedule ? (
+					{showStepper ? (
+						<div className='space-y-4'>
+							{reconfiguring && (
+								<div className='flex items-center justify-between pb-3 border-b border-border'>
+									<p className='text-xs text-muted-foreground'>Reconfigurando horario actual</p>
+									<button
+										type='button'
+										onClick={() => setReconfiguring(false)}
+										className='text-xs text-muted-foreground hover:text-foreground transition-colors underline'
+									>
+										Cancelar
+									</button>
+								</div>
+							)}
+							<ScheduleStepper onSave={handleSaveSchedule} />
+						</div>
+					) : (
 						<div className='space-y-6'>
 							<ScheduleCalendar
-								weeklySchedule={profile.weeklySchedule}
+								weeklySchedule={profile.weeklySchedule!}
 								exceptions={profile.scheduleExceptions ?? []}
 								onUpdateExceptions={handleUpdateExceptions}
 							/>
@@ -78,10 +106,7 @@ export default function SchedulePage() {
 								</button>
 								<button
 									type='button'
-									onClick={() => {
-										clearDraft();
-										window.location.href = '?step=1';
-									}}
+									onClick={handleReconfigure}
 									disabled={loading}
 									className='px-4 py-2 text-sm border border-border text-foreground hover:border-foreground disabled:opacity-50 transition-colors'
 								>
@@ -89,8 +114,6 @@ export default function SchedulePage() {
 								</button>
 							</div>
 						</div>
-					) : (
-						<ScheduleStepper onSave={handleSaveSchedule} />
 					)}
 				</div>
 			</main>
