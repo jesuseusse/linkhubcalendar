@@ -70,14 +70,16 @@ export function ScheduleCalendar({ weeklySchedule, exceptions, onUpdateException
 		await onUpdateExceptions(updated);
 	};
 
-	const modifiers: Record<string, Date[]> = { available: [], partial: [], disabled: [] };
+	// Note: avoid 'disabled' as a modifier name — react-day-picker treats it as
+	// a built-in that prevents click events. Use custom names instead.
+	const modifiers: Record<string, Date[]> = { available: [], partial: [], dayOff: [] };
 	for (const dateStr of activeDates) {
 		const [y, m, d] = dateStr.split('-').map(Number);
 		const date = new Date(y, m - 1, d);
 		const status = getDayStatus(dateStr, weeklySchedule, exceptions);
 		if (status === 'available') modifiers.available.push(date);
 		else if (status === 'partial') modifiers.partial.push(date);
-		else if (status === 'disabled') modifiers.disabled.push(date);
+		else if (status === 'disabled') modifiers.dayOff.push(date);
 	}
 
 	const modifiersStyles = {
@@ -95,13 +97,12 @@ export function ScheduleCalendar({ weeklySchedule, exceptions, onUpdateException
 			color: '#f97316',
 			fontWeight: '700',
 		},
-		disabled: {
+		dayOff: {
 			backgroundColor: 'transparent',
 			border: '2px solid #ef4444',
 			borderRadius: '50%',
 			color: '#ef4444',
 			fontWeight: '700',
-			opacity: 1,
 		},
 	};
 

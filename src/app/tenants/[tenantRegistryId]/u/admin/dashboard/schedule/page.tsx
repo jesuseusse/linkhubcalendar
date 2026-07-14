@@ -8,6 +8,7 @@ import { authService, profileService } from '@/services/serviceFactory';
 import { Header } from '@/components/Common/Header';
 import { ScheduleStepper } from '@/components/Calendar/Schedule/ScheduleStepper';
 import { ScheduleCalendar } from '@/components/Calendar/ScheduleCalendar';
+import { ConfirmModal } from '@/components/Common/ConfirmModal';
 import { WeeklySchedule, ScheduleException } from '@/domain/entities/User';
 import { clearDraft } from '@/components/Calendar/Schedule/scheduleTypes';
 
@@ -21,6 +22,7 @@ export default function SchedulePage() {
 	} = useProfile(profileService);
 
 	const [reconfiguring, setReconfiguring] = useState(false);
+	const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
 	if (!user || !profile) {
 		return (
@@ -33,10 +35,11 @@ export default function SchedulePage() {
 		setReconfiguring(false);
 	};
 
-	const handleDeleteSchedule = async () => {
-		if (!confirm('¿Eliminar todos los horarios? Esta acción no se puede deshacer.')) return;
+	const handleDeleteConfirmed = async () => {
 		clearDraft();
 		await saveWeeklySchedule(null);
+		await updateScheduleExceptions([]);
+		setConfirmDeleteOpen(false);
 		setReconfiguring(false);
 	};
 
@@ -98,7 +101,7 @@ export default function SchedulePage() {
 							<div className='border-t border-border pt-4 flex flex-col sm:flex-row gap-3'>
 								<button
 									type='button'
-									onClick={handleDeleteSchedule}
+									onClick={() => setConfirmDeleteOpen(true)}
 									disabled={loading}
 									className='px-4 py-2 text-sm border border-error text-error hover:bg-error-light disabled:opacity-50 transition-colors'
 								>
@@ -117,6 +120,18 @@ export default function SchedulePage() {
 					)}
 				</div>
 			</main>
+
+			{confirmDeleteOpen && (
+				<ConfirmModal
+					title='Eliminar todos los horarios'
+					message='Se eliminarán tu horario semanal y todos los días desactivados. Esta acción no se puede deshacer.'
+					confirmLabel='Eliminar'
+					variant='danger'
+					loading={loading}
+					onConfirm={handleDeleteConfirmed}
+					onCancel={() => setConfirmDeleteOpen(false)}
+				/>
+			)}
 		</div>
 	);
 }
