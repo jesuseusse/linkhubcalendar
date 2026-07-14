@@ -72,10 +72,28 @@ export function useAuth(
 		[authService, setAuth]
 	);
 
+	const completePasswordReset = useCallback(
+		async (oobCode: string, newPassword: string) => {
+			setLoading(true);
+			setError(null);
+			try {
+				await authService.confirmPasswordReset(oobCode, newPassword);
+			} catch (err: unknown) {
+				const message = getFirebaseErrorMessage(err, 'Error al restablecer la contraseña.');
+				setError(message);
+				throw err;
+			} finally {
+				setLoading(false);
+			}
+		},
+		[authService]
+	);
+
 	return {
 		login,
 		signUp,
 		logout,
+		completePasswordReset,
 		loading,
 		error,
 		isAuthenticated: !!token,

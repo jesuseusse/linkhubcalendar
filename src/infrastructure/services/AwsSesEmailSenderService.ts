@@ -7,7 +7,7 @@ import {
 	SupportTicketNotificationData,
 	UpcomingRenewalData
 } from '@/domain/interfaces/IEmailSenderService';
-import { getVerificationEmailTemplate, getAppointmentNotificationTemplate, getContactNotificationTemplate, getUpcomingRenewalTemplate, getSupportTicketNotificationTemplate } from './emailTemplates';
+import { getVerificationEmailTemplate, getAppointmentNotificationTemplate, getContactNotificationTemplate, getUpcomingRenewalTemplate, getSupportTicketNotificationTemplate, getPasswordResetTemplate } from './emailTemplates';
 
 export class AwsSesEmailSenderService implements IEmailSenderService {
 	private client: SESClient;
@@ -158,6 +158,34 @@ export class AwsSesEmailSenderService implements IEmailSenderService {
 				Body: { Html: { Data: html, Charset: 'UTF-8' } }
 			}
 		});
+		try {
+			await this.client.send(command);
+		} catch (err: unknown) {
+			const message = err instanceof Error ? err.message : 'SES send error';
+			console.error(message);
+			throw new Error('Error al enviar correo');
+		}
+	}
+
+	async sendPasswordResetEmail(
+		config: EmailSenderConfig,
+		to: string,
+		resetLink: string,
+		companyName?: string | null,
+		logoUrl?: string | null,
+	): Promise<void> {
+		const name = companyName || 'LinkHub';
+		const template = getPasswordResetTemplate(config.tenantId);
+
+		const command = new SendEmailCommand({
+			Source: config.fromEmail,
+			Destination: { ToAddresses: [to] },
+			Message: {
+				Subject: { Data: template.subject(name), Charset: 'UTF-8' },
+				Body: { Html: { Data: template.html(resetLink, name, logoUrl), Charset: 'UTF-8' } }
+			}
+		});
+
 		try {
 			await this.client.send(command);
 		} catch (err: unknown) {

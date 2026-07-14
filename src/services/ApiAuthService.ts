@@ -1,7 +1,12 @@
 import { IAuthService } from '@/interfaces/IAuthService';
 import { LoginDto, SignUpDto, AuthResponseDto } from '@/dtos/auth.dto';
 import { auth, tenantReady } from '@/lib/firebase/client';
-import { signInWithEmailAndPassword, createUserWithEmailAndPassword, updateProfile } from 'firebase/auth';
+import {
+  signInWithEmailAndPassword,
+  createUserWithEmailAndPassword,
+  updateProfile,
+  confirmPasswordReset as fbConfirmPasswordReset,
+} from 'firebase/auth';
 import { apiClient } from './apiClient';
 
 export class ApiAuthService implements IAuthService {
@@ -11,6 +16,11 @@ export class ApiAuthService implements IAuthService {
     const token = await cred.user.getIdToken();
     const user = await apiClient('/api/profile');
     return { token, user };
+  }
+
+  async confirmPasswordReset(oobCode: string, newPassword: string): Promise<void> {
+    await tenantReady;
+    await fbConfirmPasswordReset(auth, oobCode, newPassword);
   }
 
   async signUp(dto: SignUpDto): Promise<AuthResponseDto> {

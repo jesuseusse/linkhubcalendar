@@ -86,4 +86,12 @@ export interface IEmailSenderService {
     subject: string,
     html: string
   ): Promise<void>;
+
+  sendPasswordResetEmail(
+    config: EmailSenderConfig,
+    to: string,
+    resetLink: string,
+    companyName?: string | null,
+    logoUrl?: string | null,
+  ): Promise<void>;
 }

@@ -196,6 +196,32 @@ Stripe is integrated per-tenant. Each tenant registry document in Firestore stor
 - `src/components/Common/UpgradeModal.tsx` — monthly/annual toggle; both enabled; "3 MESES GRATIS" badge; benefit list; disclaimer
 - `src/components/Billing/ProBanner.tsx` — full-width promotional banner shown to `plan === 'free'` users at the top of the dashboard; dismissable per session via `sessionStorage`; opens `UpgradeModal` on CTA click
 
+## Auth — Password Reset
+
+Tenant-branded password reset flow that avoids exposing Firebase URLs in emails.
+
+**Flow:**
+1. User clicks "¿Olvidaste tu contraseña?" on the login page → `ForgotPasswordForm` renders
+2. User submits email → `POST /api/auth/password-reset` (always returns `{ sent: true }` regardless of outcome — prevents user enumeration)
+3. Server: `adminAuth.tenantManager().authForTenant(tenantId).generatePasswordResetLink(email)` — extracts `oobCode` from the returned Firebase URL
+4. Branded email is sent via tenant's Resend/SES service with a link to `https://{tenant-domain}/u/admin/login?oobCode=xxx`
+5. User clicks link → login page detects `oobCode` in URL → `ResetPasswordForm` renders
+6. User submits new password → `confirmPasswordReset(auth, oobCode, newPassword)` (Firebase client SDK)
+7. Success → redirects to login with "Contraseña restablecida." banner
+
+**Security guarantees:**
+- API always returns 200 — email existence never revealed
+- `oobCode` is one-time-use, expires per Firebase settings (default 1 hour)
+- Tenant isolation: all Admin SDK calls are scoped via `authForTenant(tenantId)`
+
+**Key files:**
+- API route: `src/app/api/auth/password-reset/route.ts`
+- UI components: `src/components/Auth/ForgotPasswordForm.tsx`, `src/components/Auth/ResetPasswordForm.tsx`
+- Login page (4 modes: login/signup/forgot-password/reset-password): `src/app/tenants/[tenantRegistryId]/u/admin/login/page.tsx`
+- Email template: `getPasswordResetTemplate()` in `src/infrastructure/services/emailTemplates.ts`
+- Hook: `completePasswordReset` in `src/hooks/useAuth.ts`
+- Client SDK method: `confirmPasswordReset` in `src/services/ApiAuthService.ts`
+
 ## Referral System
 
 A lightweight URL-based referral capture:

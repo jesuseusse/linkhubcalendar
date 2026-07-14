@@ -349,3 +349,66 @@ const tenantSupportTicketTemplates: Record<string, SupportTicketNotificationTemp
 export function getSupportTicketNotificationTemplate(tenantId: string): SupportTicketNotificationTemplate {
 	return tenantSupportTicketTemplates[tenantId] ?? defaultSupportTicketTemplate;
 }
+
+// ---------------------------------------------------------------------------
+// Password reset template
+// ---------------------------------------------------------------------------
+
+export interface PasswordResetTemplate {
+	subject: (companyName: string) => string;
+	html: (resetLink: string, companyName: string, logoUrl?: string | null) => string;
+}
+
+const defaultPasswordResetTemplate: PasswordResetTemplate = {
+	subject: (companyName) => `${companyName} — Restablecer tu contraseña`,
+	html: (resetLink, companyName, logoUrl) => `<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#f4f4f5;font-family:Arial,Helvetica,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:40px 0;">
+    <tr><td align="center">
+      <table width="480" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;border:1px solid #e4e4e7;padding:40px;">
+        <tr><td style="text-align:center;padding-bottom:24px;">
+          ${logoUrl
+            ? `<img src="${logoUrl}" alt="${companyName}" style="max-height:48px;max-width:180px;object-fit:contain;margin-bottom:8px;" /><br/>`
+            : ''}
+          <h1 style="margin:0;font-size:20px;color:#18181b;">${companyName}</h1>
+        </td></tr>
+        <tr><td style="padding-bottom:16px;">
+          <h2 style="margin:0;font-size:18px;color:#18181b;">Restablecer tu contraseña</h2>
+        </td></tr>
+        <tr><td style="padding-bottom:24px;">
+          <p style="margin:0;font-size:14px;line-height:1.6;color:#52525b;">
+            Recibimos una solicitud para restablecer la contraseña de tu cuenta. Haz clic en el botón de abajo para crear una nueva contraseña.
+          </p>
+        </td></tr>
+        <tr><td style="text-align:center;padding-bottom:24px;">
+          <a href="${resetLink}" style="display:inline-block;background:#18181b;color:#ffffff;font-size:14px;font-weight:600;text-decoration:none;padding:12px 32px;border-radius:6px;">
+            Restablecer contraseña
+          </a>
+        </td></tr>
+        <tr><td style="padding-bottom:16px;">
+          <p style="margin:0;font-size:12px;line-height:1.5;color:#a1a1aa;">
+            Si no puedes hacer clic en el botón, copia y pega este enlace en tu navegador:
+          </p>
+          <p style="margin:4px 0 0;font-size:12px;line-height:1.5;color:#a1a1aa;word-break:break-all;">
+            ${resetLink}
+          </p>
+        </td></tr>
+        <tr><td style="border-top:1px solid #e4e4e7;padding-top:16px;">
+          <p style="margin:0;font-size:12px;color:#a1a1aa;">
+            Este enlace expira en 1 hora. Si no solicitaste restablecer tu contraseña, puedes ignorar este correo de forma segura — tu contraseña no cambiará.
+          </p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`
+};
+
+const tenantPasswordResetTemplates: Record<string, PasswordResetTemplate> = {};
+
+export function getPasswordResetTemplate(tenantId: string): PasswordResetTemplate {
+	return tenantPasswordResetTemplates[tenantId] ?? defaultPasswordResetTemplate;
+}

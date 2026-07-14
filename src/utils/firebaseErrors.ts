@@ -15,6 +15,10 @@ const FIREBASE_ERROR_MAP: Record<string, string> = {
 	'auth/unauthorized-continue-uri': 'La URL de redirección no está autorizada.',
 	'auth/operation-not-allowed': 'Este método de autenticación no está habilitado.',
 
+	// Auth - password reset
+	'auth/expired-action-code': 'El enlace de restablecimiento ha expirado. Solicita uno nuevo.',
+	'auth/invalid-action-code': 'El enlace es inválido o ya fue utilizado.',
+
 	// Auth - token / sesión
 	'auth/id-token-expired': 'La sesión ha expirado. Inicia sesión de nuevo.',
 	'auth/id-token-revoked': 'La sesión fue revocada. Inicia sesión de nuevo.',

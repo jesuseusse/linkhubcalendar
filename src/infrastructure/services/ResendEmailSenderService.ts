@@ -7,7 +7,7 @@ import {
 	SupportTicketNotificationData,
 	UpcomingRenewalData
 } from '@/domain/interfaces/IEmailSenderService';
-import { getVerificationEmailTemplate, getAppointmentNotificationTemplate, getContactNotificationTemplate, getUpcomingRenewalTemplate, getSupportTicketNotificationTemplate } from './emailTemplates';
+import { getVerificationEmailTemplate, getAppointmentNotificationTemplate, getContactNotificationTemplate, getUpcomingRenewalTemplate, getSupportTicketNotificationTemplate, getPasswordResetTemplate } from './emailTemplates';
 
 export class ResendEmailSenderService implements IEmailSenderService {
 	async sendVerificationEmail(
@@ -112,6 +112,29 @@ export class ResendEmailSenderService implements IEmailSenderService {
 			subject,
 			html
 		});
+		if (error) {
+			throw new Error(`Error al enviar correo: ${error.message}`);
+		}
+	}
+
+	async sendPasswordResetEmail(
+		config: EmailSenderConfig,
+		to: string,
+		resetLink: string,
+		companyName?: string | null,
+		logoUrl?: string | null,
+	): Promise<void> {
+		const resend = new Resend(config.apiKey);
+		const name = companyName || 'LinkHub';
+		const template = getPasswordResetTemplate(config.tenantId);
+
+		const { error } = await resend.emails.send({
+			from: config.fromEmail,
+			to,
+			subject: template.subject(name),
+			html: template.html(resetLink, name, logoUrl)
+		});
+
 		if (error) {
 			throw new Error(`Error al enviar correo: ${error.message}`);
 		}

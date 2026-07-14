@@ -8,13 +8,15 @@ interface Props {
 	loading: boolean;
 	error: string | null;
 	onSwitchToSignUp: () => void;
+	onForgotPassword?: () => void;
 }
 
 export function LoginForm({
 	onSubmit,
 	loading,
 	error,
-	onSwitchToSignUp
+	onSwitchToSignUp,
+	onForgotPassword,
 }: Props) {
 	const [email, setEmail] = useState('');
 	const [password, setPassword] = useState('');
@@ -66,6 +68,15 @@ export function LoginForm({
 					</button>
 				</div>
 			</div>
+			{onForgotPassword && (
+				<button
+					type='button'
+					onClick={onForgotPassword}
+					className='text-xs text-muted-foreground hover:text-foreground transition-colors self-start -mt-1'
+				>
+					¿Olvidaste tu contraseña?
+				</button>
+			)}
 			<button
 				type='submit'
 				disabled={loading}
