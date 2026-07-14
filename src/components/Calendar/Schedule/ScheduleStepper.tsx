@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter, useSearchParams } from 'next/navigation';
+import { useRouter, useSearchParams, usePathname } from 'next/navigation';
 import { ScheduleDraft, WeeklySchedule, loadDraft, saveDraft, clearDraft, buildEmptyDraft } from './scheduleTypes';
 import { StepDaySelector } from './StepDaySelector';
 import { StepSameSchedule } from './StepSameSchedule';
@@ -17,6 +17,7 @@ const STEP_TITLES = ['Días', 'Horario', 'Configuración', 'Vista previa'];
 
 export function ScheduleStepper({ onSave }: Props) {
 	const router = useRouter();
+	const pathname = usePathname();
 	const searchParams = useSearchParams();
 	const stepParam = parseInt(searchParams.get('step') ?? '1', 10);
 	const [step, setStep] = useState(stepParam);
@@ -37,6 +38,7 @@ export function ScheduleStepper({ onSave }: Props) {
 		try {
 			await onSave(schedule);
 			clearDraft();
+			router.replace(pathname);
 		} finally {
 			setSaving(false);
 		}

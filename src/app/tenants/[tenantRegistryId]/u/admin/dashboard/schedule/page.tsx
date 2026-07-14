@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter, usePathname } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
 import { useProfile } from '@/hooks/useProfile';
 import { authService, profileService } from '@/services/serviceFactory';
@@ -21,6 +22,8 @@ export default function SchedulePage() {
 		updateScheduleExceptions,
 	} = useProfile(profileService);
 
+	const router = useRouter();
+	const pathname = usePathname();
 	const [reconfiguring, setReconfiguring] = useState(false);
 	const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
 
@@ -41,10 +44,12 @@ export default function SchedulePage() {
 		await updateScheduleExceptions([]);
 		setConfirmDeleteOpen(false);
 		setReconfiguring(false);
+		router.replace(pathname);
 	};
 
 	const handleReconfigure = () => {
 		clearDraft();
+		router.replace(pathname);
 		setReconfiguring(true);
 	};
 
