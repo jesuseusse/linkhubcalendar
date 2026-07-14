@@ -27,7 +27,7 @@ export function StepPerDaySchedule({ draft, onChange, onNext, onBack }: Props) {
 		if (idx <= 0) return;
 		const prev = activeDays[idx - 1];
 		const prevSchedule = draft.perDaySchedules[prev] ?? DEFAULT_DAY_SCHEDULE;
-		updateDay(day, { ...prevSchedule, excludedStartTimes: [] });
+		updateDay(day, { ...prevSchedule });
 	};
 
 	const canContinue = activeDays.every((d) => {

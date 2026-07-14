@@ -16,12 +16,11 @@ export function DayScheduleForm({ label, schedule, onChange, onCopyPrevious }: P
 	};
 
 	const excludeSlot = (startTime: string) => {
-		const excluded = [...(schedule.excludedStartTimes ?? []), startTime];
-		update({ excludedStartTimes: excluded });
+		update({ excludedStartTimes: [...(schedule.excludedStartTimes ?? []), startTime] });
 	};
 
-	const previewSchedule: DaySchedule = {
-		...schedule,
+	const restoreSlot = (startTime: string) => {
+		update({ excludedStartTimes: (schedule.excludedStartTimes ?? []).filter(t => t !== startTime) });
 	};
 
 	return (
@@ -95,9 +94,9 @@ export function DayScheduleForm({ label, schedule, onChange, onCopyPrevious }: P
 			{schedule.startTime && schedule.endTime && schedule.durationMinutes > 0 && (
 				<div>
 					<p className='text-xs text-muted-foreground mb-2'>
-						Slots generados — toca × para excluir:
+						Slots generados — toca × para excluir, ↺ para restaurar:
 					</p>
-					<SlotPreview schedule={previewSchedule} onExclude={excludeSlot} />
+					<SlotPreview schedule={schedule} onExclude={excludeSlot} onRestore={restoreSlot} />
 				</div>
 			)}
 		</div>
