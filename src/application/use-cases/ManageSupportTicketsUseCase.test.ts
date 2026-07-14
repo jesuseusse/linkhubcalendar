@@ -56,6 +56,7 @@ function makeSupportTicketRepo(): ISupportTicketRepository {
     findByIdWithComments: vi.fn().mockResolvedValue({ ticket: makeTicket(), comments: [] }),
     updateStatus: vi.fn().mockResolvedValue(makeTicket({ status: 'closed' })),
     addComment: vi.fn().mockResolvedValue(makeComment()),
+    findAllByTenant: vi.fn().mockResolvedValue([]),
   };
 }
 
@@ -66,6 +67,8 @@ function makeEmailService(): IEmailSenderService {
     sendUpcomingRenewalEmail: vi.fn(),
     sendContactNotification: vi.fn(),
     sendSupportTicketNotification: vi.fn().mockResolvedValue(undefined),
+    sendCampaignEmail: vi.fn(),
+    sendPasswordResetEmail: vi.fn(),
   };
 }
 

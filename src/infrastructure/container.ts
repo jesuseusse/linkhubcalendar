@@ -72,6 +72,7 @@ export const emailVerificationService = new FirebaseEmailVerificationService();
 export const container = {
   tenantRegistryRepo,
   userRepo,
+  appointmentRepo,
   getProfileUseCase: new GetProfileUseCase(userRepo, appointmentRepo),
   updateProfileUseCase: new UpdateProfileUseCase(userRepo),
   uploadPhotoUseCase: new UploadPhotoUseCase(userRepo, storageService),

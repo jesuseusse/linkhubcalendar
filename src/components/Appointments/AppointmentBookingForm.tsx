@@ -1,13 +1,20 @@
 'use client';
 
 import { useState } from 'react';
-import { CalendarSlotDto, CreateAppointmentDto } from '@/dtos/user.dto';
+import { CalendarSlotDto } from '@/dtos/user.dto';
 import { InputPhone } from '@/components/Common/InputPhone';
+
+export interface BookingFormData {
+	name: string;
+	email: string;
+	phone: string;
+	reason: string;
+}
 
 interface Props {
 	slot: CalendarSlotDto;
 	loading: boolean;
-	onSubmit: (dto: CreateAppointmentDto) => Promise<void>;
+	onSubmit: (data: BookingFormData) => Promise<void>;
 }
 
 export function AppointmentBookingForm({ slot, loading, onSubmit }: Props) {
@@ -23,7 +30,7 @@ export function AppointmentBookingForm({ slot, loading, onSubmit }: Props) {
 		setError(null);
 		setSuccess(false);
 		try {
-			await onSubmit({ slotId: slot.id, name, email, phone, reason });
+			await onSubmit({ name, email, phone, reason });
 			setSuccess(true);
 			setName('');
 			setEmail('');

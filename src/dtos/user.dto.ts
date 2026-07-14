@@ -1,5 +1,6 @@
 import { Plan } from '../permissions/plans';
 import { LinkDto } from './link.dto';
+import { WeeklySchedule, ScheduleException } from '@/domain/entities/User';
 
 export interface GalleryPhotoDto {
 	id: string;
@@ -19,6 +20,18 @@ export interface CreateCalendarSlotDto {
 	date: string;
 	startTime: string;
 	endTime: string;
+}
+
+export type { WeeklySchedule, ScheduleException };
+
+export interface CreateScheduleBookingDto {
+	date: string;
+	startTime: string;
+	endTime: string;
+	name: string;
+	email: string;
+	phone: string;
+	reason: string;
 }
 
 export interface ThemeDto {
@@ -47,6 +60,8 @@ export interface UserDto {
 	referredBy?: string;
 	contactFormEnabled: boolean;
 	calendarEnabled: boolean;
+	weeklySchedule?: WeeklySchedule | null;
+	scheduleExceptions?: ScheduleException[];
 	galleryEnabled: boolean;
 	galleryPhotos: GalleryPhotoDto[];
 	theme?: ThemeDto;
@@ -85,6 +100,7 @@ export interface PublicCalendarDto {
 	username: string;
 	profilePhoto?: string;
 	calendarSlots: CalendarSlotDto[];
+	hasWeeklySchedule?: boolean;
 }
 
 export type LeadStatus = 'attended' | 'canceled' | 'contacted';

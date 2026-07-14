@@ -25,6 +25,8 @@ function makeUser(overrides: Partial<User> = {}): User {
     username: USERNAME,
     contactFormEnabled: false,
     calendarEnabled: true,
+    galleryEnabled: false,
+    galleryPhotos: [],
     links: [],
     plan: 'pro',
     createdAt: 1_000_000,
@@ -104,6 +106,8 @@ describe('BookAppointmentUseCase', () => {
       deleteSlot: vi.fn(),
       releaseSlotAtomically: vi.fn(),
       markSlotBookedAtomically: vi.fn(),
+      findAppointmentsByMonth: vi.fn(),
+      bookScheduleSlotAtomically: vi.fn(),
     } as IAppointmentRepository;
 
     emailSenderService = {
@@ -111,6 +115,9 @@ describe('BookAppointmentUseCase', () => {
       sendAppointmentNotification: vi.fn().mockResolvedValue(undefined),
       sendUpcomingRenewalEmail: vi.fn().mockResolvedValue(undefined),
       sendContactNotification: vi.fn().mockResolvedValue(undefined),
+      sendSupportTicketNotification: vi.fn(),
+      sendCampaignEmail: vi.fn(),
+      sendPasswordResetEmail: vi.fn(),
     };
   });
 

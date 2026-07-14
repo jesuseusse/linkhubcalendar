@@ -1,6 +1,6 @@
 import { adminDb } from '@/lib/firebase/admin';
 import { IUserRepository } from '@/domain/interfaces/IUserRepository';
-import { User, Link, ThemeConfig, GalleryPhoto } from '@/domain/entities/User';
+import { User, Link, ThemeConfig, GalleryPhoto, WeeklySchedule, ScheduleException } from '@/domain/entities/User';
 
 const COLLECTION = 'users';
 
@@ -29,6 +29,8 @@ function docToUser(id: string, data: FirebaseFirestore.DocumentData): User {
 		billingInterval: data.billingInterval === 'month' || data.billingInterval === 'year' ? data.billingInterval : undefined,
 		contactFormEnabled: data.contactFormEnabled ?? false,
 		calendarEnabled: data.calendarEnabled ?? false,
+		weeklySchedule: data.weeklySchedule ?? null,
+		scheduleExceptions: data.scheduleExceptions ?? [],
 		galleryEnabled: data.galleryEnabled ?? false,
 		galleryPhotos: data.galleryPhotos ?? [],
 		theme: data.theme,
@@ -346,6 +348,32 @@ export class FirestoreUserRepository implements IUserRepository {
 		await ref.update(updateData);
 		const updated = await ref.get();
 		return docToUser(id, updated.data()!);
+	}
+
+	async updateWeeklySchedule(
+		tenantId: string,
+		userId: string,
+		schedule: WeeklySchedule | null
+	): Promise<User | null> {
+		const ref = this.col(tenantId).doc(userId);
+		const doc = await ref.get();
+		if (!doc.exists) return null;
+		await ref.update({ weeklySchedule: schedule ?? null, updatedAt: Date.now() });
+		const updated = await ref.get();
+		return docToUser(userId, updated.data()!);
+	}
+
+	async updateScheduleExceptions(
+		tenantId: string,
+		userId: string,
+		exceptions: ScheduleException[]
+	): Promise<User | null> {
+		const ref = this.col(tenantId).doc(userId);
+		const doc = await ref.get();
+		if (!doc.exists) return null;
+		await ref.update({ scheduleExceptions: exceptions, updatedAt: Date.now() });
+		const updated = await ref.get();
+		return docToUser(userId, updated.data()!);
 	}
 
 	async updatePromoRateLimit(

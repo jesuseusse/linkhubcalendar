@@ -1,4 +1,4 @@
-import { AppointmentDto, CreateAppointmentDto, CreateCalendarSlotDto, CreateLeadDto, GalleryPhotoDto, LeadDto, LeadStatus, PaginatedAppointmentsDto, PaginatedLeadsDto, PublicCalendarDto, PublicProfileDto, ThemeDto, UpdateProfileDto, UpdateUsernameDto, UserDto } from "../dtos/user.dto";
+import { AppointmentDto, CreateAppointmentDto, CreateCalendarSlotDto, CreateLeadDto, CreateScheduleBookingDto, GalleryPhotoDto, LeadDto, LeadStatus, PaginatedAppointmentsDto, PaginatedLeadsDto, PublicCalendarDto, PublicProfileDto, ThemeDto, UpdateProfileDto, UpdateUsernameDto, UserDto, WeeklySchedule, ScheduleException } from "../dtos/user.dto";
 import type { LeadOrder } from "../domain/interfaces/ILeadRepository";
 
 export interface GetLeadsPaginatedParams {
@@ -20,8 +20,11 @@ export interface IProfileService {
   deleteCalendarSlot(token: string, slotId: string): Promise<UserDto>;
   releaseCalendarSlot(token: string, slotId: string): Promise<UserDto>;
   getPublicProfile(username: string): Promise<PublicProfileDto>;
-  getPublicCalendar(username: string): Promise<PublicCalendarDto>;
-  bookAppointment(username: string, dto: CreateAppointmentDto): Promise<AppointmentDto>;
+  getPublicCalendar(username: string, month?: string): Promise<PublicCalendarDto>;
+  saveWeeklySchedule(token: string, schedule: WeeklySchedule | null): Promise<UserDto>;
+  updateScheduleExceptions(token: string, exceptions: ScheduleException[]): Promise<UserDto>;
+  removeScheduleException(token: string, date: string): Promise<UserDto>;
+  bookAppointment(username: string, dto: CreateAppointmentDto | CreateScheduleBookingDto): Promise<AppointmentDto>;
   getAppointments(token: string, page: number, filter?: 'upcoming' | 'past'): Promise<PaginatedAppointmentsDto>;
   cancelAppointment(token: string, appointmentId: string): Promise<AppointmentDto>;
   confirmAppointment(token: string, appointmentId: string): Promise<AppointmentDto>;

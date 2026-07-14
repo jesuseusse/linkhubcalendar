@@ -1,16 +1,21 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { DayPicker } from 'react-day-picker';
 import { format } from 'date-fns';
 import { CalendarSlotDto, PublicCalendarDto } from '@/dtos/user.dto';
 import { profileService } from '@/services/serviceFactory';
-import { AppointmentBookingForm } from '@/components/Appointments/AppointmentBookingForm';
+import { AppointmentBookingForm, BookingFormData } from '@/components/Appointments/AppointmentBookingForm';
 import { ReservedAppointmentModal, StoredAppointment } from '@/components/Calendar/ReservedAppointmentModal';
 import { getProfilePhotoUrl } from '@/utils/profilePhoto';
 import { sortSlotsByDateTime } from '@/lib/utils/sortSlots';
 import Image from 'next/image';
+
+const MONTH_NAMES = [
+	'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
+	'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+];
 
 function formatTime(hhmm: string): string {
 	const [h, m] = hhmm.split(':').map(Number);
@@ -47,6 +52,10 @@ function saveAppointment(username: string, data: StoredAppointment) {
 	}
 }
 
+function toMonthParam(year: number, month: number): string {
+	return `${year}-${month.toString().padStart(2, '0')}`;
+}
+
 interface Props {
 	calendar: PublicCalendarDto;
 	username: string;
@@ -56,19 +65,49 @@ export function PublicCalendarClient({
 	calendar: initialCalendar,
 	username
 }: Props) {
+	const now = new Date();
+	const [displayMonth, setDisplayMonth] = useState({ year: now.getFullYear(), month: now.getMonth() + 1 });
 	const [calendar, setCalendar] = useState(initialCalendar);
+	const [monthLoading, setMonthLoading] = useState(false);
 	const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
-	const [selectedSlot, setSelectedSlot] = useState<CalendarSlotDto | null>(
-		null
-	);
+	const [selectedSlot, setSelectedSlot] = useState<CalendarSlotDto | null>(null);
 	const [bookingLoading, setBookingLoading] = useState(false);
-	const [reservedAppointment, setReservedAppointment] =
-		useState<StoredAppointment | null>(null);
+	const [reservedAppointment, setReservedAppointment] = useState<StoredAppointment | null>(null);
 
 	useEffect(() => {
 		const stored = loadStoredAppointment(username);
 		if (stored) setReservedAppointment(stored);
 	}, [username]);
+
+	const fetchMonth = useCallback(async (year: number, month: number) => {
+		setMonthLoading(true);
+		setSelectedDate(undefined);
+		setSelectedSlot(null);
+		try {
+			const data = await profileService.getPublicCalendar(username, toMonthParam(year, month));
+			setCalendar(data);
+		} catch {
+			// keep previous data on error
+		} finally {
+			setMonthLoading(false);
+		}
+	}, [username]);
+
+	const goToPrevMonth = () => {
+		const prev = displayMonth.month === 1
+			? { year: displayMonth.year - 1, month: 12 }
+			: { year: displayMonth.year, month: displayMonth.month - 1 };
+		setDisplayMonth(prev);
+		fetchMonth(prev.year, prev.month);
+	};
+
+	const goToNextMonth = () => {
+		const next = displayMonth.month === 12
+			? { year: displayMonth.year + 1, month: 1 }
+			: { year: displayMonth.year, month: displayMonth.month + 1 };
+		setDisplayMonth(next);
+		fetchMonth(next.year, next.month);
+	};
 
 	const todayStr = format(new Date(), 'yyyy-MM-dd');
 	const visibleSlots = calendar.calendarSlots.filter(slot => slot.date >= todayStr);
@@ -80,28 +119,36 @@ export function PublicCalendarClient({
 		visibleSlots.filter(slot => slot.date === selectedDateStr)
 	);
 
-	const datesWithSlots = visibleSlots.reduce<Record<string, number>>(
-		(acc, slot) => {
-			acc[slot.date] = (acc[slot.date] || 0) + 1;
-			return acc;
-		},
-		{}
-	);
-
-	const highlightedDays = Object.keys(datesWithSlots).map(
+	const highlightedDays = [...new Set(visibleSlots.map(s => s.date))].map(
 		d => new Date(d + 'T00:00:00')
 	);
 
-	const sortedSlots = sortSlotsByDateTime(visibleSlots);
+	const pickerMonth = new Date(displayMonth.year, displayMonth.month - 1, 1);
 
-	const groupedSlots = sortedSlots.reduce<Record<string, typeof sortedSlots>>(
-		(acc, slot) => {
-			if (!acc[slot.date]) acc[slot.date] = [];
-			acc[slot.date].push(slot);
-			return acc;
-		},
-		{}
-	);
+	const handleBook = async (slot: CalendarSlotDto, data: BookingFormData) => {
+		setBookingLoading(true);
+		try {
+			const dto = calendar.hasWeeklySchedule
+				? { date: slot.date, startTime: slot.startTime, endTime: slot.endTime, ...data }
+				: { slotId: slot.id, ...data };
+			await profileService.bookAppointment(username, dto);
+			const stored: StoredAppointment = {
+				name: data.name,
+				date: slot.date,
+				startTime: slot.startTime,
+				endTime: slot.endTime,
+			};
+			saveAppointment(username, stored);
+			setReservedAppointment(stored);
+			setCalendar(prev => ({
+				...prev,
+				calendarSlots: prev.calendarSlots.filter(s => s.id !== slot.id),
+			}));
+			setSelectedSlot(null);
+		} finally {
+			setBookingLoading(false);
+		}
+	};
 
 	return (
 		<div className='min-h-screen bg-surface flex flex-col items-center p-4'>
@@ -117,7 +164,7 @@ export function PublicCalendarClient({
 						href={`/${username}`}
 						className='text-sm text-muted-foreground hover:text-foreground transition-colors'
 					>
-						&larr; Back to profile
+						&larr; Volver al perfil
 					</Link>
 				</div>
 
@@ -142,128 +189,108 @@ export function PublicCalendarClient({
 						@{calendar.username}
 					</p>
 					<h2 className='text-sm font-medium text-muted-foreground mt-3'>
-						Calendario público
+						Calendario de citas
 					</h2>
 				</div>
 
 				<div className='bg-background border border-border p-6'>
-					<div className='flex flex-col md:flex-row gap-6'>
-						<div className='shrink-0 flex justify-center'>
-							<DayPicker
-								mode='single'
-								selected={selectedDate}
-								onSelect={setSelectedDate}
-								disabled={{ before: new Date() }}
-								modifiers={{ hasSlots: highlightedDays }}
-								modifiersStyles={{
-									hasSlots: {
-										backgroundColor: 'color-mix(in srgb, var(--color-primary) 15%, var(--color-background))',
-										borderRadius: '100%'
-									}
-								}}
-							/>
-						</div>
-						<div className='flex-1 min-w-0'>
-							{selectedDate ? (
-								<div>
-									<h3 className='text-sm font-medium text-foreground mb-3'>
-										{format(selectedDate, 'MMMM d, yyyy')}
-									</h3>
-									{slotsForSelectedDate.length > 0 ? (
-										<ul className='space-y-2'>
-											{slotsForSelectedDate.map(slot => (
-												<li key={slot.id}>
-													<button
-														onClick={() =>
-															setSelectedSlot(
-																selectedSlot?.id === slot.id ? null : slot
-															)
-														}
-														className={`cursor-pointer w-full text-left px-4 py-3 text-sm border transition-colors ${selectedSlot?.id === slot.id ? 'bg-primary text-primary-foreground border-primary' : 'bg-surface border-border text-foreground hover:border-primary'}`}
-													>
-														{formatTime(slot.startTime)} - {formatTime(slot.endTime)}
-													</button>
-													{selectedSlot?.id === slot.id && (
-														<AppointmentBookingForm
-															slot={slot}
-															loading={bookingLoading}
-															onSubmit={async data => {
-																setBookingLoading(true);
-																try {
-																	await profileService.bookAppointment(
-																		username,
-																		data
-																	);
-																	const stored: StoredAppointment = {
-																		name: data.name,
-																		date: slot.date,
-																		startTime: slot.startTime,
-																		endTime: slot.endTime,
-																	};
-																	saveAppointment(username, stored);
-																	setReservedAppointment(stored);
-																	setCalendar(prev => ({
-																		...prev,
-																		calendarSlots: prev.calendarSlots.filter(
-																			s => s.id !== slot.id
-																		)
-																	}));
-																	setSelectedSlot(null);
-																} finally {
-																	setBookingLoading(false);
-																}
-															}}
-														/>
-													)}
-												</li>
-											))}
-										</ul>
-									) : (
-										<p className='text-xs text-muted-foreground'>
-											No slots available for this date
-										</p>
-									)}
-								</div>
-							) : (
-								<div className='py-8 text-center'>
-									<p className='text-sm text-muted-foreground'>
-										Select a date to view available slots
-									</p>
-								</div>
-							)}
-						</div>
+					{/* Month navigation */}
+					<div className='flex items-center justify-between mb-4'>
+						<button
+							type='button'
+							onClick={goToPrevMonth}
+							disabled={monthLoading}
+							className='text-sm text-muted-foreground hover:text-foreground transition-colors px-2 disabled:opacity-40'
+						>
+							‹ Anterior
+						</button>
+						<span className='text-sm font-medium text-foreground'>
+							{MONTH_NAMES[displayMonth.month - 1]} {displayMonth.year}
+						</span>
+						<button
+							type='button'
+							onClick={goToNextMonth}
+							disabled={monthLoading}
+							className='text-sm text-muted-foreground hover:text-foreground transition-colors px-2 disabled:opacity-40'
+						>
+							Siguiente ›
+						</button>
 					</div>
 
-					{/* {Object.keys(groupedSlots).length > 0 && (
-						<div className='mt-6 border-t border-border pt-4'>
-							<h3 className='text-xs font-semibold text-muted-foreground mb-3 uppercase tracking-wider'>
-								All Available Slots
-							</h3>
-							<div className='space-y-3'>
-								{Object.entries(groupedSlots).map(([date, dateSlots]) => (
-									<div key={date}>
-										<p className='text-xs font-medium text-muted-foreground mb-1'>
-											{format(new Date(date + 'T00:00:00'), 'MMMM d, yyyy')}
-										</p>
-										<div className='flex flex-wrap gap-2'>
-											{dateSlots.map(slot => (
-												<span
-													key={slot.id}
-													className='inline-block bg-success-light border border-success px-3 py-1 text-xs text-success'
-												>
-													{slot.startTime} - {slot.endTime}
-												</span>
-											))}
-										</div>
+					{monthLoading ? (
+						<div className='py-12 flex items-center justify-center'>
+							<div className='w-5 h-5 border-2 border-border border-t-foreground rounded-full animate-spin' />
+						</div>
+					) : (
+						<div className='flex flex-col md:flex-row gap-6'>
+							<div className='shrink-0 flex justify-center'>
+								<DayPicker
+									mode='single'
+									selected={selectedDate}
+									onSelect={setSelectedDate}
+									month={pickerMonth}
+									onMonthChange={() => {}}
+									disabled={{ before: new Date() }}
+									modifiers={{ hasSlots: highlightedDays }}
+									modifiersStyles={{
+										hasSlots: {
+											backgroundColor: 'color-mix(in srgb, var(--color-primary) 15%, var(--color-background))',
+											borderRadius: '100%'
+										}
+									}}
+									hideNavigation
+								/>
+							</div>
+							<div className='flex-1 min-w-0'>
+								{selectedDate ? (
+									<div>
+										<h3 className='text-sm font-medium text-foreground mb-3'>
+											{format(selectedDate, 'MMMM d, yyyy')}
+										</h3>
+										{slotsForSelectedDate.length > 0 ? (
+											<ul className='space-y-2'>
+												{slotsForSelectedDate.map(slot => (
+													<li key={slot.id}>
+														<button
+															onClick={() =>
+																setSelectedSlot(
+																	selectedSlot?.id === slot.id ? null : slot
+																)
+															}
+															className={`cursor-pointer w-full text-left px-4 py-3 text-sm border transition-colors ${selectedSlot?.id === slot.id ? 'bg-primary text-primary-foreground border-primary' : 'bg-surface border-border text-foreground hover:border-primary'}`}
+														>
+															{formatTime(slot.startTime)} - {formatTime(slot.endTime)}
+														</button>
+														{selectedSlot?.id === slot.id && (
+															<AppointmentBookingForm
+																slot={slot}
+																loading={bookingLoading}
+																onSubmit={(data) => handleBook(slot, data)}
+															/>
+														)}
+													</li>
+												))}
+											</ul>
+										) : (
+											<p className='text-xs text-muted-foreground'>
+												No hay horarios disponibles para este día.
+											</p>
+										)}
 									</div>
-								))}
+								) : (
+									<div className='py-8 text-center'>
+										<p className='text-sm text-muted-foreground'>
+											Selecciona una fecha para ver los horarios disponibles.
+										</p>
+									</div>
+								)}
 							</div>
 						</div>
-					)} */}
+					)}
 
-					{visibleSlots.length === 0 && (
+					{!monthLoading && visibleSlots.length === 0 && (
 						<p className='text-sm text-muted-foreground text-center py-8'>
-							No available slots
+							No hay horarios disponibles este mes.
 						</p>
 					)}
 				</div>

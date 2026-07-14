@@ -1,4 +1,4 @@
-import { User, Link, ThemeConfig, GalleryPhoto } from "../entities/User";
+import { User, Link, ThemeConfig, GalleryPhoto, WeeklySchedule, ScheduleException } from "../entities/User";
 
 export interface IUserRepository {
   create(tenantId: string, user: Omit<User, "id" | "createdAt" | "updatedAt">): Promise<User>;
@@ -20,6 +20,8 @@ export interface IUserRepository {
   updatePromoRateLimit(tenantId: string, id: string, data: { promoInvalidAttempts?: number; promoInvalidAttemptsDate?: string; promoLastAppliedAt?: number }): Promise<void>;
   updateGalleryEnabled(tenantId: string, userId: string, enabled: boolean): Promise<User | null>;
   updateGalleryPhotos(tenantId: string, userId: string, photos: GalleryPhoto[]): Promise<User | null>;
+  updateWeeklySchedule(tenantId: string, userId: string, schedule: WeeklySchedule | null): Promise<User | null>;
+  updateScheduleExceptions(tenantId: string, userId: string, exceptions: ScheduleException[]): Promise<User | null>;
   findAll(tenantId: string): Promise<User[]>;
   findAllPaginated(tenantId: string, opts: { cursor?: string; limit: number; plan?: string }): Promise<{
     users: User[];

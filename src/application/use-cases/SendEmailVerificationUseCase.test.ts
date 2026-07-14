@@ -13,6 +13,8 @@ function makeUser(overrides: Partial<User> = {}): User {
 		username: 'testuser',
 		contactFormEnabled: false,
 		calendarEnabled: false,
+		galleryEnabled: false,
+		galleryPhotos: [],
 		links: [],
 		plan: 'free',
 		createdAt: Date.now(),
@@ -53,7 +55,14 @@ describe('SendEmailVerificationUseCase', () => {
 			deleteLink: vi.fn(),
 			updateTheme: vi.fn(),
 			updatePlan: vi.fn(),
-			updateSubscriptionFlags: vi.fn()
+			updateSubscriptionFlags: vi.fn(),
+			updatePromoRateLimit: vi.fn(),
+			updateGalleryEnabled: vi.fn(),
+			updateGalleryPhotos: vi.fn(),
+			updateWeeklySchedule: vi.fn(),
+			updateScheduleExceptions: vi.fn(),
+			findAll: vi.fn(),
+			findAllPaginated: vi.fn(),
 		};
 
 		emailVerificationService = {
@@ -64,6 +73,10 @@ describe('SendEmailVerificationUseCase', () => {
 			sendVerificationEmail: vi.fn().mockResolvedValue(undefined),
 			sendAppointmentNotification: vi.fn().mockResolvedValue(undefined),
 			sendUpcomingRenewalEmail: vi.fn().mockResolvedValue(undefined),
+			sendContactNotification: vi.fn(),
+			sendSupportTicketNotification: vi.fn(),
+			sendCampaignEmail: vi.fn(),
+			sendPasswordResetEmail: vi.fn(),
 		};
 
 		useCase = new SendEmailVerificationUseCase(

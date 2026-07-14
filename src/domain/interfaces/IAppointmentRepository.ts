@@ -28,4 +28,12 @@ export interface IAppointmentRepository {
   ): Promise<Appointment>;
   releaseSlotAtomically(tenantId: string, userId: string, appointmentId: string, slotId: string): Promise<void>;
   markSlotBookedAtomically(tenantId: string, userId: string, appointmentId: string, slotId: string): Promise<void>;
+
+  // Schedule-based methods (inverted model — no slot documents needed)
+  findAppointmentsByMonth(tenantId: string, userId: string, year: number, month: number): Promise<Appointment[]>;
+  bookScheduleSlotAtomically(
+    tenantId: string,
+    userId: string,
+    data: { date: string; startTime: string; endTime: string; userId: string; name: string; email: string; phone: string; reason: string }
+  ): Promise<Appointment>;
 }

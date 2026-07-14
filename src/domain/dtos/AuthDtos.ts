@@ -1,4 +1,5 @@
 import { Plan } from '@/permissions/plans';
+import { WeeklySchedule, ScheduleException } from '@/domain/entities/User';
 
 export interface ThemeResponseDto {
   backgroundColor: string;
@@ -25,6 +26,8 @@ export interface UserResponseDto {
   billingInterval?: 'month' | 'year';
   contactFormEnabled: boolean;
   calendarEnabled: boolean;
+  weeklySchedule?: WeeklySchedule | null;
+  scheduleExceptions?: ScheduleException[];
   galleryEnabled: boolean;
   galleryPhotos: GalleryPhotoResponseDto[];
   theme?: ThemeResponseDto;

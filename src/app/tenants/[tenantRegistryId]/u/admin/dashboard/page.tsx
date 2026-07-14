@@ -24,7 +24,6 @@ import { AddTiktokModal } from '@/components/Links/AddTiktokModal';
 import { WhatsappIcon, InstagramIcon, TiktokIcon } from '@/components/Common/SocialIcons';
 import { ThemeCustomizer } from '@/components/Theme/ThemeCustomizer';
 import { CalendarToggle } from '@/components/Calendar/CalendarToggle';
-import { ModalCalendarManager } from '@/components/Calendar/ModalCalendarManager';
 import { LeadList } from '@/components/Leads/LeadList';
 import { RequirePermission } from '@/components/Common/RequirePermission';
 import { PERMISSIONS } from '@/permissions/plans';
@@ -40,7 +39,6 @@ export default function DashboardPage() {
 	const searchParams = useSearchParams();
 	const router = useRouter();
 	const pathname = usePathname();
-	const [calendarModalOpen, setCalendarModalOpen] = useState(false);
 	const [whatsappModalOpen, setWhatsappModalOpen] = useState(false);
 	const [instagramModalOpen, setInstagramModalOpen] = useState(false);
 	const [tiktokModalOpen, setTiktokModalOpen] = useState(false);
@@ -71,9 +69,6 @@ export default function DashboardPage() {
 		updateTheme,
 		toggleContactForm,
 		toggleCalendar,
-		addCalendarSlot,
-		deleteCalendarSlot,
-		releaseCalendarSlot,
 		sendVerificationEmail,
 		toggleGallery,
 		leads,
@@ -282,31 +277,11 @@ export default function DashboardPage() {
 							enabled={profile.calendarEnabled}
 							onToggle={toggleCalendar}
 							loading={loading}
+							scheduleHref='./dashboard/schedule'
 						/>
-						{profile.calendarEnabled && (
-							<>
-								<button
-									type='button'
-									onClick={() => setCalendarModalOpen(true)}
-									className='mt-4 px-4 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 transition-colors'
-								>
-									Gestionar horarios
-								</button>
-								{calendarModalOpen && (
-									<ModalCalendarManager
-										slots={profile.calendarSlots}
-										onAddSlot={addCalendarSlot}
-										onDeleteSlot={deleteCalendarSlot}
-										onReleaseSlot={releaseCalendarSlot}
-										onClose={() => setCalendarModalOpen(false)}
-										loading={loading}
-									/>
-								)}
-							</>
-						)}
 						<Link
 							href='/u/admin/dashboard/dates'
-							className='inline-block ml-4 mt-4 text-sm text-muted-foreground hover:text-foreground underline'
+							className='inline-block mt-4 text-sm text-muted-foreground hover:text-foreground underline'
 						>
 							Ver Citas
 						</Link>

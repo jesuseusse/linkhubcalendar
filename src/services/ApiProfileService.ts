@@ -10,12 +10,15 @@ import {
   PublicCalendarDto,
   AppointmentDto,
   CreateAppointmentDto,
+  CreateScheduleBookingDto,
   PaginatedAppointmentsDto,
   LeadDto,
   LeadStatus,
   CreateLeadDto,
   PaginatedLeadsDto,
   GalleryPhotoDto,
+  WeeklySchedule,
+  ScheduleException,
 } from '@/dtos/user.dto';
 import type { GetLeadsPaginatedParams } from '@/interfaces/IProfileService';
 
@@ -67,11 +70,24 @@ export class ApiProfileService implements IProfileService {
     return apiClient(`/api/u/${username}`);
   }
 
-  async getPublicCalendar(username: string): Promise<PublicCalendarDto> {
-    return apiClient(`/api/u/${username}/calendar`);
+  async getPublicCalendar(username: string, month?: string): Promise<PublicCalendarDto> {
+    const url = month ? `/api/u/${username}/calendar?month=${month}` : `/api/u/${username}/calendar`;
+    return apiClient(url);
   }
 
-  async bookAppointment(username: string, dto: CreateAppointmentDto): Promise<AppointmentDto> {
+  async saveWeeklySchedule(_token: string, schedule: WeeklySchedule | null): Promise<UserDto> {
+    return apiClient('/api/calendar/schedule', { method: 'PUT', body: JSON.stringify(schedule) });
+  }
+
+  async updateScheduleExceptions(_token: string, exceptions: ScheduleException[]): Promise<UserDto> {
+    return apiClient('/api/calendar/exceptions', { method: 'PUT', body: JSON.stringify(exceptions) });
+  }
+
+  async removeScheduleException(_token: string, date: string): Promise<UserDto> {
+    return apiClient(`/api/calendar/exceptions/${date}`, { method: 'DELETE' });
+  }
+
+  async bookAppointment(username: string, dto: CreateAppointmentDto | CreateScheduleBookingDto): Promise<AppointmentDto> {
     return apiClient(`/api/u/${username}/appointments`, { method: 'POST', body: JSON.stringify(dto) });
   }
 

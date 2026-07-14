@@ -18,6 +18,25 @@ export interface CalendarSlot {
   booked: boolean;
 }
 
+export interface DaySchedule {
+  startTime: string;
+  endTime: string;
+  durationMinutes: number;
+  excludedStartTimes?: string[];
+}
+
+export interface WeeklySchedule {
+  days: number[];
+  sameForAllDays: boolean;
+  defaultSchedule?: DaySchedule;
+  perDaySchedule?: Partial<Record<number, DaySchedule>>;
+}
+
+export interface ScheduleException {
+  date: string;
+  disabledSlotTimes?: string[];
+}
+
 export interface ThemeConfig {
   backgroundColor: string;
   textColor: string;
@@ -47,6 +66,8 @@ export interface User {
   referredBy?: string;
   contactFormEnabled: boolean;
   calendarEnabled: boolean;
+  weeklySchedule?: WeeklySchedule | null;
+  scheduleExceptions?: ScheduleException[];
   galleryEnabled: boolean;
   galleryPhotos: GalleryPhoto[];
   theme?: ThemeConfig;

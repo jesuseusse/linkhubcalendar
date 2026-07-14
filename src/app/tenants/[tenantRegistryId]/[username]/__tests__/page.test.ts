@@ -48,7 +48,11 @@ function createMockUserRepository(
 		updateLastVerificationEmailSentAt: vi.fn(),
 		updateGalleryEnabled: vi.fn(),
 		updateGalleryPhotos: vi.fn(),
+		updateWeeklySchedule: vi.fn(),
+		updateScheduleExceptions: vi.fn(),
+		updatePromoRateLimit: vi.fn(),
 		findAll: vi.fn(),
+		findAllPaginated: vi.fn(),
 	};
 }
 
@@ -71,6 +75,8 @@ function createMockAppointmentRepository(
 		bookSlotAtomically: vi.fn(),
 		releaseSlotAtomically: vi.fn(),
 		markSlotBookedAtomically: vi.fn(),
+		findAppointmentsByMonth: vi.fn(),
+		bookScheduleSlotAtomically: vi.fn(),
 	};
 }
 

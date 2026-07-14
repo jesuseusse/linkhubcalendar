@@ -89,7 +89,7 @@ describe('checkAuth', () => {
 	});
 
 	it('defaults emailVerified to false when email_verified is missing from token', async () => {
-		const tokenWithout = makeDecodedToken();
+		const tokenWithout = makeDecodedToken() as Record<string, unknown>;
 		delete tokenWithout.email_verified;
 		mockVerifyIdToken.mockResolvedValue(tokenWithout);
 

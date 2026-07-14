@@ -24,6 +24,8 @@ function makeUser(overrides: Partial<User> = {}): User {
     username: USERNAME,
     contactFormEnabled: true,
     calendarEnabled: false,
+    galleryEnabled: false,
+    galleryPhotos: [],
     links: [],
     plan: 'pro',
     createdAt: 1_000_000,
@@ -92,6 +94,9 @@ describe('SubmitLeadUseCase', () => {
       sendAppointmentNotification: vi.fn(),
       sendUpcomingRenewalEmail: vi.fn(),
       sendContactNotification: vi.fn().mockResolvedValue(undefined),
+      sendSupportTicketNotification: vi.fn(),
+      sendCampaignEmail: vi.fn(),
+      sendPasswordResetEmail: vi.fn(),
     };
   });
 

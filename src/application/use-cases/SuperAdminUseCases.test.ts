@@ -23,6 +23,8 @@ function makeUser(overrides: Partial<User> = {}): User {
     name: 'María López',
     contactFormEnabled: false,
     calendarEnabled: false,
+    galleryEnabled: false,
+    galleryPhotos: [],
     links: [],
     createdAt: NOW,
     updatedAt: NOW,
@@ -133,8 +135,8 @@ describe('GetAllUsersUseCase', () => {
     expect(result[0].plan).toBe('pro');
     expect(result[0].links).toHaveLength(1);
     // No sensitive fields
-    expect((result[0] as Record<string, unknown>).stripeSubscriptionId).toBeUndefined();
-    expect((result[0] as Record<string, unknown>).password).toBeUndefined();
+    expect((result[0] as unknown as Record<string, unknown>).stripeSubscriptionId).toBeUndefined();
+    expect((result[0] as unknown as Record<string, unknown>).password).toBeUndefined();
   });
 
   it('includes updatedAt in the DTO', async () => {

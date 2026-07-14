@@ -362,6 +362,84 @@ SupportPage
 - UI constants: `src/components/Support/support.const.ts`
 - Dashboard page: `src/app/tenants/[tenantRegistryId]/u/admin/dashboard/support/page.tsx`
 
+## Calendar Schedule System
+
+The calendar uses an **inverted exception model**: instead of creating individual slot documents for every available time, users define a weekly recurring template once, then only mark exceptions (disabled dates or specific disabled slots).
+
+### Data model (on User document)
+
+- `weeklySchedule?: WeeklySchedule | null` — the weekly template
+- `scheduleExceptions?: ScheduleException[]` — dates with overrides
+
+```typescript
+interface DaySchedule {
+  startTime: string;          // "09:00"
+  endTime: string;            // "18:00"
+  durationMinutes: number;    // 30 | 60 | 90 | 120 | custom
+  excludedStartTimes?: string[]; // template-level removed slots
+}
+interface WeeklySchedule {
+  days: number[];             // day-of-week indices (0=Sun…6=Sat)
+  sameForAllDays: boolean;
+  defaultSchedule?: DaySchedule;
+  perDaySchedule?: Partial<Record<number, DaySchedule>>;
+}
+interface ScheduleException {
+  date: string;               // "YYYY-MM-DD"
+  disabledSlotTimes?: string[]; // absent = full day disabled
+}
+```
+
+### Slot generation
+
+`src/lib/utils/scheduleGenerator.ts` — pure utility shared between API routes and client-side preview:
+- `generateSlotsForDay(schedule: DaySchedule): string[]` — returns start times
+- `generateSlotsForMonth(weeklySchedule, year, month, exceptions, bookedStartTimes): CalendarSlotDto[]`
+
+### Admin flow
+
+1. "Gestionar horarios" link in the dashboard Calendar section → `/dashboard/schedule`
+2. No `weeklySchedule` → 5-step stepper: select days → same schedule? → configure → preview → save
+3. Has `weeklySchedule` → monthly calendar view; click any active day → ExceptionModal to disable whole day or specific slots
+4. Buttons: "Eliminar todos los horarios" (set schedule to null), "Reconfigurar horarios" (restart stepper)
+5. Draft persisted in `localStorage` under `linkhub_schedule_draft` key
+
+**Step components:** `src/components/Calendar/Schedule/` — `StepDaySelector`, `StepSameSchedule`, `StepDefaultSchedule`, `StepPerDaySchedule`, `StepPreview`, `DayScheduleForm`, `SlotPreview`, `ScheduleStepper`
+
+**Calendar components:** `src/components/Calendar/ScheduleCalendar.tsx`, `ExceptionModal.tsx`
+
+**Admin page:** `src/app/tenants/[tenantRegistryId]/u/admin/dashboard/schedule/page.tsx`
+
+### Public calendar
+
+`PublicCalendarClient.tsx` fetches one month at a time via `GET /api/u/{username}/calendar?month=YYYY-MM`. Month navigation buttons ("‹ Anterior" / "Siguiente ›") trigger a new fetch. Loading spinner shown during fetch. Booking sends `{ date, startTime, endTime }` for schedule-based users (detected via `hasWeeklySchedule` on `PublicCalendarDto`), or `{ slotId }` for old slot-doc users (backward compat).
+
+### API routes
+
+| Method | Path | Purpose |
+|--------|------|---------|
+| `GET/PUT` | `/api/calendar/schedule` | Get or save `weeklySchedule` |
+| `PUT` | `/api/calendar/exceptions` | Replace full `scheduleExceptions` array |
+| `DELETE` | `/api/calendar/exceptions/[date]` | Remove one date's exception |
+| `GET` | `/api/u/[username]/calendar?month=YYYY-MM` | Generate slots for the month (or fallback to old slot-doc query) |
+| `POST` | `/api/u/[username]/appointments` | Dual-path: `slotId` → old flow; `{date,startTime,endTime}` → new atomic booking |
+
+### Atomic booking (new model)
+
+`bookScheduleSlotAtomically` in `FirestoreAppointmentRepository` uses a deterministic document ID `${yyyymmdd}_${hhmm}` (e.g. `20260720_0900`) in a Firestore transaction. If the doc already exists → throws "Slot no disponible" (prevents double booking without pre-created slot documents).
+
+### Backward compatibility
+
+Users without `weeklySchedule` continue using the old slot-doc system. All routes check `user.weeklySchedule` and fall back gracefully. `ModalCalendarManager` and `CalendarManager` components are kept but no longer wired from the dashboard.
+
+### Migration script
+
+`scripts/migrateCalendarToSchedule.ts` — infers `weeklySchedule` from the first 7 days of existing slot documents, then records missing slots as `scheduleExceptions`. Idempotent (skips users who already have `weeklySchedule`).
+
+```bash
+npx tsx scripts/migrateCalendarToSchedule.ts [--tenantId=<id>] [--dryRun]
+```
+
 ## Gallery
 
 Pro users can upload up to **10 photos** displayed as a horizontal scroll carousel on their public profile page (after the links section).

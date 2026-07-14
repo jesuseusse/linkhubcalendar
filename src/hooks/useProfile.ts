@@ -267,6 +267,63 @@ export function useProfile(profileService: IProfileService) {
 		[token, user, profileService, updateUser]
 	);
 
+	const saveWeeklySchedule = useCallback(
+		async (schedule: import('@/dtos/user.dto').WeeklySchedule | null) => {
+			if (!token) return;
+			setLoading(true);
+			setError(null);
+			try {
+				const data = await profileService.saveWeeklySchedule(token, schedule);
+				updateUser(data);
+			} catch (err: unknown) {
+				const message = err instanceof Error ? err.message : 'Failed to save schedule';
+				setError(message);
+				throw err;
+			} finally {
+				setLoading(false);
+			}
+		},
+		[token, profileService, updateUser]
+	);
+
+	const updateScheduleExceptions = useCallback(
+		async (exceptions: import('@/dtos/user.dto').ScheduleException[]) => {
+			if (!token) return;
+			setLoading(true);
+			setError(null);
+			try {
+				const data = await profileService.updateScheduleExceptions(token, exceptions);
+				updateUser(data);
+			} catch (err: unknown) {
+				const message = err instanceof Error ? err.message : 'Failed to update exceptions';
+				setError(message);
+				throw err;
+			} finally {
+				setLoading(false);
+			}
+		},
+		[token, profileService, updateUser]
+	);
+
+	const removeScheduleException = useCallback(
+		async (date: string) => {
+			if (!token) return;
+			setLoading(true);
+			setError(null);
+			try {
+				const data = await profileService.removeScheduleException(token, date);
+				updateUser(data);
+			} catch (err: unknown) {
+				const message = err instanceof Error ? err.message : 'Failed to remove exception';
+				setError(message);
+				throw err;
+			} finally {
+				setLoading(false);
+			}
+		},
+		[token, profileService, updateUser]
+	);
+
 	const toggleGallery = useCallback(
 		async (enabled: boolean) => {
 			if (!token) return;
@@ -315,6 +372,9 @@ export function useProfile(profileService: IProfileService) {
 		updateTheme,
 		toggleContactForm,
 		toggleCalendar,
+		saveWeeklySchedule,
+		updateScheduleExceptions,
+		removeScheduleException,
 		addCalendarSlot,
 		deleteCalendarSlot,
 		releaseCalendarSlot,

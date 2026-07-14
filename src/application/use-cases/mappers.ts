@@ -19,6 +19,8 @@ export function toUserResponse(user: User, slots: CalendarSlot[] = []): UserResp
     billingInterval: user.billingInterval,
     contactFormEnabled: user.contactFormEnabled,
     calendarEnabled: user.calendarEnabled,
+    weeklySchedule: user.weeklySchedule ?? null,
+    scheduleExceptions: user.scheduleExceptions ?? [],
     galleryEnabled: user.galleryEnabled,
     galleryPhotos: (user.galleryPhotos ?? []).map((p) => ({
       id: p.id,

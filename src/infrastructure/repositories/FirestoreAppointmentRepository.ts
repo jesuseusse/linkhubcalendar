@@ -202,6 +202,53 @@ export class FirestoreAppointmentRepository implements IAppointmentRepository {
     });
   }
 
+  async findAppointmentsByMonth(tenantId: string, userId: string, year: number, month: number): Promise<Appointment[]> {
+    const mm = month.toString().padStart(2, '0');
+    const from = `${year}-${mm}-01`;
+    const to = `${year}-${mm}-31`;
+    const snap = await this.col(tenantId, userId)
+      .where('type', '==', 'appointment')
+      .where('date', '>=', from)
+      .where('date', '<=', to)
+      .get();
+    return snap.docs.map((doc) => docToAppointment(doc.id, doc.data()));
+  }
+
+  async bookScheduleSlotAtomically(
+    tenantId: string,
+    userId: string,
+    data: { date: string; startTime: string; endTime: string; userId: string; name: string; email: string; phone: string; reason: string }
+  ): Promise<Appointment> {
+    const col = this.col(tenantId, userId);
+    const deterministicId = `${data.date.replace(/-/g, '')}_${data.startTime.replace(':', '')}`;
+    const appointmentRef = col.doc(deterministicId);
+    const now = Date.now();
+
+    return adminDb.runTransaction(async (tx) => {
+      const existing = await tx.get(appointmentRef);
+      if (existing.exists) {
+        throw new Error('Slot no disponible');
+      }
+      const appointment: Appointment = {
+        type: 'appointment',
+        id: deterministicId,
+        slotId: deterministicId,
+        date: data.date,
+        startTime: data.startTime,
+        endTime: data.endTime,
+        userId: data.userId,
+        name: data.name,
+        email: data.email,
+        phone: data.phone,
+        reason: data.reason,
+        status: 'pending',
+        createdAt: now,
+      };
+      tx.set(appointmentRef, { ...appointment });
+      return appointment;
+    });
+  }
+
   async releaseSlotAtomically(tenantId: string, userId: string, appointmentId: string, slotId: string): Promise<void> {
     const col = this.col(tenantId, userId);
     const appointmentRef = col.doc(appointmentId);
