@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git -C /Users/jesuseusse/Documents/mydevs/linkhubcalendar add CLAUDE.md src/app/tenants/[tenantRegistryId]/u/admin/login/page.tsx src/components/Auth/LoginForm.tsx src/components/Auth/ForgotPasswordForm.tsx src/components/Auth/ResetPasswordForm.tsx src/domain/interfaces/IEmailSenderService.ts src/hooks/useAuth.ts src/infrastructure/services/AwsSesEmailSenderService.ts src/infrastructure/services/ResendEmailSenderService.ts src/infrastructure/services/emailTemplates.ts src/interfaces/IAuthService.ts src/services/ApiAuthService.ts src/utils/firebaseErrors.ts src/app/api/auth/password-reset/route.ts)",
+      "Bash(git -C /Users/jesuseusse/Documents/mydevs/linkhubcalendar commit -m ' *)"
+    ]
+  }
+}

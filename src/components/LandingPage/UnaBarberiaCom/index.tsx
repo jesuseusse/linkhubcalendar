@@ -219,19 +219,76 @@ export default function UnaBarberiaCom() {
 					</table>
 				</div>
 
-				<div className='text-center mt-10'>
-					<div className='text-5xl font-bold text-primary'>$200 MXN</div>
-					<p className='text-mutedForeground mt-2'>
-						Plan Pro mensual — todo incluido
-					</p>
+				{/* PRICING PLANS */}
+				<div className='mt-16'>
+					<div className='text-center mb-10'>
+						<span className='inline-flex items-center gap-2 bg-accent/10 text-accent border border-accent/30 px-5 py-2 rounded-full text-sm font-semibold'>
+							💈 3 meses gratis en cualquier plan — Promoción por tiempo
+							limitado
+						</span>
+					</div>
 
-					<Link
-						href='u/admin/login?mode=signup'
-						prefetch
-						className='mt-6 inline-block bg-primary text-primaryForeground px-10 py-4 rounded-xl font-semibold hover:scale-105 transition'
-					>
-						Crear mi página ahora
-					</Link>
+					<div className='grid sm:grid-cols-2 gap-6 max-w-3xl mx-auto items-stretch'>
+						{/* MONTHLY */}
+						<div className='flex flex-col bg-surface border border-border rounded-2xl p-8'>
+							<h3 className='font-semibold text-mutedForeground'>
+								Plan Mensual
+							</h3>
+							<div className='mt-3 flex items-baseline gap-2'>
+								<span className='text-4xl font-bold'>$75</span>
+								<span className='text-mutedForeground text-sm'>MXN / mes</span>
+							</div>
+							<p className='mt-2 text-sm font-medium text-success'>
+								+ 3 meses gratis al empezar
+							</p>
+							<ul className='mt-6 space-y-2 text-sm text-mutedForeground flex-1'>
+								<li>✓ Todo incluido, sin costos ocultos</li>
+								<li>✓ Cancela cuando quieras</li>
+							</ul>
+							<Link
+								href='u/admin/login?mode=signup'
+								prefetch
+								className='mt-8 inline-block text-center border border-border px-6 py-3 rounded-xl font-semibold hover:scale-105 transition'
+							>
+								Crear mi página ahora
+							</Link>
+						</div>
+
+						{/* ANNUAL — highlighted */}
+						<div className='relative flex flex-col bg-primary text-primaryForeground rounded-2xl p-8 shadow-xl md:-translate-y-2'>
+							<span className='absolute -top-3 left-1/2 -translate-x-1/2 bg-primaryForeground text-primary px-4 py-1 rounded-full text-xs font-bold whitespace-nowrap shadow-md'>
+								Mejor precio · Ahorra más
+							</span>
+							<h3 className='font-semibold text-primaryForeground/80'>
+								Plan Anual
+							</h3>
+							<div className='mt-3 flex items-baseline gap-2'>
+								<span className='text-4xl font-bold'>$500</span>
+								<span className='text-primaryForeground/80 text-sm'>
+									MXN / año
+								</span>
+							</div>
+							<p className='mt-2 text-sm font-medium'>
+								+ 3 meses gratis al empezar
+							</p>
+							<ul className='mt-6 space-y-2 text-sm text-primaryForeground/90 flex-1'>
+								<li>✓ Todo incluido, sin costos ocultos</li>
+								<li>✓ Precio congelado todo el año</li>
+							</ul>
+							<Link
+								href='u/admin/login?mode=signup'
+								prefetch
+								className='mt-8 inline-block text-center bg-background text-foreground px-6 py-3 rounded-xl font-semibold hover:scale-105 transition'
+							>
+								Crear mi página ahora
+							</Link>
+						</div>
+					</div>
+
+					<p className='text-center text-xs text-mutedForeground mt-8'>
+						* Los 3 meses gratis aplican al activar tu cuenta durante la
+						promoción. Al finalizar, se cobra el precio del plan elegido.
+					</p>
 				</div>
 			</section>
 
