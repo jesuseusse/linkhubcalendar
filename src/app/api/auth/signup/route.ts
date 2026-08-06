@@ -1,15 +1,20 @@
 import { NextRequest, NextResponse } from "next/server";
 import { checkAuth } from "@/lib/auth/checkAuth";
 import { container, userRepo } from "@/infrastructure/container";
+import { normalizeEmail } from "@/utils/normalizeEmail";
 
 export async function POST(req: NextRequest) {
   try {
-    const { userId, tenantId } = await checkAuth(req);
+    const { userId, tenantId, email } = await checkAuth(req);
     const body = await req.json();
-    const { name, email, referredBy } = body;
+    const { name, referredBy } = body;
     await userRepo.createWithId(tenantId, userId, {
       name: name || "",
-      email: email || "",
+      // Always the verified Firebase Auth email, never client input — a client-supplied
+      // email here could drift in casing (or be arbitrary) from the identity the user
+      // actually authenticated with, breaking findByEmail() lookups used by the Stripe
+      // webhook (see normalizeEmail.ts).
+      email: normalizeEmail(email),
       ...(referredBy ? { referredBy } : {}),
       links: [],
       calendarEnabled: false,

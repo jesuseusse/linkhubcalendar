@@ -223,6 +223,15 @@ Two independent problems are solved here: (1) picking the *correct* month/year p
 - Fire-and-forget (`.catch(() => {})`) — alert delivery can never block or fail the Stripe response.
 - Template: `getStripeWebhookErrorTemplate()` in `emailTemplates.ts`; interface: `IEmailSenderService.sendStripeWebhookErrorNotification`.
 
+## Auth — Email Normalization
+
+`User.email` must always match the casing Firebase Auth returns (`decoded.email` from a verified ID token, always lowercase) — `userRepo.findByEmail()` does an exact-match Firestore query, so any drift makes the lookup silently fail. This bit the Stripe webhook: a user's Firestore `email` was stored as `Jesuseusse@gmail.com` (from client-submitted signup form input) while the webhook looked up `jesuseusse@gmail.com` (the Auth-normalized email in the subscription metadata) — `USER_NOT_FOUND`, plan never upgraded, no error to Stripe.
+
+**Fix, defense in depth:**
+- `POST /api/auth/signup` now writes the verified `email` from `checkAuth()`, never `body.email` — the client should never be trusted to supply its own identity's email.
+- `src/utils/normalizeEmail.ts` — `normalizeEmail(email)` trims + lowercases. Applied in `FirestoreUserRepository`'s `create`, `createWithId`, `updateProfile`, and `findByEmail` — every read/write boundary for `user.email`, not just signup.
+- `scripts/normalizeUserEmails.ts` — one-time migration for accounts created before this fix (`--dryRun` to preview, no flag to apply). Scans all tenants via a `collectionGroup('users')` query.
+
 ## Auth — Password Reset
 
 Tenant-branded password reset flow that avoids exposing Firebase URLs in emails.

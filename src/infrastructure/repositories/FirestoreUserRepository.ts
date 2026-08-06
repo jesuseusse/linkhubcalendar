@@ -1,6 +1,7 @@
 import { adminDb } from '@/lib/firebase/admin';
 import { IUserRepository } from '@/domain/interfaces/IUserRepository';
 import { User, Link, ThemeConfig, GalleryPhoto, WeeklySchedule, ScheduleException } from '@/domain/entities/User';
+import { normalizeEmail } from '@/utils/normalizeEmail';
 
 const COLLECTION = 'users';
 
@@ -58,6 +59,7 @@ export class FirestoreUserRepository implements IUserRepository {
 		const ref = this.col(tenantId).doc();
 		const data = {
 			...user,
+			email: normalizeEmail(user.email),
 			createdAt: now,
 			updatedAt: now
 		};
@@ -73,6 +75,7 @@ export class FirestoreUserRepository implements IUserRepository {
 		const now = Date.now();
 		const data = {
 			...user,
+			email: normalizeEmail(user.email),
 			createdAt: now,
 			updatedAt: now
 		};
@@ -82,7 +85,7 @@ export class FirestoreUserRepository implements IUserRepository {
 
 	async findByEmail(tenantId: string, email: string): Promise<User | null> {
 		const snap = await this.col(tenantId)
-			.where('email', '==', email)
+			.where('email', '==', normalizeEmail(email))
 			.limit(1)
 			.get();
 		if (snap.empty) return null;
@@ -117,7 +120,11 @@ export class FirestoreUserRepository implements IUserRepository {
 		const ref = this.col(tenantId).doc(id);
 		const doc = await ref.get();
 		if (!doc.exists) return null;
-		await ref.update({ ...data, updatedAt: Date.now() });
+		await ref.update({
+			...data,
+			...(data.email !== undefined && { email: normalizeEmail(data.email) }),
+			updatedAt: Date.now()
+		});
 		const updated = await ref.get();
 		return docToUser(id, updated.data()!);
 	}
