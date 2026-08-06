@@ -1,7 +1,7 @@
 'use client';
 
 import Image from 'next/image';
-import Link from 'next/link'; 
+import Link from 'next/link';
 
 export default function UnaBarberiaHeroSection() {
 	return (
@@ -41,9 +41,9 @@ export default function UnaBarberiaHeroSection() {
 					</h1>
 
 					<p className='mt-6 text-lg text-mutedForeground max-w-xl'>
-						Convierte tu barbería en un negocio moderno. Gestiona citas, organiza
-						tu agenda y recibe más clientes sin complicaciones. Todo en un solo
-						lugar, diseñado para barberos que quieren crecer.
+						Convierte tu barbería en un negocio moderno. Gestiona citas,
+						organiza tu agenda y recibe más clientes sin complicaciones. Todo en
+						un solo lugar, diseñado para barberos que quieren crecer.
 					</p>
 
 					{/* CTA */}
@@ -69,7 +69,7 @@ export default function UnaBarberiaHeroSection() {
 					<Image
 						src='/unabarberia/hero.jpg'
 						alt='Barbero usando su página profesional'
-						className='rounded-2xl h-[200px] object-cover shadow-2xl border border-border relative z-10'
+						className='rounded-2xl h-50 object-cover shadow-2xl border border-border relative z-10'
 						width={350}
 						height={350}
 					/>
@@ -89,7 +89,7 @@ export default function UnaBarberiaHeroSection() {
 					<div className='mr-8 md:mr-0 absolute -right-10 bottom-0 bg-background border border-border rounded-xl shadow-xl p-4 w-52 animate-float delay-200 z-20'>
 						<p className='text-sm font-semibold'>Nuevo cliente</p>
 						<p className='text-xs text-mutedForeground mt-1'>
-							"¿Tienen turno hoy?"
+							¿Tienen turno hoy?
 						</p>
 						<span className='text-info text-xs font-medium'>Desde Google</span>
 					</div>
