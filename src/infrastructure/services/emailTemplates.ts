@@ -1,4 +1,4 @@
-import { AppointmentNotificationData, ContactNotificationData, SupportTicketNotificationData, UpcomingRenewalData } from '@/domain/interfaces/IEmailSenderService';
+import { AppointmentNotificationData, ContactNotificationData, SupportTicketNotificationData, UpcomingRenewalData, StripeWebhookErrorNotificationData } from '@/domain/interfaces/IEmailSenderService';
 
 export interface VerificationEmailTemplate {
 	subject: (companyName: string) => string;
@@ -411,4 +411,83 @@ const tenantPasswordResetTemplates: Record<string, PasswordResetTemplate> = {};
 
 export function getPasswordResetTemplate(tenantId: string): PasswordResetTemplate {
 	return tenantPasswordResetTemplates[tenantId] ?? defaultPasswordResetTemplate;
+}
+
+// ---------------------------------------------------------------------------
+// Stripe webhook error alert template
+// ---------------------------------------------------------------------------
+
+export interface StripeWebhookErrorTemplate {
+	subject: (data: StripeWebhookErrorNotificationData) => string;
+	html: (data: StripeWebhookErrorNotificationData, companyName: string) => string;
+}
+
+const defaultStripeWebhookErrorTemplate: StripeWebhookErrorTemplate = {
+	subject: (d) => `[Stripe] Fallo procesando ${d.eventType} — ${d.domain}`,
+	html: (d, companyName) => `<!DOCTYPE html>
+<html lang="es">
+<head><meta charset="UTF-8"></head>
+<body style="margin:0;padding:0;background:#f4f4f5;font-family:Arial,Helvetica,sans-serif;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background:#f4f4f5;padding:40px 0;">
+    <tr><td align="center">
+      <table width="520" cellpadding="0" cellspacing="0" style="background:#ffffff;border-radius:8px;border:1px solid #e4e4e7;padding:40px;">
+        <tr><td style="text-align:center;padding-bottom:24px;">
+          <h1 style="margin:0;font-size:20px;color:#18181b;">${companyName}</h1>
+        </td></tr>
+        <tr><td style="padding-bottom:8px;">
+          <h2 style="margin:0;font-size:18px;color:#b91c1c;">Error procesando un webhook de Stripe</h2>
+        </td></tr>
+        <tr><td style="padding-bottom:24px;">
+          <p style="margin:0;font-size:14px;line-height:1.6;color:#52525b;">
+            Un evento de Stripe no se procesó correctamente y puede requerir intervención manual (por ejemplo, revisar la configuración de precios o el usuario asociado).
+          </p>
+        </td></tr>
+        <tr><td style="padding-bottom:24px;">
+          <table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e4e4e7;border-radius:6px;overflow:hidden;">
+            <tr style="background:#f4f4f5;">
+              <td style="padding:10px 16px;font-size:12px;font-weight:600;color:#71717a;text-transform:uppercase;letter-spacing:0.05em;width:35%;">Campo</td>
+              <td style="padding:10px 16px;font-size:12px;font-weight:600;color:#71717a;text-transform:uppercase;letter-spacing:0.05em;">Detalle</td>
+            </tr>
+            <tr style="border-top:1px solid #e4e4e7;">
+              <td style="padding:10px 16px;font-size:13px;color:#71717a;">Dominio</td>
+              <td style="padding:10px 16px;font-size:13px;color:#18181b;font-weight:500;">${d.domain}</td>
+            </tr>
+            <tr style="border-top:1px solid #e4e4e7;background:#fafafa;">
+              <td style="padding:10px 16px;font-size:13px;color:#71717a;">Tenant ID</td>
+              <td style="padding:10px 16px;font-size:13px;color:#18181b;">${d.tenantId}</td>
+            </tr>
+            <tr style="border-top:1px solid #e4e4e7;">
+              <td style="padding:10px 16px;font-size:13px;color:#71717a;">Evento</td>
+              <td style="padding:10px 16px;font-size:13px;color:#18181b;">${d.eventType} (${d.eventId})</td>
+            </tr>
+            <tr style="border-top:1px solid #e4e4e7;background:#fafafa;">
+              <td style="padding:10px 16px;font-size:13px;color:#71717a;">Motivo</td>
+              <td style="padding:10px 16px;font-size:13px;color:#18181b;font-weight:500;">${d.reason}</td>
+            </tr>
+            <tr style="border-top:1px solid #e4e4e7;">
+              <td style="padding:10px 16px;font-size:13px;color:#71717a;">Reintentos</td>
+              <td style="padding:10px 16px;font-size:13px;color:#18181b;">${d.retryable ? 'Stripe reintentará automáticamente (hasta 3 días)' : 'No se reintentará — requiere corrección manual'}</td>
+            </tr>
+            <tr style="border-top:1px solid #e4e4e7;background:#fafafa;">
+              <td style="padding:10px 16px;font-size:13px;color:#71717a;">Detalle</td>
+              <td style="padding:10px 16px;font-size:13px;color:#18181b;white-space:pre-wrap;">${d.detail}</td>
+            </tr>
+          </table>
+        </td></tr>
+        <tr><td>
+          <p style="margin:0;font-size:12px;color:#a1a1aa;">
+            Este es un correo automático generado por el webhook de Stripe. Revisa el documento del evento en <code>tenant_registry/${d.domain}/stripe_events/${d.eventId}</code> para más contexto.
+          </p>
+        </td></tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`
+};
+
+const tenantStripeWebhookErrorTemplates: Record<string, StripeWebhookErrorTemplate> = {};
+
+export function getStripeWebhookErrorTemplate(tenantId: string): StripeWebhookErrorTemplate {
+	return tenantStripeWebhookErrorTemplates[tenantId] ?? defaultStripeWebhookErrorTemplate;
 }

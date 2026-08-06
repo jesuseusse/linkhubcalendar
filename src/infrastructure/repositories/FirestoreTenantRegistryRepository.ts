@@ -4,7 +4,8 @@ import { CacheTags } from '@/lib/cache/tags';
 import { TenantRegistryData } from '@/interfaces/ITenantRegistryData';
 import {
 	ITenantRegistryRepository,
-	CreateTenantRegistryData
+	CreateTenantRegistryData,
+	StripeEventOutcome
 } from '@/domain/interfaces/ITenantRegistryRepository';
 
 const COLLECTION = 'tenant_registry';
@@ -110,5 +111,17 @@ export class FirestoreTenantRegistryRepository implements ITenantRegistryReposit
 			.collection('stripe_events')
 			.doc(eventId)
 			.set(data);
+	}
+
+	async recordStripeEventOutcome(
+		hostname: string,
+		eventId: string,
+		outcome: StripeEventOutcome
+	): Promise<void> {
+		await this.col()
+			.doc(hostname)
+			.collection('stripe_events')
+			.doc(eventId)
+			.set({ outcome, outcomeRecordedAt: Date.now() }, { merge: true });
 	}
 }

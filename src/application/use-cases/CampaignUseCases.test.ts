@@ -49,6 +49,7 @@ function makeEmailService(): IEmailSenderService {
     sendSupportTicketNotification: vi.fn(),
     sendCampaignEmail: vi.fn().mockResolvedValue(undefined),
     sendPasswordResetEmail: vi.fn(),
+    sendStripeWebhookErrorNotification: vi.fn(),
   };
 }
 

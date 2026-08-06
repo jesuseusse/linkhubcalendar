@@ -5,9 +5,10 @@ import {
 	AppointmentNotificationData,
 	ContactNotificationData,
 	SupportTicketNotificationData,
-	UpcomingRenewalData
+	UpcomingRenewalData,
+	StripeWebhookErrorNotificationData
 } from '@/domain/interfaces/IEmailSenderService';
-import { getVerificationEmailTemplate, getAppointmentNotificationTemplate, getContactNotificationTemplate, getUpcomingRenewalTemplate, getSupportTicketNotificationTemplate, getPasswordResetTemplate } from './emailTemplates';
+import { getVerificationEmailTemplate, getAppointmentNotificationTemplate, getContactNotificationTemplate, getUpcomingRenewalTemplate, getSupportTicketNotificationTemplate, getPasswordResetTemplate, getStripeWebhookErrorTemplate } from './emailTemplates';
 
 export class ResendEmailSenderService implements IEmailSenderService {
 	async sendVerificationEmail(
@@ -154,6 +155,29 @@ export class ResendEmailSenderService implements IEmailSenderService {
 		const { error } = await resend.emails.send({
 			from: config.fromEmail,
 			to: adminEmails,
+			subject: template.subject(data),
+			html: template.html(data, name)
+		});
+
+		if (error) {
+			throw new Error(`Error al enviar correo: ${error.message}`);
+		}
+	}
+
+	async sendStripeWebhookErrorNotification(
+		config: EmailSenderConfig,
+		alertEmails: string[],
+		data: StripeWebhookErrorNotificationData,
+		companyName?: string
+	): Promise<void> {
+		if (alertEmails.length === 0) return;
+		const resend = new Resend(config.apiKey);
+		const name = companyName || 'LinkHub';
+		const template = getStripeWebhookErrorTemplate(config.tenantId);
+
+		const { error } = await resend.emails.send({
+			from: config.fromEmail,
+			to: alertEmails,
 			subject: template.subject(data),
 			html: template.html(data, name)
 		});

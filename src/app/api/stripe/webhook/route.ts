@@ -2,7 +2,16 @@ import { NextRequest, NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { container } from '@/infrastructure/container';
 import { StripeConfig } from '@/interfaces/IStripeConfig';
+import { TenantRegistryData } from '@/interfaces/ITenantRegistryData';
+import { IEmailSenderService, EmailSenderConfig } from '@/domain/interfaces/IEmailSenderService';
 import { createEmailSenderService } from '@/infrastructure/services/emailSenderFactory';
+import { resolveProInterval, ProBillingInterval } from '@/lib/stripe/resolveProInterval';
+import {
+	WebhookProcessingError,
+	ClassifiedWebhookFailure,
+	classifyWebhookFailure,
+	callStripeApi
+} from './webhookErrors';
 
 // ---------------------------------------------------------------------------
 // Typed error responses — prevents ad-hoc { error: string } objects
@@ -11,7 +20,8 @@ type WebhookErrorCode =
 	| 'INVALID_JSON'
 	| 'TENANT_NOT_FOUND'
 	| 'STRIPE_NOT_CONFIGURED'
-	| 'SIGNATURE_MISMATCH';
+	| 'SIGNATURE_MISMATCH'
+	| 'PROCESSING_ERROR';
 
 interface WebhookErrorResponse {
 	code: WebhookErrorCode;
@@ -90,7 +100,17 @@ export async function POST(req: NextRequest) {
 		receivedAt: Date.now()
 	});
 
-	// 5. Process event — errors are swallowed so Stripe receives 200 and doesn't retry
+	// 5. Process event.
+	//
+	// Failures are classified as retryable or not (see webhookErrors.ts):
+	//   - retryable   → 5xx, so Stripe retries with backoff (up to 3 days) in case the
+	//                   underlying issue (Stripe API hiccup, transient Firestore error)
+	//                   was transient and self-heals.
+	//   - non-retryable → 200, so Stripe stops retrying immediately. Retrying the same
+	//                   event can never fix a price-ID mismatch or a missing user — a
+	//                   human has to act, which is exactly what the alert email is for.
+	// In both cases the outcome is persisted onto the stripe_events doc and an alert
+	// email fires, so "Stripe shows 200" never again silently means "nothing happened."
 	try {
 		switch (event.type) {
 			case 'checkout.session.completed':
@@ -129,8 +149,33 @@ export async function POST(req: NextRequest) {
 				);
 				break;
 		}
+
+		await container.tenantRegistryRepo
+			.recordStripeEventOutcome(domain, event.id, { status: 'processed' })
+			.catch(() => {});
 	} catch (err) {
-		console.error(`[stripe-webhook] Error processing ${event.type} (${event.id}):`, err);
+		const failure = classifyWebhookFailure(err);
+		console.error(
+			`[stripe-webhook] ${failure.reason} processing ${event.type} (${event.id}): ${failure.message}`,
+			failure.context
+		);
+
+		await container.tenantRegistryRepo
+			.recordStripeEventOutcome(domain, event.id, {
+				status: 'failed',
+				reason: failure.reason,
+				retryable: failure.retryable,
+				message: failure.message
+			})
+			.catch(() => {});
+
+		// Fire-and-forget — alert delivery must never block or fail the Stripe response.
+		sendWebhookFailureAlert(tenantRegistry, domain, event, failure).catch(() => {});
+
+		if (failure.retryable) {
+			return webhookError('PROCESSING_ERROR', `${failure.reason}: ${failure.message}`, 500);
+		}
+		// Non-retryable falls through to the 200 below — see comment above.
 	}
 
 	return NextResponse.json({ received: true });
@@ -147,42 +192,70 @@ async function handleCheckoutCompleted(
 	domain: string,
 	stripeConfig: StripeConfig
 ) {
-	const { email, tenantId, interval } = session.metadata ?? {};
+	const { email, tenantId, interval: requestedInterval } = session.metadata ?? {};
 	if (!email || !tenantId) {
-		console.warn('[stripe-webhook] checkout.session.completed: missing metadata');
-		return;
+		throw new WebhookProcessingError(
+			'MISSING_METADATA',
+			'checkout.session.completed is missing email/tenantId metadata',
+			{ retryable: false, context: { sessionId: session.id } }
+		);
 	}
 
 	const subscriptionId =
 		typeof session.subscription === 'string' ? session.subscription : null;
-	if (!subscriptionId) return;
+	if (!subscriptionId) {
+		throw new WebhookProcessingError(
+			'MISSING_SUBSCRIPTION_DATA',
+			'checkout.session.completed has no subscription ID (mode was not "subscription"?)',
+			{ retryable: false, context: { sessionId: session.id } }
+		);
+	}
 
 	// Fetch subscription to get priceId and billing period end
 	// In Stripe v20, current_period_end is on SubscriptionItem, not Subscription
-	const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+	const subscription = await callStripeApi('subscriptions.retrieve', () =>
+		stripe.subscriptions.retrieve(subscriptionId)
+	);
 	const item = subscription.items.data[0];
 	const priceId = item?.price?.id;
 	const currentPeriodEnd = item?.current_period_end; // Unix seconds
 
-	const billingInterval: 'month' | 'year' = interval === 'year' ? 'year' : 'month';
+	// The live Stripe price is the only source of truth for month vs. year — see
+	// resolveProInterval's docstring for why metadata.interval is not trusted here.
+	const billingInterval = resolveProInterval(priceId, stripeConfig);
 
-	// Propagate metadata to the subscription so future renewal events can resolve the tenant
-	await stripe.subscriptions.update(subscriptionId, {
-		metadata: { tenantId, domain, email, interval: billingInterval }
-	});
+	// Propagate metadata to the subscription so future renewal events can resolve the
+	// tenant. `interval` mirrors what the client originally requested, kept only for
+	// debugging — it is never used for billing decisions.
+	await callStripeApi('subscriptions.update', () =>
+		stripe.subscriptions.update(subscriptionId, {
+			metadata: { tenantId, domain, email, interval: requestedInterval === 'year' ? 'year' : 'month' }
+		})
+	);
 
-	const isProPrice =
-		priceId === stripeConfig.proPriceId ||
-		(stripeConfig.proAnnualPriceId && priceId === stripeConfig.proAnnualPriceId);
-
-	if (!isProPrice) {
-		console.log(
-			`[stripe-webhook] priceId ${priceId} does not match any configured pro price — skipping upgrade`
+	if (!billingInterval) {
+		throw new WebhookProcessingError(
+			'PRICE_ID_MISMATCH',
+			`priceId "${priceId}" does not match proPriceId or proAnnualPriceId configured for this tenant`,
+			{
+				retryable: false,
+				context: {
+					priceId,
+					proPriceId: stripeConfig.proPriceId,
+					proAnnualPriceId: stripeConfig.proAnnualPriceId,
+					subscriptionId
+				}
+			}
 		);
-		return;
 	}
 
-	if (!currentPeriodEnd) return;
+	if (!currentPeriodEnd) {
+		throw new WebhookProcessingError(
+			'MISSING_SUBSCRIPTION_DATA',
+			'Subscription item has no current_period_end',
+			{ retryable: false, context: { subscriptionId } }
+		);
+	}
 
 	await updateUserPlan(tenantId, email, 'pro', currentPeriodEnd * 1000, subscriptionId, billingInterval);
 }
@@ -197,12 +270,22 @@ async function handleSubscriptionUpdated(
 	stripeConfig: StripeConfig
 ) {
 	const { tenantId, email } = subscription.metadata ?? {};
-	if (!tenantId || !email) return; // metadata not yet set (handled in checkout.session.completed)
+	if (!tenantId || !email) {
+		// Expected only for subscriptions created before the metadata-at-creation
+		// pattern existed. Not alerted — retrying won't add metadata that isn't there.
+		console.warn(
+			`[stripe-webhook] customer.subscription.updated missing tenantId/email metadata — subscription ${subscription.id}`
+		);
+		return;
+	}
 
 	const user = await container.userRepo.findByEmail(tenantId, email);
 	if (!user) {
-		console.warn(`[stripe-webhook] No user found — tenantId: ${tenantId}, email: ${email}`);
-		return;
+		throw new WebhookProcessingError(
+			'USER_NOT_FOUND',
+			`No user found for tenantId=${tenantId} email=${email}`,
+			{ retryable: false, context: { tenantId, email, subscriptionId: subscription.id } }
+		);
 	}
 
 	// Stripe uses EITHER cancel_at_period_end OR cancel_at to schedule a future cancellation.
@@ -260,20 +343,36 @@ async function handleSubscriptionUpdated(
 		return;
 	}
 
-	// Renewal / plan change — existing logic
+	// Renewal / plan change
 	// In Stripe v20, current_period_end is on SubscriptionItem, not Subscription
 	const item = subscription.items.data[0];
 	const priceId = item?.price?.id;
 	const currentPeriodEnd = item?.current_period_end;
+	const billingInterval = resolveProInterval(priceId, stripeConfig);
 
-	const isProPrice =
-		priceId === stripeConfig.proPriceId ||
-		(stripeConfig.proAnnualPriceId && priceId === stripeConfig.proAnnualPriceId);
+	if (!billingInterval) {
+		throw new WebhookProcessingError(
+			'PRICE_ID_MISMATCH',
+			`priceId "${priceId}" does not match proPriceId or proAnnualPriceId configured for this tenant`,
+			{
+				retryable: false,
+				context: {
+					priceId,
+					proPriceId: stripeConfig.proPriceId,
+					proAnnualPriceId: stripeConfig.proAnnualPriceId,
+					subscriptionId: subscription.id
+				}
+			}
+		);
+	}
 
-	if (!isProPrice || !currentPeriodEnd) return;
-
-	const billingInterval: 'month' | 'year' =
-		subscription.metadata?.interval === 'year' ? 'year' : 'month';
+	if (!currentPeriodEnd) {
+		throw new WebhookProcessingError(
+			'MISSING_SUBSCRIPTION_DATA',
+			'Subscription item has no current_period_end',
+			{ retryable: false, context: { subscriptionId: subscription.id } }
+		);
+	}
 
 	await container.userRepo.updatePlan(tenantId, user.id, 'pro', currentPeriodEnd * 1000, undefined, billingInterval);
 	console.log(
@@ -285,6 +384,10 @@ async function handleSubscriptionUpdated(
 // customer.subscription.deleted
 // Fired when a subscription is fully cancelled (period ends or immediate cancel).
 // Downgrades the user to free and clears any subscription flags.
+//
+// Missing metadata/user are NOT treated as alertable errors here — unlike the
+// upgrade paths, the desired end state (user has no active pro access) is either
+// already true or harmless to skip, so there is nothing for a human to fix.
 // ---------------------------------------------------------------------------
 async function handleSubscriptionDeleted(subscription: Stripe.Subscription) {
 	const { tenantId, email } = subscription.metadata ?? {};
@@ -324,25 +427,50 @@ async function handleInvoicePaymentSucceeded(
 			: subscriptionRef != null && typeof subscriptionRef === 'object'
 				? (subscriptionRef as Stripe.Subscription).id
 				: null;
-	if (!subscriptionId) return;
+	if (!subscriptionId) return; // not a subscription invoice — nothing to reconcile
 
-	const subscription = await stripe.subscriptions.retrieve(subscriptionId);
+	const subscription = await callStripeApi('subscriptions.retrieve', () =>
+		stripe.subscriptions.retrieve(subscriptionId)
+	);
 	const { tenantId, email } = subscription.metadata ?? {};
-	if (!tenantId || !email) return;
+	if (!tenantId || !email) {
+		// Money was collected but we can't tell for whom — always worth a human look.
+		throw new WebhookProcessingError(
+			'MISSING_METADATA',
+			`invoice.payment_succeeded subscription ${subscriptionId} has no tenantId/email metadata`,
+			{ retryable: false, context: { subscriptionId } }
+		);
+	}
 
 	// In Stripe v20, current_period_end is on SubscriptionItem, not Subscription
 	const item = subscription.items.data[0];
 	const priceId = item?.price?.id;
 	const currentPeriodEnd = item?.current_period_end;
+	const billingInterval = resolveProInterval(priceId, stripeConfig);
 
-	const isProPrice =
-		priceId === stripeConfig.proPriceId ||
-		(stripeConfig.proAnnualPriceId && priceId === stripeConfig.proAnnualPriceId);
+	if (!billingInterval) {
+		throw new WebhookProcessingError(
+			'PRICE_ID_MISMATCH',
+			`priceId "${priceId}" does not match proPriceId or proAnnualPriceId configured for this tenant`,
+			{
+				retryable: false,
+				context: {
+					priceId,
+					proPriceId: stripeConfig.proPriceId,
+					proAnnualPriceId: stripeConfig.proAnnualPriceId,
+					subscriptionId
+				}
+			}
+		);
+	}
 
-	if (!isProPrice || !currentPeriodEnd) return;
-
-	const billingInterval: 'month' | 'year' =
-		subscription.metadata?.interval === 'year' ? 'year' : 'month';
+	if (!currentPeriodEnd) {
+		throw new WebhookProcessingError(
+			'MISSING_SUBSCRIPTION_DATA',
+			'Subscription item has no current_period_end',
+			{ retryable: false, context: { subscriptionId } }
+		);
+	}
 
 	await updateUserPlan(tenantId, email, 'pro', currentPeriodEnd * 1000, undefined, billingInterval);
 }
@@ -351,14 +479,14 @@ async function handleInvoicePaymentSucceeded(
 // invoice.upcoming
 // Fired ~3 days before a subscription renewal (configurable in Stripe dashboard).
 // Sends a reminder email to the subscriber so they know the charge is coming.
+// A failed reminder is not billing-critical — it's caught and logged, never
+// retried or alerted on, so it can't trip up Stripe's retry budget for the event.
 // ---------------------------------------------------------------------------
 async function handleInvoiceUpcoming(
 	stripe: Stripe,
 	invoice: Stripe.Invoice,
-	tenantRegistry: Awaited<ReturnType<typeof container.tenantRegistryRepo.getByHostname>>
+	tenantRegistry: TenantRegistryData
 ) {
-	if (!tenantRegistry) return;
-
 	// Resolve subscription to get metadata (tenantId, email)
 	const subscriptionRef = invoice.parent?.subscription_details?.subscription;
 	const subscriptionId =
@@ -388,16 +516,26 @@ async function handleInvoiceUpcoming(
 				.format(new Date(nextPaymentAttempt * 1000))
 		: '—';
 
-	const emailService = createEmailSenderService(tenantRegistry);
-	const config = {
-		tenantId: tenantRegistry.tenantId,
-		apiKey: tenantRegistry.resendApiKey ?? tenantRegistry.sesConfig?.accessKeyId ?? '',
-		fromEmail: tenantRegistry.resendFromEmail ?? tenantRegistry.sesConfig?.fromEmail ?? ''
-	};
+	let emailService: IEmailSenderService;
+	let config: EmailSenderConfig;
+	try {
+		emailService = createEmailSenderService(tenantRegistry);
+		config = {
+			tenantId: tenantRegistry.tenantId,
+			apiKey: tenantRegistry.resendApiKey ?? tenantRegistry.sesConfig?.accessKeyId ?? '',
+			fromEmail: tenantRegistry.resendFromEmail ?? tenantRegistry.sesConfig?.fromEmail ?? ''
+		};
+	} catch {
+		return; // no email service configured for this tenant — reminder silently skipped
+	}
 	const companyName = tenantRegistry.seoConfig?.siteName ?? tenantRegistry.companyName ?? 'LinkHub';
 
-	await emailService.sendUpcomingRenewalEmail(config, { email, amountFormatted, renewalDate }, companyName);
-	console.log(`[stripe-webhook] invoice.upcoming — renewal reminder sent to ${email}`);
+	await emailService
+		.sendUpcomingRenewalEmail(config, { email, amountFormatted, renewalDate }, companyName)
+		.then(() => console.log(`[stripe-webhook] invoice.upcoming — renewal reminder sent to ${email}`))
+		.catch((err) =>
+			console.error(`[stripe-webhook] Failed to send upcoming renewal email to ${email}:`, err)
+		);
 }
 
 // ---------------------------------------------------------------------------
@@ -409,19 +547,67 @@ async function updateUserPlan(
 	email: string,
 	plan: string,
 	planExpiredAt: number,
-	stripeSubscriptionId?: string | null,
-	billingInterval?: 'month' | 'year'
+	stripeSubscriptionId: string | null | undefined,
+	billingInterval: ProBillingInterval
 ) {
 	const user = await container.userRepo.findByEmail(tenantId, email);
 	if (!user) {
-		console.warn(
-			`[stripe-webhook] No user found — tenantId: ${tenantId}, email: ${email}`
+		throw new WebhookProcessingError(
+			'USER_NOT_FOUND',
+			`No user found for tenantId=${tenantId} email=${email}`,
+			{ retryable: false, context: { tenantId, email } }
 		);
-		return;
 	}
 
 	await container.userRepo.updatePlan(tenantId, user.id, plan, planExpiredAt, stripeSubscriptionId, billingInterval);
 	console.log(
-		`[stripe-webhook] Updated user ${email} (tenant ${tenantId}) → plan: ${plan}, interval: ${billingInterval ?? 'month'}, expires: ${new Date(planExpiredAt).toISOString()}`
+		`[stripe-webhook] Updated user ${email} (tenant ${tenantId}) → plan: ${plan}, interval: ${billingInterval}, expires: ${new Date(planExpiredAt).toISOString()}`
+	);
+}
+
+// ---------------------------------------------------------------------------
+// Alert email — fired for every classified processing failure (retryable or
+// not) so a human finds out immediately instead of via a support ticket days
+// later. Uses the tenant's own configured email service, same as every other
+// notification in this codebase (see sendSupportTicketNotification).
+// ---------------------------------------------------------------------------
+async function sendWebhookFailureAlert(
+	tenantRegistry: TenantRegistryData,
+	domain: string,
+	event: Stripe.Event,
+	failure: ClassifiedWebhookFailure
+): Promise<void> {
+	const alertEmailsRaw = process.env.NEXT_STRIPE_ALERT_EMAILS ?? '';
+	const alertEmails = alertEmailsRaw.split(',').map((e) => e.trim()).filter(Boolean);
+	if (alertEmails.length === 0) return;
+
+	let emailService: IEmailSenderService;
+	let emailConfig: EmailSenderConfig;
+	try {
+		emailService = createEmailSenderService(tenantRegistry);
+		emailConfig = {
+			tenantId: tenantRegistry.tenantId,
+			apiKey: tenantRegistry.resendApiKey ?? tenantRegistry.sesConfig?.accessKeyId ?? '',
+			fromEmail: tenantRegistry.resendFromEmail ?? tenantRegistry.sesConfig?.fromEmail ?? ''
+		};
+	} catch {
+		return; // no email service configured for this tenant — nothing more we can do
+	}
+
+	const companyName = tenantRegistry.seoConfig?.siteName ?? tenantRegistry.companyName ?? 'LinkHub';
+
+	await emailService.sendStripeWebhookErrorNotification(
+		emailConfig,
+		alertEmails,
+		{
+			eventId: event.id,
+			eventType: event.type,
+			domain,
+			tenantId: tenantRegistry.tenantId,
+			reason: failure.reason,
+			retryable: failure.retryable,
+			detail: failure.message
+		},
+		companyName
 	);
 }

@@ -12,6 +12,7 @@ const USER_ID = 'user-abc123';
 const SUBSCRIPTION_ID = 'sub_1T2is88gTI2M8y3RxsJrOjdW';
 const EVENT_ID = 'evt_test_checkout_completed';
 const PRO_PRICE_ID = 'price_pro_monthly_test';
+const PRO_ANNUAL_PRICE_ID = 'price_pro_annual_test';
 const CURRENT_PERIOD_END = 1774144254; // Unix seconds → planExpiredAt = × 1000
 
 // ---------------------------------------------------------------------------
@@ -20,22 +21,47 @@ const CURRENT_PERIOD_END = 1774144254; // Unix seconds → planExpiredAt = × 10
 const {
 	mockGetByHostname,
 	mockSaveStripeEvent,
+	mockRecordStripeEventOutcome,
 	mockFindByEmail,
 	mockUpdatePlan,
 	mockUpdateSubscriptionFlags,
 	mockConstructEvent,
 	mockSubscriptionsRetrieve,
-	mockSubscriptionsUpdate
-} = vi.hoisted(() => ({
-	mockGetByHostname: vi.fn(),
-	mockSaveStripeEvent: vi.fn(),
-	mockFindByEmail: vi.fn(),
-	mockUpdatePlan: vi.fn(),
-	mockUpdateSubscriptionFlags: vi.fn(),
-	mockConstructEvent: vi.fn(),
-	mockSubscriptionsRetrieve: vi.fn(),
-	mockSubscriptionsUpdate: vi.fn()
-}));
+	mockSubscriptionsUpdate,
+	mockCreateEmailSenderService,
+	mockSendStripeWebhookErrorNotification,
+	mockSendUpcomingRenewalEmail,
+	MockStripeInvalidRequestError
+} = vi.hoisted(() => {
+	// `errors.StripeInvalidRequestError` is real Stripe's shape for e.g. resource_missing —
+	// webhookErrors.ts's callStripeApi() checks `instanceof` against it, so the Stripe mock
+	// below must provide a compatible class rather than leaving `Stripe.errors` undefined.
+	class MockStripeInvalidRequestError extends Error {
+		type: string;
+		code?: string;
+		constructor(raw: { type: string; code?: string; message: string }) {
+			super(raw.message);
+			this.type = raw.type;
+			this.code = raw.code;
+		}
+	}
+
+	return {
+		mockGetByHostname: vi.fn(),
+		mockSaveStripeEvent: vi.fn(),
+		mockRecordStripeEventOutcome: vi.fn(),
+		mockFindByEmail: vi.fn(),
+		mockUpdatePlan: vi.fn(),
+		mockUpdateSubscriptionFlags: vi.fn(),
+		mockConstructEvent: vi.fn(),
+		mockSubscriptionsRetrieve: vi.fn(),
+		mockSubscriptionsUpdate: vi.fn(),
+		mockCreateEmailSenderService: vi.fn(),
+		mockSendStripeWebhookErrorNotification: vi.fn(),
+		mockSendUpcomingRenewalEmail: vi.fn(),
+		MockStripeInvalidRequestError
+	};
+});
 
 // ---------------------------------------------------------------------------
 // Container mock — replaces all Firestore/Firebase interactions
@@ -44,7 +70,8 @@ vi.mock('@/infrastructure/container', () => ({
 	container: {
 		tenantRegistryRepo: {
 			getByHostname: mockGetByHostname,
-			saveStripeEvent: mockSaveStripeEvent
+			saveStripeEvent: mockSaveStripeEvent,
+			recordStripeEventOutcome: mockRecordStripeEventOutcome
 		},
 		userRepo: {
 			findByEmail: mockFindByEmail,
@@ -55,10 +82,17 @@ vi.mock('@/infrastructure/container', () => ({
 }));
 
 // ---------------------------------------------------------------------------
-// Stripe mock — use regular function (not arrow) so it works as a constructor
+// Email sender factory mock — used for alert emails and renewal reminders
 // ---------------------------------------------------------------------------
-vi.mock('stripe', () => ({
-	default: vi.fn(function () {
+vi.mock('@/infrastructure/services/emailSenderFactory', () => ({
+	createEmailSenderService: mockCreateEmailSenderService
+}));
+
+// ---------------------------------------------------------------------------
+// Stripe mock — use regular function (not arrow) so it works as a constructor.
+// ---------------------------------------------------------------------------
+vi.mock('stripe', () => {
+	const StripeMock = vi.fn(function () {
 		return {
 			webhooks: { constructEvent: mockConstructEvent },
 			subscriptions: {
@@ -66,8 +100,10 @@ vi.mock('stripe', () => ({
 				update: mockSubscriptionsUpdate
 			}
 		};
-	})
-}));
+	});
+	Object.assign(StripeMock, { errors: { StripeInvalidRequestError: MockStripeInvalidRequestError } });
+	return { default: StripeMock };
+});
 
 // Import AFTER mocks are registered
 import { POST } from './route';
@@ -99,16 +135,21 @@ function makeRequest(overrides: { body?: string; tenant?: string } = {}) {
 	});
 }
 
-function makeTenantRegistry(proPriceId = PRO_PRICE_ID) {
+function makeTenantRegistry(
+	overrides: { proPriceId?: string; proAnnualPriceId?: string } = {}
+) {
 	return {
 		tenantId: TENANT_ID,
 		domain: TENANT_DOMAIN,
 		theme: null,
+		resendApiKey: 're_test_xxx',
+		resendFromEmail: 'no-reply@linkhubcalendar.com.dev',
 		stripeConfig: {
 			secretKey: 'sk_test_xxx',
 			publishableKey: 'pk_test_xxx',
 			webhookSecret: 'whsec_xxx',
-			proPriceId
+			proPriceId: overrides.proPriceId ?? PRO_PRICE_ID,
+			proAnnualPriceId: overrides.proAnnualPriceId ?? PRO_ANNUAL_PRICE_ID
 		}
 	};
 }
@@ -134,6 +175,14 @@ function makeUser() {
 describe('POST /api/stripe/webhook — checkout.session.completed', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		delete process.env.NEXT_STRIPE_ALERT_EMAILS;
+		mockRecordStripeEventOutcome.mockResolvedValue(undefined);
+		mockSendStripeWebhookErrorNotification.mockResolvedValue(undefined);
+		mockSendUpcomingRenewalEmail.mockResolvedValue(undefined);
+		mockCreateEmailSenderService.mockReturnValue({
+			sendStripeWebhookErrorNotification: mockSendStripeWebhookErrorNotification,
+			sendUpcomingRenewalEmail: mockSendUpcomingRenewalEmail
+		});
 		mockGetByHostname.mockResolvedValue(makeTenantRegistry());
 		mockSaveStripeEvent.mockResolvedValue(undefined);
 		mockConstructEvent.mockReturnValue(STRIPE_EVENT);
@@ -249,10 +298,55 @@ describe('POST /api/stripe/webhook — checkout.session.completed', () => {
 		);
 	});
 
-	it('does NOT upgrade user when priceId does not match proPriceId', async () => {
+	it('upgrades user to pro with interval "year" when priceId matches proAnnualPriceId', async () => {
+		mockSubscriptionsRetrieve.mockResolvedValue(makeSubscription(PRO_ANNUAL_PRICE_ID));
+		await POST(makeRequest());
+		expect(mockUpdatePlan).toHaveBeenCalledWith(
+			TENANT_ID,
+			USER_ID,
+			'pro',
+			CURRENT_PERIOD_END * 1000,
+			SUBSCRIPTION_ID,
+			'year'
+		);
+	});
+
+	it('does NOT upgrade and does NOT retry (200) when priceId matches neither configured price — config drift', async () => {
+		mockSubscriptionsRetrieve.mockResolvedValue(makeSubscription('price_other_plan'));
+		const res = await POST(makeRequest());
+
+		expect(res.status).toBe(200); // non-retryable — retrying the same event can't fix a bad price ID
+		expect(mockUpdatePlan).not.toHaveBeenCalled();
+		expect(mockRecordStripeEventOutcome).toHaveBeenCalledWith(
+			TENANT_DOMAIN,
+			EVENT_ID,
+			expect.objectContaining({ status: 'failed', reason: 'PRICE_ID_MISMATCH', retryable: false })
+		);
+	});
+
+	it('sends an alert email when NEXT_STRIPE_ALERT_EMAILS is configured and processing fails', async () => {
+		process.env.NEXT_STRIPE_ALERT_EMAILS = 'ops@example.com, second@example.com';
 		mockSubscriptionsRetrieve.mockResolvedValue(makeSubscription('price_other_plan'));
 		await POST(makeRequest());
-		expect(mockUpdatePlan).not.toHaveBeenCalled();
+
+		expect(mockSendStripeWebhookErrorNotification).toHaveBeenCalledWith(
+			expect.objectContaining({ tenantId: TENANT_ID }),
+			['ops@example.com', 'second@example.com'],
+			expect.objectContaining({
+				eventId: EVENT_ID,
+				eventType: 'checkout.session.completed',
+				domain: TENANT_DOMAIN,
+				reason: 'PRICE_ID_MISMATCH',
+				retryable: false
+			}),
+			expect.anything()
+		);
+	});
+
+	it('does NOT send an alert email when NEXT_STRIPE_ALERT_EMAILS is unset', async () => {
+		mockSubscriptionsRetrieve.mockResolvedValue(makeSubscription('price_other_plan'));
+		await POST(makeRequest());
+		expect(mockSendStripeWebhookErrorNotification).not.toHaveBeenCalled();
 	});
 
 	it('returns { received: true } with status 200 on success', async () => {
@@ -260,20 +354,44 @@ describe('POST /api/stripe/webhook — checkout.session.completed', () => {
 		expect(res.status).toBe(200);
 		const json = await res.json();
 		expect(json).toEqual({ received: true });
+		expect(mockRecordStripeEventOutcome).toHaveBeenCalledWith(TENANT_DOMAIN, EVENT_ID, { status: 'processed' });
 	});
 
-	it('returns 200 even when user is not found in the repo (safe degradation)', async () => {
+	it('returns 200 (non-retryable) when user is not found in the repo, and alerts', async () => {
+		process.env.NEXT_STRIPE_ALERT_EMAILS = 'ops@example.com';
 		mockFindByEmail.mockResolvedValue(null);
 		const res = await POST(makeRequest());
 		expect(res.status).toBe(200);
 		expect(mockUpdatePlan).not.toHaveBeenCalled();
+		expect(mockSendStripeWebhookErrorNotification).toHaveBeenCalledWith(
+			expect.anything(),
+			['ops@example.com'],
+			expect.objectContaining({ reason: 'USER_NOT_FOUND', retryable: false }),
+			expect.anything()
+		);
 	});
 
-	it('returns 200 even when Stripe subscription retrieval throws (safe degradation)', async () => {
+	it('returns 500 (retryable) when the Stripe API call fails transiently — lets Stripe retry', async () => {
 		mockSubscriptionsRetrieve.mockRejectedValue(new Error('Stripe API error'));
 		const res = await POST(makeRequest());
-		expect(res.status).toBe(200);
+		expect(res.status).toBe(500);
 		expect(mockUpdatePlan).not.toHaveBeenCalled();
+		expect(mockRecordStripeEventOutcome).toHaveBeenCalledWith(
+			TENANT_DOMAIN,
+			EVENT_ID,
+			expect.objectContaining({ status: 'failed', reason: 'STRIPE_API_ERROR', retryable: true })
+		);
+	});
+
+	it('returns 200 (non-retryable) when the subscription genuinely does not exist (resource_missing)', async () => {
+		const notFoundErr = new MockStripeInvalidRequestError({
+			type: 'invalid_request_error',
+			code: 'resource_missing',
+			message: 'No such subscription'
+		});
+		mockSubscriptionsRetrieve.mockRejectedValue(notFoundErr);
+		const res = await POST(makeRequest());
+		expect(res.status).toBe(200); // retrying a missing resource ID can never succeed
 	});
 });
 
@@ -322,6 +440,14 @@ function makeSubscriptionRequest(
 describe('POST /api/stripe/webhook — customer.subscription.updated', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		delete process.env.NEXT_STRIPE_ALERT_EMAILS;
+		mockRecordStripeEventOutcome.mockResolvedValue(undefined);
+		mockSendStripeWebhookErrorNotification.mockResolvedValue(undefined);
+		mockSendUpcomingRenewalEmail.mockResolvedValue(undefined);
+		mockCreateEmailSenderService.mockReturnValue({
+			sendStripeWebhookErrorNotification: mockSendStripeWebhookErrorNotification,
+			sendUpcomingRenewalEmail: mockSendUpcomingRenewalEmail
+		});
 		mockGetByHostname.mockResolvedValue(makeTenantRegistry());
 		mockSaveStripeEvent.mockResolvedValue(undefined);
 		mockFindByEmail.mockResolvedValue(makeUser());
@@ -455,6 +581,14 @@ describe('POST /api/stripe/webhook — customer.subscription.updated', () => {
 describe('POST /api/stripe/webhook — customer.subscription.deleted', () => {
 	beforeEach(() => {
 		vi.clearAllMocks();
+		delete process.env.NEXT_STRIPE_ALERT_EMAILS;
+		mockRecordStripeEventOutcome.mockResolvedValue(undefined);
+		mockSendStripeWebhookErrorNotification.mockResolvedValue(undefined);
+		mockSendUpcomingRenewalEmail.mockResolvedValue(undefined);
+		mockCreateEmailSenderService.mockReturnValue({
+			sendStripeWebhookErrorNotification: mockSendStripeWebhookErrorNotification,
+			sendUpcomingRenewalEmail: mockSendUpcomingRenewalEmail
+		});
 		mockGetByHostname.mockResolvedValue(makeTenantRegistry());
 		mockSaveStripeEvent.mockResolvedValue(undefined);
 		mockFindByEmail.mockResolvedValue(makeUser());
@@ -532,6 +666,14 @@ describe('POST /api/stripe/webhook — invoice.payment_succeeded via ?tenant= qu
 
 	beforeEach(() => {
 		vi.clearAllMocks();
+		delete process.env.NEXT_STRIPE_ALERT_EMAILS;
+		mockRecordStripeEventOutcome.mockResolvedValue(undefined);
+		mockSendStripeWebhookErrorNotification.mockResolvedValue(undefined);
+		mockSendUpcomingRenewalEmail.mockResolvedValue(undefined);
+		mockCreateEmailSenderService.mockReturnValue({
+			sendStripeWebhookErrorNotification: mockSendStripeWebhookErrorNotification,
+			sendUpcomingRenewalEmail: mockSendUpcomingRenewalEmail
+		});
 		mockGetByHostname.mockResolvedValue(makeTenantRegistry());
 		mockSaveStripeEvent.mockResolvedValue(undefined);
 		mockFindByEmail.mockResolvedValue(makeUser());

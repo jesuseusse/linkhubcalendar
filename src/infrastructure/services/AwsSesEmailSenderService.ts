@@ -5,9 +5,10 @@ import {
 	AppointmentNotificationData,
 	ContactNotificationData,
 	SupportTicketNotificationData,
-	UpcomingRenewalData
+	UpcomingRenewalData,
+	StripeWebhookErrorNotificationData
 } from '@/domain/interfaces/IEmailSenderService';
-import { getVerificationEmailTemplate, getAppointmentNotificationTemplate, getContactNotificationTemplate, getUpcomingRenewalTemplate, getSupportTicketNotificationTemplate, getPasswordResetTemplate } from './emailTemplates';
+import { getVerificationEmailTemplate, getAppointmentNotificationTemplate, getContactNotificationTemplate, getUpcomingRenewalTemplate, getSupportTicketNotificationTemplate, getPasswordResetTemplate, getStripeWebhookErrorTemplate } from './emailTemplates';
 
 export class AwsSesEmailSenderService implements IEmailSenderService {
 	private client: SESClient;
@@ -208,6 +209,34 @@ export class AwsSesEmailSenderService implements IEmailSenderService {
 		const command = new SendEmailCommand({
 			Source: config.fromEmail,
 			Destination: { ToAddresses: adminEmails },
+			Message: {
+				Subject: { Data: template.subject(data), Charset: 'UTF-8' },
+				Body: { Html: { Data: template.html(data, name), Charset: 'UTF-8' } }
+			}
+		});
+
+		try {
+			await this.client.send(command);
+		} catch (err: unknown) {
+			const message = err instanceof Error ? err.message : 'SES send error';
+			console.error(message);
+			throw new Error(`Error al enviar correo`);
+		}
+	}
+
+	async sendStripeWebhookErrorNotification(
+		config: EmailSenderConfig,
+		alertEmails: string[],
+		data: StripeWebhookErrorNotificationData,
+		companyName?: string
+	): Promise<void> {
+		if (alertEmails.length === 0) return;
+		const name = companyName || 'LinkHub';
+		const template = getStripeWebhookErrorTemplate(config.tenantId);
+
+		const command = new SendEmailCommand({
+			Source: config.fromEmail,
+			Destination: { ToAddresses: alertEmails },
 			Message: {
 				Subject: { Data: template.subject(data), Charset: 'UTF-8' },
 				Body: { Html: { Data: template.html(data, name), Charset: 'UTF-8' } }

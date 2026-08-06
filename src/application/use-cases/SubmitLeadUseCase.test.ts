@@ -97,6 +97,7 @@ describe('SubmitLeadUseCase', () => {
       sendSupportTicketNotification: vi.fn(),
       sendCampaignEmail: vi.fn(),
       sendPasswordResetEmail: vi.fn(),
+      sendStripeWebhookErrorNotification: vi.fn(),
     };
   });
 

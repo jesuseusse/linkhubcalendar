@@ -36,6 +36,18 @@ export interface SupportTicketNotificationData {
   description: string;
 }
 
+export interface StripeWebhookErrorNotificationData {
+  eventId: string;
+  eventType: string;
+  domain: string;
+  tenantId: string;
+  /** Machine-readable failure reason, e.g. 'PRICE_ID_MISMATCH' — see WebhookFailureReason */
+  reason: string;
+  /** Whether Stripe will keep retrying this event (5xx was returned) */
+  retryable: boolean;
+  detail: string;
+}
+
 export interface IEmailSenderService {
   sendVerificationEmail(
     config: EmailSenderConfig,
@@ -77,6 +89,20 @@ export interface IEmailSenderService {
     config: EmailSenderConfig,
     adminEmails: string[],
     data: SupportTicketNotificationData,
+    companyName?: string
+  ): Promise<void>;
+
+  /**
+   * Sends a billing-critical webhook failure alert to the configured ops recipients.
+   * @param config - Tenant email sender config.
+   * @param alertEmails - List of recipient addresses (from NEXT_STRIPE_ALERT_EMAILS).
+   * @param data - Failure summary data for the email body.
+   * @param companyName - Optional tenant company name for the email header.
+   */
+  sendStripeWebhookErrorNotification(
+    config: EmailSenderConfig,
+    alertEmails: string[],
+    data: StripeWebhookErrorNotificationData,
     companyName?: string
   ): Promise<void>;
 

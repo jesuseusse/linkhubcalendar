@@ -196,6 +196,33 @@ Stripe is integrated per-tenant. Each tenant registry document in Firestore stor
 - `src/components/Common/UpgradeModal.tsx` — monthly/annual toggle; both enabled; "3 MESES GRATIS" badge; benefit list; disclaimer
 - `src/components/Billing/ProBanner.tsx` — full-width promotional banner shown to `plan === 'free'` users at the top of the dashboard; dismissable per session via `sessionStorage`; opens `UpgradeModal` on CTA click
 
+### Webhook error handling & alerting
+
+Two independent problems are solved here: (1) picking the *correct* month/year price deterministically, and (2) never letting a processing failure disappear silently behind Stripe's "200 received."
+
+**Month vs. year resolution — single source of truth:**
+- `src/lib/stripe/resolveProInterval.ts` exports `resolveProInterval(priceId, stripeConfig): 'month' | 'year' | null`. Every handler in the webhook derives `billingInterval` from the **live Stripe price ID** via this function — never from `subscription.metadata.interval`, which is set once at checkout time and can drift if a tenant's price IDs are reconfigured later. A `null` result (price matches neither `proPriceId` nor `proAnnualPriceId`) is always treated as a config/data error, never a silent no-op — every checkout this app creates uses exactly one of those two IDs (see `/api/stripe/checkout`), so a mismatch can only mean drift.
+
+**Typed failure classification** (`src/app/api/stripe/webhook/webhookErrors.ts`):
+- `WebhookProcessingError` carries a `reason` (`MISSING_METADATA` | `PRICE_ID_MISMATCH` | `USER_NOT_FOUND` | `MISSING_SUBSCRIPTION_DATA` | `STRIPE_API_ERROR` | `UNEXPECTED_ERROR`) and a `retryable` flag.
+- `callStripeApi(operation, fn)` wraps every `stripe.subscriptions.*` call and reclassifies failures: a `resource_missing` `StripeInvalidRequestError` is non-retryable (the ID will never resolve), everything else (network errors, Stripe 5xx, rate limits) is retryable.
+- Any error that isn't a `WebhookProcessingError` (e.g. a Firestore write failing) defaults to retryable — we can't rule out transience, so Stripe gets to retry while a human is alerted in parallel.
+
+**HTTP status returned to Stripe — retryable vs. not:**
+- **Retryable failures → 5xx.** Stripe retries with exponential backoff for up to 3 days; worth it only when re-delivery might actually succeed (a transient Stripe/Firestore blip).
+- **Non-retryable failures → 200.** Re-processing the *same* event can never fix a price-ID mismatch or a user that doesn't exist — returning 2xx stops Stripe from wasting 3 days of retries on something only a human can resolve. This is why "Stripe shows the webhook was delivered" no longer implies "the user's plan was actually updated."
+- Pre-signature-verification failures (`INVALID_JSON`, `TENANT_NOT_FOUND`, `STRIPE_NOT_CONFIGURED`, `SIGNATURE_MISMATCH`) are unchanged — a malformed/unsigned request is never trusted enough to alert on.
+- `handleSubscriptionDeleted` and missing-metadata on `customer.subscription.updated` deliberately do **not** throw — the desired end state (no active pro access) is already true or harmless to skip, so there's nothing actionable for a human. `invoice.upcoming` reminder-email failures are caught and logged only — a failed reminder isn't billing-critical and must never trigger Stripe retries.
+
+**Observability — every event's outcome is persisted, not just logged:**
+- `container.tenantRegistryRepo.recordStripeEventOutcome(hostname, eventId, outcome)` merges `{ status: 'processed' | 'failed', reason?, retryable?, message? }` onto the same `tenant_registry/{hostname}/stripe_events/{eventId}` doc that `saveStripeEvent` writes. Check this doc first when a customer reports a plan mismatch — no more grepping server logs.
+
+**Alert emails on processing failure:**
+- `NEXT_STRIPE_ALERT_EMAILS` (comma-separated, same convention as `NEXT_SUPER_ADMINS_EMAILS`) — recipients notified whenever a webhook event fails to process, retryable or not.
+- Sent via the *affected tenant's own* configured email service (Resend/SES), same pattern as `sendSupportTicketNotification` — there is no platform-level email account to fall back to. If the tenant has no email service configured, the alert is silently skipped (nothing more we can do).
+- Fire-and-forget (`.catch(() => {})`) — alert delivery can never block or fail the Stripe response.
+- Template: `getStripeWebhookErrorTemplate()` in `emailTemplates.ts`; interface: `IEmailSenderService.sendStripeWebhookErrorNotification`.
+
 ## Auth — Password Reset
 
 Tenant-branded password reset flow that avoids exposing Firebase URLs in emails.
@@ -248,6 +275,7 @@ Multiple email backends selectable per tenant:
 | Appointment booked | Calendar owner (`user.email`) | `defaultAppointmentTemplate` | `POST /api/u/[username]/appointments` |
 | Contact form submitted | Profile owner (`user.email`) | `defaultContactTemplate` | `POST /api/u/[username]/contact` |
 | Subscription renewal upcoming | Subscriber | `defaultRenewalTemplate` | Stripe `invoice.upcoming` webhook |
+| Stripe webhook processing failed | `NEXT_STRIPE_ALERT_EMAILS` | `defaultStripeWebhookErrorTemplate` | `POST /api/stripe/webhook` (see [Webhook error handling & alerting](#webhook-error-handling--alerting)) |
 
 **Pattern** (appointments and contact form): The API route calls `resolveTenantRegistry` to get the full registry, builds `emailSenderService` + `emailConfig` inside a `try/catch` (silently skips email if not configured), then constructs the use case ad-hoc (not from container) with those deps. The use case fires `sendXxxNotification(...).catch(() => {})` after saving to Firestore, so email failures never break the user flow.
 
@@ -256,6 +284,10 @@ Multiple email backends selectable per tenant:
 - `sendAppointmentNotification`
 - `sendUpcomingRenewalEmail`
 - `sendContactNotification`
+- `sendSupportTicketNotification`
+- `sendStripeWebhookErrorNotification`
+- `sendCampaignEmail`
+- `sendPasswordResetEmail`
 
 ## SEO Configuration
 

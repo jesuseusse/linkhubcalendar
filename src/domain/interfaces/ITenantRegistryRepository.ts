@@ -16,6 +16,11 @@ export interface CreateTenantRegistryData {
   seoConfig?: SeoConfig | null;
 }
 
+export type StripeEventOutcome =
+  | { status: 'processed' }
+  | { status: 'skipped'; reason: string }
+  | { status: 'failed'; reason: string; retryable: boolean; message: string };
+
 export interface ITenantRegistryRepository {
   getByHostname(hostname: string): Promise<TenantRegistryData | null>;
   getByTenantId(tenantId: string): Promise<TenantRegistryData | null>;
@@ -23,4 +28,9 @@ export interface ITenantRegistryRepository {
   create(hostname: string, data: CreateTenantRegistryData): Promise<TenantRegistryData>;
   /** Persists a raw Stripe event under tenant_registry/{hostname}/stripe_events/{eventId} */
   saveStripeEvent(hostname: string, eventId: string, data: Record<string, unknown>): Promise<void>;
+  /**
+   * Merges the processing outcome onto the same stripe_events doc — makes it possible
+   * to tell "delivered" apart from "actually processed" without grepping server logs.
+   */
+  recordStripeEventOutcome(hostname: string, eventId: string, outcome: StripeEventOutcome): Promise<void>;
 }
