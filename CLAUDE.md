@@ -433,10 +433,14 @@ interface ScheduleException {
 1. "Gestionar horarios" link in the dashboard Calendar section → `/dashboard/schedule`
 2. No `weeklySchedule` → 5-step stepper: select days → same schedule? → configure → preview → save
 3. Has `weeklySchedule` → monthly calendar view; click any active day → ExceptionModal to disable whole day or specific slots
-4. Buttons: "Eliminar todos los horarios" (set schedule to null), "Reconfigurar horarios" (restart stepper)
-5. Draft persisted in `localStorage` under `linkhub_schedule_draft` key
+4. Buttons: "Eliminar todos los horarios" (set schedule to null), "Reconfigurar horarios" (reopens the stepper prefilled with the current schedule via `weeklyScheduleToDraft()` — editing an already-valid schedule never requires re-entering every day from scratch)
+5. Draft persisted in `localStorage` under `linkhub_schedule_draft` key; an in-progress draft there always wins over prefilling from the saved schedule, so a page refresh mid-wizard never discards unsaved edits
 
 **Step components:** `src/components/Calendar/Schedule/` — `StepDaySelector`, `StepSameSchedule`, `StepDefaultSchedule`, `StepPerDaySchedule`, `StepPreview`, `DayScheduleForm`, `SlotPreview`, `ScheduleStepper`
+
+**Per-day validation ("Siguiente" gating):** `StepDefaultSchedule` and `StepPerDaySchedule` validate the *effective* schedule per day — `effectiveDaySchedule()` in `scheduleTypes.ts`, which falls back to `DEFAULT_DAY_SCHEDULE` exactly like the form's own display does. A day the user never interacted with is not an error; only `startTime >= endTime` or a non-positive duration blocks continuing, and always with a visible reason (`validateDaySchedule()` — inline message under the offending day via `DayScheduleForm`'s `error` prop, plus a "Corrige el horario de: …" summary and a `title` tooltip on the disabled button). Previously the per-day step required an explicit `perDaySchedules[day]` entry to exist, which blocked "Siguiente" on any untouched day even when its (displayed) default values were perfectly valid.
+
+**Per-day backfill on save:** `draftToWeeklySchedule()` writes an explicit `DaySchedule` for every selected day, even ones the user never touched — `getDaySchedule()` in `scheduleGenerator.ts` has no fallback for a missing `perDaySchedule` entry (it returns `null`, i.e. zero bookable slots), so an untouched day must never be persisted as a gap.
 
 **Calendar components:** `src/components/Calendar/ScheduleCalendar.tsx`, `ExceptionModal.tsx`
 

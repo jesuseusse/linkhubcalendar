@@ -94,7 +94,7 @@ export default function SchedulePage() {
 									</button>
 								</div>
 							)}
-							<ScheduleStepper onSave={handleSaveSchedule} />
+							<ScheduleStepper onSave={handleSaveSchedule} initialSchedule={profile.weeklySchedule} />
 						</div>
 					) : (
 						<div className='space-y-6'>

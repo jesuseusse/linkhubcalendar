@@ -1,6 +1,6 @@
 'use client';
 
-import { ScheduleDraft, saveDraft, DEFAULT_DAY_SCHEDULE } from './scheduleTypes';
+import { ScheduleDraft, saveDraft, DEFAULT_DAY_SCHEDULE, validateDaySchedule } from './scheduleTypes';
 import { DayScheduleForm } from './DayScheduleForm';
 
 interface Props {
@@ -19,8 +19,8 @@ export function StepDefaultSchedule({ draft, onChange, onNext, onBack }: Props) 
 		onChange(updated);
 	};
 
-	const canContinue =
-		schedule.startTime < schedule.endTime && schedule.durationMinutes > 0;
+	const error = validateDaySchedule(schedule);
+	const canContinue = error === null;
 
 	return (
 		<div className='space-y-6'>
@@ -32,7 +32,7 @@ export function StepDefaultSchedule({ draft, onChange, onNext, onBack }: Props) 
 					Este horario aplicará a todos tus días de atención.
 				</p>
 			</div>
-			<DayScheduleForm schedule={schedule} onChange={update} />
+			<DayScheduleForm schedule={schedule} onChange={update} error={error} />
 			<div className='flex gap-3'>
 				<button
 					type='button'
@@ -45,6 +45,7 @@ export function StepDefaultSchedule({ draft, onChange, onNext, onBack }: Props) 
 					type='button'
 					disabled={!canContinue}
 					onClick={onNext}
+					title={canContinue ? undefined : error ?? undefined}
 					className='flex-1 py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors'
 				>
 					Siguiente →

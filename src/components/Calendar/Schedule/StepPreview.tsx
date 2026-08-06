@@ -1,6 +1,6 @@
 'use client';
 
-import { ScheduleDraft, DAY_LABELS, ORDERED_DAYS, DEFAULT_DAY_SCHEDULE, draftToWeeklySchedule } from './scheduleTypes';
+import { ScheduleDraft, DAY_LABELS, ORDERED_DAYS, DEFAULT_DAY_SCHEDULE, draftToWeeklySchedule, effectiveDaySchedule } from './scheduleTypes';
 import { generateSlotsForDay } from '@/lib/utils/scheduleGenerator';
 
 interface Props {
@@ -15,7 +15,7 @@ export function StepPreview({ draft, onBack, onSave, saving }: Props) {
 
 	const getSchedule = (day: number) => {
 		if (draft.sameForAllDays) return draft.defaultSchedule ?? DEFAULT_DAY_SCHEDULE;
-		return draft.perDaySchedules[day] ?? DEFAULT_DAY_SCHEDULE;
+		return effectiveDaySchedule(draft.perDaySchedules, day);
 	};
 
 	const handleSave = async () => {

@@ -47,10 +47,16 @@ export function StepDaySelector({ draft, onChange, onNext }: Props) {
 					);
 				})}
 			</div>
+			{draft.selectedDays.length === 0 && (
+				<p className='text-xs text-error' role='alert'>
+					⚠ Selecciona al menos un día para continuar.
+				</p>
+			)}
 			<button
 				type='button'
 				disabled={draft.selectedDays.length === 0}
 				onClick={onNext}
+				title={draft.selectedDays.length === 0 ? 'Selecciona al menos un día para continuar.' : undefined}
 				className='w-full py-2 text-sm font-medium bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 transition-colors'
 			>
 				Siguiente →

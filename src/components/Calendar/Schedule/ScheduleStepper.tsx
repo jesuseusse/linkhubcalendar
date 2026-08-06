@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, useSearchParams, usePathname } from 'next/navigation';
-import { ScheduleDraft, WeeklySchedule, loadDraft, saveDraft, clearDraft, buildEmptyDraft } from './scheduleTypes';
+import { ScheduleDraft, WeeklySchedule, loadDraft, clearDraft, buildEmptyDraft, weeklyScheduleToDraft, DRAFT_KEY } from './scheduleTypes';
 import { StepDaySelector } from './StepDaySelector';
 import { StepSameSchedule } from './StepSameSchedule';
 import { StepDefaultSchedule } from './StepDefaultSchedule';
@@ -11,11 +11,11 @@ import { StepPreview } from './StepPreview';
 
 interface Props {
 	onSave: (schedule: WeeklySchedule) => Promise<void>;
+	/** Existing saved schedule, if any — prefills the wizard so "Reconfigurar horarios" doesn't force starting from scratch. */
+	initialSchedule?: WeeklySchedule | null;
 }
 
-const STEP_TITLES = ['Días', 'Horario', 'Configuración', 'Vista previa'];
-
-export function ScheduleStepper({ onSave }: Props) {
+export function ScheduleStepper({ onSave, initialSchedule }: Props) {
 	const router = useRouter();
 	const pathname = usePathname();
 	const searchParams = useSearchParams();
@@ -25,7 +25,18 @@ export function ScheduleStepper({ onSave }: Props) {
 	const [saving, setSaving] = useState(false);
 
 	useEffect(() => {
-		setDraft(loadDraft());
+		// An in-progress draft in localStorage (e.g. the user refreshed mid-wizard) always
+		// wins — we should never discard edits they haven't saved yet. Only when there is
+		// no such draft do we prefill from the already-saved schedule, so reconfiguring an
+		// existing schedule starts from its real values instead of a blank one.
+		const hasInProgressDraft =
+			typeof window !== 'undefined' && localStorage.getItem(DRAFT_KEY) != null;
+		if (!hasInProgressDraft && initialSchedule) {
+			setDraft(weeklyScheduleToDraft(initialSchedule));
+		} else {
+			setDraft(loadDraft());
+		}
+		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
 	const goTo = (s: number) => {

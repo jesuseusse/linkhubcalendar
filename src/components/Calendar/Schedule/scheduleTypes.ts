@@ -63,10 +63,52 @@ export function clearDraft(): void {
 
 export function draftToWeeklySchedule(draft: ScheduleDraft): WeeklySchedule {
 	const sameForAllDays = draft.sameForAllDays ?? true;
+	// getDaySchedule() in scheduleGenerator.ts does NOT fall back to DEFAULT_DAY_SCHEDULE for
+	// missing per-day entries — it returns null, which means zero bookable slots for that day.
+	// A day the user never touched (and so is absent from perDaySchedules) must still be
+	// written out explicitly here, or the saved schedule silently has no availability on it.
+	const perDaySchedule = !sameForAllDays
+		? Object.fromEntries(
+				draft.selectedDays.map((day) => [day, effectiveDaySchedule(draft.perDaySchedules, day)])
+			)
+		: undefined;
 	return {
 		days: draft.selectedDays,
 		sameForAllDays,
 		defaultSchedule: sameForAllDays ? (draft.defaultSchedule ?? DEFAULT_DAY_SCHEDULE) : undefined,
-		perDaySchedule: !sameForAllDays ? draft.perDaySchedules : undefined,
+		perDaySchedule,
 	};
+}
+
+/**
+ * Seeds a stepper draft from an already-saved schedule (the "Reconfigurar horarios" flow).
+ * Without this, reconfiguring always started from a blank draft — the user had to re-pick
+ * every day and re-enter every time from scratch even though nothing needed to change.
+ */
+export function weeklyScheduleToDraft(schedule: WeeklySchedule): ScheduleDraft {
+	return {
+		selectedDays: schedule.days,
+		sameForAllDays: schedule.sameForAllDays,
+		defaultSchedule: schedule.sameForAllDays ? (schedule.defaultSchedule ?? null) : null,
+		perDaySchedules: !schedule.sameForAllDays ? { ...(schedule.perDaySchedule ?? {}) } : {},
+	};
+}
+
+/** Effective schedule for a day: an explicit entry, falling back to the shared default. */
+export function effectiveDaySchedule(
+	perDaySchedules: Partial<Record<number, DaySchedule>>,
+	day: number
+): DaySchedule {
+	return perDaySchedules[day] ?? DEFAULT_DAY_SCHEDULE;
+}
+
+/** Human-readable reason a DaySchedule can't be used yet, or null if it's valid. */
+export function validateDaySchedule(schedule: DaySchedule): string | null {
+	if (!(schedule.startTime < schedule.endTime)) {
+		return 'La hora de inicio debe ser anterior a la hora de fin.';
+	}
+	if (!(schedule.durationMinutes > 0)) {
+		return 'Selecciona una duración válida.';
+	}
+	return null;
 }

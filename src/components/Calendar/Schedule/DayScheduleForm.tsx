@@ -8,9 +8,11 @@ interface Props {
 	schedule: DaySchedule;
 	onChange: (schedule: DaySchedule) => void;
 	onCopyPrevious?: () => void;
+	/** Validation message shown inline, e.g. "La hora de inicio debe ser anterior a la hora de fin." */
+	error?: string | null;
 }
 
-export function DayScheduleForm({ label, schedule, onChange, onCopyPrevious }: Props) {
+export function DayScheduleForm({ label, schedule, onChange, onCopyPrevious, error }: Props) {
 	const update = (patch: Partial<DaySchedule>) => {
 		onChange({ ...schedule, ...patch });
 	};
@@ -91,6 +93,11 @@ export function DayScheduleForm({ label, schedule, onChange, onCopyPrevious }: P
 					</div>
 				</div>
 			</div>
+			{error && (
+				<p className='text-xs text-error flex items-center gap-1' role='alert'>
+					<span aria-hidden='true'>⚠</span> {error}
+				</p>
+			)}
 			{schedule.startTime && schedule.endTime && schedule.durationMinutes > 0 && (
 				<div>
 					<p className='text-xs text-muted-foreground mb-2'>
