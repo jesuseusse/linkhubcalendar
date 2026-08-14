@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { UserSummaryDto } from '@/dtos/user.dto';
 import { USERS_LABELS, LOADING_TEXT } from './superAdmin.const';
 import { EmailExportModal } from './EmailExportModal';
+import { WhatsappIcon, getSocialIcon } from '@/components/Common/SocialIcons';
 
 interface Props {
   users: UserSummaryDto[];
@@ -47,6 +48,27 @@ function getStatusInfo(user: UserSummaryDto): { label: string; className: string
     return { label: USERS_LABELS.statusCancelScheduled, className: 'text-yellow-700' };
   }
   return { label: USERS_LABELS.statusActive, className: 'text-green-700' };
+}
+
+function extractWhatsappNumber(url: string): string | null {
+  try {
+    const parsed = new URL(/^https?:\/\//i.test(url) ? url : `https://${url}`);
+    const raw = parsed.searchParams.get('phone') ?? parsed.pathname;
+    const digits = raw.replace(/\D/g, '');
+    return digits || null;
+  } catch {
+    return null;
+  }
+}
+
+function getWhatsappNumber(user: UserSummaryDto): string | null {
+  for (const link of user.links) {
+    if (getSocialIcon(link.url)?.label === 'WhatsApp') {
+      const number = extractWhatsappNumber(link.url);
+      if (number) return number;
+    }
+  }
+  return null;
 }
 
 const TH_CLASS =
@@ -145,6 +167,7 @@ export function UserTable({
               <th className={TH_CLASS}>{USERS_LABELS.colUser}</th>
               <th className={TH_CLASS}>{USERS_LABELS.colPlanStatus}</th>
               <th className={TH_CLASS}>{USERS_LABELS.colLinks}</th>
+              <th className={TH_CLASS}>{USERS_LABELS.colWhatsapp}</th>
               <th className={TH_CLASS}>{USERS_LABELS.colAppointments30d}</th>
               <SortHeader
                 label={USERS_LABELS.colLastActivity}
@@ -165,6 +188,7 @@ export function UserTable({
           <tbody>
             {users.map((user) => {
               const status = getStatusInfo(user);
+              const whatsapp = getWhatsappNumber(user);
               return (
                 <tr key={user.id} className='border-b border-border last:border-0'>
                   <td className='py-3 px-4'>
@@ -225,6 +249,21 @@ export function UserTable({
                       <span title={user.links.map((l) => l.title).join(', ')}>
                         {user.links.length}
                       </span>
+                    )}
+                  </td>
+                  <td className='py-3 px-4 text-sm'>
+                    {whatsapp ? (
+                      <a
+                        href={`https://wa.me/${whatsapp}`}
+                        target='_blank'
+                        rel='noopener noreferrer'
+                        className='inline-flex items-center gap-1.5 text-foreground hover:text-primary transition-colors whitespace-nowrap'
+                      >
+                        <WhatsappIcon className='w-4 h-4 shrink-0' style={{ fill: '#25D366' }} />
+                        +{whatsapp}
+                      </a>
+                    ) : (
+                      <span className='text-muted-foreground'>—</span>
                     )}
                   </td>
                   <td className='py-3 px-4 text-sm'>

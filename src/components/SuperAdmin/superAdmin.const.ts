@@ -18,6 +18,7 @@ export const USERS_LABELS = {
   colUser: 'Usuario',
   colPlanStatus: 'Plan y estatus',
   colLinks: 'Links',
+  colWhatsapp: 'WhatsApp',
   colAppointments30d: 'Citas (30d)',
   colLastActivity: 'Última actividad',
   colCreatedAt: 'Creada',
