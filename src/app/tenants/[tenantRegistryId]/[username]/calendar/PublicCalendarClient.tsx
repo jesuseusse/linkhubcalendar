@@ -6,15 +6,31 @@ import { DayPicker } from 'react-day-picker';
 import { format } from 'date-fns';
 import { CalendarSlotDto, PublicCalendarDto } from '@/dtos/user.dto';
 import { profileService } from '@/services/serviceFactory';
-import { AppointmentBookingForm, BookingFormData } from '@/components/Appointments/AppointmentBookingForm';
-import { ReservedAppointmentModal, StoredAppointment } from '@/components/Calendar/ReservedAppointmentModal';
+import {
+	AppointmentBookingForm,
+	BookingFormData
+} from '@/components/Appointments/AppointmentBookingForm';
+import {
+	ReservedAppointmentModal,
+	StoredAppointment
+} from '@/components/Calendar/ReservedAppointmentModal';
 import { getProfilePhotoUrl } from '@/utils/profilePhoto';
 import { sortSlotsByDateTime } from '@/lib/utils/sortSlots';
 import Image from 'next/image';
 
 const MONTH_NAMES = [
-	'Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio',
-	'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre',
+	'Enero',
+	'Febrero',
+	'Marzo',
+	'Abril',
+	'Mayo',
+	'Junio',
+	'Julio',
+	'Agosto',
+	'Septiembre',
+	'Octubre',
+	'Noviembre',
+	'Diciembre'
 ];
 
 function formatTime(hhmm: string): string {
@@ -66,51 +82,67 @@ export function PublicCalendarClient({
 	username
 }: Props) {
 	const now = new Date();
-	const [displayMonth, setDisplayMonth] = useState({ year: now.getFullYear(), month: now.getMonth() + 1 });
+	const [displayMonth, setDisplayMonth] = useState({
+		year: now.getFullYear(),
+		month: now.getMonth() + 1
+	});
 	const [calendar, setCalendar] = useState(initialCalendar);
 	const [monthLoading, setMonthLoading] = useState(false);
 	const [selectedDate, setSelectedDate] = useState<Date | undefined>(undefined);
-	const [selectedSlot, setSelectedSlot] = useState<CalendarSlotDto | null>(null);
+	const [selectedSlot, setSelectedSlot] = useState<CalendarSlotDto | null>(
+		null
+	);
 	const [bookingLoading, setBookingLoading] = useState(false);
-	const [reservedAppointment, setReservedAppointment] = useState<StoredAppointment | null>(null);
+	const [reservedAppointment, setReservedAppointment] =
+		useState<StoredAppointment | null>(null);
 
 	useEffect(() => {
 		const stored = loadStoredAppointment(username);
 		if (stored) setReservedAppointment(stored);
 	}, [username]);
 
-	const fetchMonth = useCallback(async (year: number, month: number) => {
-		setMonthLoading(true);
-		setSelectedDate(undefined);
-		setSelectedSlot(null);
-		try {
-			const data = await profileService.getPublicCalendar(username, toMonthParam(year, month));
-			setCalendar(data);
-		} catch {
-			// keep previous data on error
-		} finally {
-			setMonthLoading(false);
-		}
-	}, [username]);
+	const fetchMonth = useCallback(
+		async (year: number, month: number) => {
+			setMonthLoading(true);
+			setSelectedDate(undefined);
+			setSelectedSlot(null);
+			try {
+				const data = await profileService.getPublicCalendar(
+					username,
+					toMonthParam(year, month)
+				);
+				setCalendar(data);
+			} catch {
+				// keep previous data on error
+			} finally {
+				setMonthLoading(false);
+			}
+		},
+		[username]
+	);
 
 	const goToPrevMonth = () => {
-		const prev = displayMonth.month === 1
-			? { year: displayMonth.year - 1, month: 12 }
-			: { year: displayMonth.year, month: displayMonth.month - 1 };
+		const prev =
+			displayMonth.month === 1
+				? { year: displayMonth.year - 1, month: 12 }
+				: { year: displayMonth.year, month: displayMonth.month - 1 };
 		setDisplayMonth(prev);
 		fetchMonth(prev.year, prev.month);
 	};
 
 	const goToNextMonth = () => {
-		const next = displayMonth.month === 12
-			? { year: displayMonth.year + 1, month: 1 }
-			: { year: displayMonth.year, month: displayMonth.month + 1 };
+		const next =
+			displayMonth.month === 12
+				? { year: displayMonth.year + 1, month: 1 }
+				: { year: displayMonth.year, month: displayMonth.month + 1 };
 		setDisplayMonth(next);
 		fetchMonth(next.year, next.month);
 	};
 
 	const todayStr = format(new Date(), 'yyyy-MM-dd');
-	const visibleSlots = calendar.calendarSlots.filter(slot => slot.date >= todayStr);
+	const visibleSlots = calendar.calendarSlots.filter(
+		slot => slot.date >= todayStr
+	);
 	const availableSlots = visibleSlots.filter(slot => !slot.booked);
 
 	const selectedDateStr = selectedDate
@@ -130,14 +162,19 @@ export function PublicCalendarClient({
 		setBookingLoading(true);
 		try {
 			const dto = calendar.hasWeeklySchedule
-				? { date: slot.date, startTime: slot.startTime, endTime: slot.endTime, ...data }
+				? {
+						date: slot.date,
+						startTime: slot.startTime,
+						endTime: slot.endTime,
+						...data
+					}
 				: { slotId: slot.id, ...data };
 			await profileService.bookAppointment(username, dto);
 			const stored: StoredAppointment = {
 				name: data.name,
 				date: slot.date,
 				startTime: slot.startTime,
-				endTime: slot.endTime,
+				endTime: slot.endTime
 			};
 			saveAppointment(username, stored);
 			setReservedAppointment(stored);
@@ -145,7 +182,7 @@ export function PublicCalendarClient({
 				...prev,
 				calendarSlots: prev.calendarSlots.map(s =>
 					s.id === slot.id ? { ...s, booked: true } : s
-				),
+				)
 			}));
 			setSelectedSlot(null);
 		} finally {
@@ -237,7 +274,8 @@ export function PublicCalendarClient({
 									modifiers={{ hasSlots: highlightedDays }}
 									modifiersStyles={{
 										hasSlots: {
-											backgroundColor: 'color-mix(in srgb, var(--color-primary) 15%, var(--color-background))',
+											backgroundColor:
+												'color-mix(in srgb, var(--color-primary) 15%, var(--color-background))',
 											borderRadius: '100%'
 										}
 									}}
@@ -256,7 +294,10 @@ export function PublicCalendarClient({
 													<li key={slot.id}>
 														{slot.booked ? (
 															<div className='w-full px-4 py-3 text-sm border border-border bg-muted text-muted-foreground flex items-center justify-between'>
-																<span>{formatTime(slot.startTime)} - {formatTime(slot.endTime)}</span>
+																<span>
+																	{formatTime(slot.startTime)} -{' '}
+																	{formatTime(slot.endTime)}
+																</span>
 																<span className='text-xs'>No disponible</span>
 															</div>
 														) : (
@@ -269,13 +310,14 @@ export function PublicCalendarClient({
 																	}
 																	className={`cursor-pointer w-full text-left px-4 py-3 text-sm border transition-colors ${selectedSlot?.id === slot.id ? 'bg-primary text-primary-foreground border-primary' : 'bg-surface border-border text-foreground hover:border-primary'}`}
 																>
-																	{formatTime(slot.startTime)} - {formatTime(slot.endTime)}
+																	{formatTime(slot.startTime)} -{' '}
+																	{formatTime(slot.endTime)}
 																</button>
 																{selectedSlot?.id === slot.id && (
 																	<AppointmentBookingForm
 																		slot={slot}
 																		loading={bookingLoading}
-																		onSubmit={(data) => handleBook(slot, data)}
+																		onSubmit={data => handleBook(slot, data)}
 																	/>
 																)}
 															</>
@@ -308,7 +350,7 @@ export function PublicCalendarClient({
 				</div>
 
 				<p className='mt-8 text-xs text-muted-foreground text-center'>
-					Powered by LinkHub
+					Powered by Grupo Eusse Soluciones
 				</p>
 			</div>
 		</div>

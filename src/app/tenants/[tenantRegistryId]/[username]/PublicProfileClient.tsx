@@ -27,7 +27,9 @@ export function PublicProfileClient({ profile, logoUrl, siteName }: Props) {
 
 	useEffect(() => {
 		if (!photoOpen) return;
-		const onKey = (e: KeyboardEvent) => { if (e.key === 'Escape') setPhotoOpen(false); };
+		const onKey = (e: KeyboardEvent) => {
+			if (e.key === 'Escape') setPhotoOpen(false);
+		};
 		document.addEventListener('keydown', onKey);
 		return () => document.removeEventListener('keydown', onKey);
 	}, [photoOpen]);
@@ -89,7 +91,6 @@ export function PublicProfileClient({ profile, logoUrl, siteName }: Props) {
 				style={theme ? { backgroundColor: theme.backgroundColor } : undefined}
 			>
 				<div className='w-full max-w-sm flex flex-col items-center'>
-
 					{/* Avatar */}
 					<div className='anim-avatar mb-5'>
 						{profile.profilePhoto ? (
@@ -114,7 +115,7 @@ export function PublicProfileClient({ profile, logoUrl, siteName }: Props) {
 									theme
 										? {
 												backgroundColor: theme.buttonColor,
-												color: theme.buttonTextColor,
+												color: theme.buttonTextColor
 											}
 										: undefined
 								}
@@ -166,19 +167,27 @@ export function PublicProfileClient({ profile, logoUrl, siteName }: Props) {
 											...(theme
 												? {
 														backgroundColor: theme.buttonColor,
-														color: theme.buttonTextColor,
+														color: theme.buttonTextColor
 													}
-												: undefined),
+												: undefined)
 										}}
 									>
 										{socialIcon ? (
-											<socialIcon.Icon className='w-[18px] h-[18px] shrink-0' style={{ fill: 'currentColor' }} />
+											<socialIcon.Icon
+												className='w-[18px] h-[18px] shrink-0'
+												style={{ fill: 'currentColor' }}
+											/>
 										) : (
-											<span className='material-icons text-[18px]' aria-hidden='true'>
+											<span
+												className='material-icons text-[18px]'
+												aria-hidden='true'
+											>
 												{icon}
 											</span>
 										)}
-										<span className='flex-1 text-center pr-4.5'>{link.title}</span>
+										<span className='flex-1 text-center pr-4.5'>
+											{link.title}
+										</span>
 									</a>
 								);
 							})
@@ -201,9 +210,9 @@ export function PublicProfileClient({ profile, logoUrl, siteName }: Props) {
 									...(theme
 										? {
 												borderColor: theme.accentColor,
-												color: theme.accentColor,
+												color: theme.accentColor
 											}
-										: undefined),
+										: undefined)
 								}}
 							>
 								<span className='material-icons text-[18px]' aria-hidden='true'>
@@ -220,7 +229,9 @@ export function PublicProfileClient({ profile, logoUrl, siteName }: Props) {
 							<GalleryCarousel
 								photos={profile.galleryPhotos!}
 								theme={theme}
-								animationDelay={0.25 + (profile.links.length + (showCalendar ? 1 : 0)) * 0.08}
+								animationDelay={
+									0.25 + (profile.links.length + (showCalendar ? 1 : 0)) * 0.08
+								}
 							/>
 						</div>
 					)}
@@ -230,7 +241,7 @@ export function PublicProfileClient({ profile, logoUrl, siteName }: Props) {
 						<div
 							className='anim-link w-full mt-6'
 							style={{
-								animationDelay: `${0.25 + (profile.links.length + (showCalendar ? 1 : 0)) * 0.08}s`,
+								animationDelay: `${0.25 + (profile.links.length + (showCalendar ? 1 : 0)) * 0.08}s`
 							}}
 						>
 							<ContactForm username={profile.username} theme={theme} />
@@ -257,7 +268,11 @@ export function PublicProfileClient({ profile, logoUrl, siteName }: Props) {
 								aria-hidden='true'
 								style={theme ? { color: `${theme.textColor}50` } : undefined}
 							>
-								<path strokeLinecap='round' strokeLinejoin='round' d='M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244' />
+								<path
+									strokeLinecap='round'
+									strokeLinejoin='round'
+									d='M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244'
+								/>
 							</svg>
 						)}
 
@@ -271,13 +286,21 @@ export function PublicProfileClient({ profile, logoUrl, siteName }: Props) {
 							className='text-xs text-foreground/45 max-w-xs leading-relaxed'
 							style={theme ? { color: `${theme.textColor}70` } : undefined}
 						>
-							Crea tu página, comparte tus enlaces y gestiona tus citas en línea.
+							Crea tu página, comparte tus enlaces y gestiona tus citas en
+							línea.
 						</p>
 
 						<a
 							href='/'
 							className='mt-1 inline-flex items-center gap-1.5 px-5 py-2 rounded-full text-xs font-semibold bg-primary text-primary-foreground hover:bg-primary/90 transition-colors'
-							style={theme ? { backgroundColor: theme.buttonColor, color: theme.buttonTextColor } : undefined}
+							style={
+								theme
+									? {
+											backgroundColor: theme.buttonColor,
+											color: theme.buttonTextColor
+										}
+									: undefined
+							}
 						>
 							Empezar gratis
 						</a>
@@ -286,7 +309,7 @@ export function PublicProfileClient({ profile, logoUrl, siteName }: Props) {
 							className='text-xs text-foreground/20 mt-1'
 							style={theme ? { color: `${theme.textColor}30` } : undefined}
 						>
-							Powered by Eusse
+							Powered by Grupo Eusse Soluciones
 						</p>
 					</div>
 				</div>
