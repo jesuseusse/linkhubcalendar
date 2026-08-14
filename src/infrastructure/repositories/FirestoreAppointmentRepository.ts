@@ -1,4 +1,6 @@
+import { unstable_cache } from 'next/cache';
 import { adminDb } from '@/lib/firebase/admin';
+import { CacheTags } from '@/lib/cache/tags';
 import { IAppointmentRepository } from '@/domain/interfaces/IAppointmentRepository';
 import { Appointment } from '@/domain/entities/Appointment';
 import { CalendarSlot } from '@/domain/entities/User';
@@ -247,6 +249,24 @@ export class FirestoreAppointmentRepository implements IAppointmentRepository {
       tx.set(appointmentRef, { ...appointment });
       return appointment;
     });
+  }
+
+  async countInDateRange(tenantId: string, userId: string, fromDate: string, toDate: string): Promise<number> {
+    const getCached = unstable_cache(
+      async (tId: string, uId: string, from: string, to: string): Promise<number> => {
+        const snap = await this.col(tId, uId)
+          .where('type', '==', 'appointment')
+          .where('date', '>=', from)
+          .where('date', '<=', to)
+          .count()
+          .get();
+        return snap.data().count;
+      },
+      ['appointments-count-in-range'],
+      { tags: [CacheTags.appointmentsCount(tenantId, userId)], revalidate: 86400 }
+    );
+
+    return getCached(tenantId, userId, fromDate, toDate);
   }
 
   async releaseSlotAtomically(tenantId: string, userId: string, appointmentId: string, slotId: string): Promise<void> {

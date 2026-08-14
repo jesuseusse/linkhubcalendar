@@ -108,6 +108,7 @@ describe('BookAppointmentUseCase', () => {
       markSlotBookedAtomically: vi.fn(),
       findAppointmentsByMonth: vi.fn(),
       bookScheduleSlotAtomically: vi.fn(),
+      countInDateRange: vi.fn(),
     } as IAppointmentRepository;
 
     emailSenderService = {

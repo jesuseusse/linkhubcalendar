@@ -36,4 +36,7 @@ export interface IAppointmentRepository {
     userId: string,
     data: { date: string; startTime: string; endTime: string; userId: string; name: string; email: string; phone: string; reason: string }
   ): Promise<Appointment>;
+
+  // Aggregate — count-only query used by the super admin users table (cached 24h by the implementation)
+  countInDateRange(tenantId: string, userId: string, fromDate: string, toDate: string): Promise<number>;
 }

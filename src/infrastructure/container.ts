@@ -113,7 +113,7 @@ export const container = {
   getSuperAdminStatsUseCase: new GetSuperAdminStatsUseCase(userRepo),
   getAllUsersUseCase: new GetAllUsersUseCase(userRepo),
   getAllTicketsUseCase: new GetAllTicketsUseCase(userRepo, supportTicketRepo),
-  getUsersPaginatedUseCase: new GetUsersPaginatedUseCase(userRepo),
+  getUsersPaginatedUseCase: new GetUsersPaginatedUseCase(userRepo, appointmentRepo),
   // Campaigns — SendCampaignUseCase is constructed ad-hoc in the API route (needs tenant email config)
   campaignRepo,
   getCampaignsPaginatedUseCase: new GetCampaignsPaginatedUseCase(campaignRepo),

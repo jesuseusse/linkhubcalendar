@@ -1,5 +1,6 @@
 import { IUserRepository } from '@/domain/interfaces/IUserRepository';
 import { ISupportTicketRepository } from '@/domain/interfaces/ISupportTicketRepository';
+import { IAppointmentRepository } from '@/domain/interfaces/IAppointmentRepository';
 import { UserSummaryDto, SuperAdminStatsDto, SuperAdminTicketDto, PaginatedUsersDto } from '@/dtos/user.dto';
 
 // ---------------------------------------------------------------------------
@@ -29,6 +30,8 @@ export class GetAllUsersUseCase {
 
   async execute(tenantId: string): Promise<UserSummaryDto[]> {
     const users = await this.userRepo.findAll(tenantId);
+    // Not wired to any UI (legacy full-list route) — appointments count is skipped here
+    // to avoid an unpaginated batch of count queries; use getUsersPaginated for real data.
     const dtos: UserSummaryDto[] = users.map((u) => ({
       id: u.id,
       email: u.email,
@@ -37,7 +40,11 @@ export class GetAllUsersUseCase {
       profilePhoto: u.profilePhoto,
       plan: u.plan,
       planExpiredAt: u.planExpiredAt,
+      subscriptionCancelAtPeriodEnd: u.subscriptionCancelAtPeriodEnd,
+      subscriptionStatus: u.subscriptionStatus,
+      billingInterval: u.billingInterval,
       links: u.links.map((l) => ({ id: l.id, title: l.title, url: l.url })),
+      appointmentsLast30d: 0,
       createdAt: u.createdAt,
       updatedAt: u.updatedAt,
     }));
@@ -49,15 +56,30 @@ export class GetAllUsersUseCase {
 // GetUsersPaginatedUseCase
 // ---------------------------------------------------------------------------
 
+const APPOINTMENTS_WINDOW_DAYS = 30;
+
 export class GetUsersPaginatedUseCase {
-  constructor(private userRepo: IUserRepository) {}
+  constructor(
+    private userRepo: IUserRepository,
+    private appointmentRepo: IAppointmentRepository
+  ) {}
 
   async execute(
     tenantId: string,
     opts: { cursor?: string; limit: number; plan?: string }
   ): Promise<PaginatedUsersDto> {
     const result = await this.userRepo.findAllPaginated(tenantId, opts);
-    const users: UserSummaryDto[] = result.users.map((u) => ({
+
+    const to = new Date().toISOString().slice(0, 10);
+    const from = new Date(Date.now() - APPOINTMENTS_WINDOW_DAYS * 24 * 60 * 60 * 1000)
+      .toISOString()
+      .slice(0, 10);
+
+    const appointmentCounts = await Promise.all(
+      result.users.map((u) => this.appointmentRepo.countInDateRange(tenantId, u.id, from, to))
+    );
+
+    const users: UserSummaryDto[] = result.users.map((u, i) => ({
       id: u.id,
       email: u.email,
       name: u.name,
@@ -65,7 +87,11 @@ export class GetUsersPaginatedUseCase {
       profilePhoto: u.profilePhoto,
       plan: u.plan,
       planExpiredAt: u.planExpiredAt,
+      subscriptionCancelAtPeriodEnd: u.subscriptionCancelAtPeriodEnd,
+      subscriptionStatus: u.subscriptionStatus,
+      billingInterval: u.billingInterval,
       links: u.links.map((l) => ({ id: l.id, title: l.title, url: l.url })),
+      appointmentsLast30d: appointmentCounts[i],
       createdAt: u.createdAt,
       updatedAt: u.updatedAt,
     }));

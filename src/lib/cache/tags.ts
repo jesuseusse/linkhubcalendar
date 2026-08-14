@@ -5,5 +5,6 @@ export const CacheTags = {
 	tenantById: (tenantId: string) => `tenant-by-id:${tenantId}`,
 	user: (id: string) => `user:${id}`,
 	users: () => 'users',
-	landingPage: (tenantId: string) => `landing-page:${tenantId}`
+	landingPage: (tenantId: string) => `landing-page:${tenantId}`,
+	appointmentsCount: (tenantId: string, userId: string) => `appointments-count:${tenantId}:${userId}`
 } as const;

@@ -77,6 +77,7 @@ function createMockAppointmentRepository(
 		markSlotBookedAtomically: vi.fn(),
 		findAppointmentsByMonth: vi.fn(),
 		bookScheduleSlotAtomically: vi.fn(),
+		countInDateRange: vi.fn(),
 	};
 }
 

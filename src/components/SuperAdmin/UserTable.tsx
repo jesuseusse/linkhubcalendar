@@ -19,6 +19,39 @@ interface Props {
   onPlanFilterChange: (plan: string) => void;
 }
 
+function formatRelativeTime(ms: number): string {
+  const diffSeconds = Math.round((ms - Date.now()) / 1000);
+  const divisions: [Intl.RelativeTimeFormatUnit, number][] = [
+    ['year', 60 * 60 * 24 * 365],
+    ['month', 60 * 60 * 24 * 30],
+    ['day', 60 * 60 * 24],
+    ['hour', 60 * 60],
+    ['minute', 60],
+  ];
+  const rtf = new Intl.RelativeTimeFormat('es-MX', { numeric: 'auto' });
+  for (const [unit, secondsInUnit] of divisions) {
+    if (Math.abs(diffSeconds) >= secondsInUnit) {
+      return rtf.format(Math.round(diffSeconds / secondsInUnit), unit);
+    }
+  }
+  return rtf.format(diffSeconds, 'second');
+}
+
+function getStatusInfo(user: UserSummaryDto): { label: string; className: string } | null {
+  const isPro = user.plan === 'pro' || user.plan === 'team';
+  if (!isPro) return null;
+  if (user.subscriptionStatus === 'past_due') {
+    return { label: USERS_LABELS.statusPastDue, className: 'text-error' };
+  }
+  if (user.subscriptionCancelAtPeriodEnd) {
+    return { label: USERS_LABELS.statusCancelScheduled, className: 'text-yellow-700' };
+  }
+  return { label: USERS_LABELS.statusActive, className: 'text-green-700' };
+}
+
+const TH_CLASS =
+  'sticky top-0 z-10 bg-surface py-2 px-4 font-medium text-muted-foreground text-xs text-left border-b border-border first:pl-3';
+
 function SortHeader({
   label,
   field,
@@ -34,7 +67,7 @@ function SortHeader({
 }) {
   const active = sortBy === field;
   return (
-    <th className='py-2 pr-4 font-medium text-left'>
+    <th className={TH_CLASS}>
       <button
         type='button'
         onClick={() => onSort(field)}
@@ -104,15 +137,22 @@ export function UserTable({
         </button>
       </div>
 
-      {/* Table */}
-      <div className='overflow-x-auto'>
-        <table className='w-full text-sm'>
+      {/* Table — header stays pinned, body scrolls both axes within a bounded box */}
+      <div className='overflow-auto max-h-150 border border-border rounded'>
+        <table className='w-full text-sm border-collapse'>
           <thead>
-            <tr className='border-b border-border text-left'>
-              <th className='py-2 pr-4 font-medium text-muted-foreground text-xs'>{USERS_LABELS.colPhoto}</th>
-              <th className='py-2 pr-4 font-medium text-muted-foreground text-xs'>{USERS_LABELS.colEmail}</th>
-              <th className='py-2 pr-4 font-medium text-muted-foreground text-xs'>{USERS_LABELS.colPlan}</th>
-              <th className='py-2 pr-4 font-medium text-muted-foreground text-xs'>{USERS_LABELS.colLinks}</th>
+            <tr>
+              <th className={TH_CLASS}>{USERS_LABELS.colUser}</th>
+              <th className={TH_CLASS}>{USERS_LABELS.colPlanStatus}</th>
+              <th className={TH_CLASS}>{USERS_LABELS.colLinks}</th>
+              <th className={TH_CLASS}>{USERS_LABELS.colAppointments30d}</th>
+              <SortHeader
+                label={USERS_LABELS.colLastActivity}
+                field='updatedAt'
+                sortBy={sortBy}
+                sortOrder={sortOrder}
+                onSort={onSort}
+              />
               <SortHeader
                 label={USERS_LABELS.colCreatedAt}
                 field='createdAt'
@@ -120,78 +160,89 @@ export function UserTable({
                 sortOrder={sortOrder}
                 onSort={onSort}
               />
-              <SortHeader
-                label={USERS_LABELS.colUpdatedAt}
-                field='updatedAt'
-                sortBy={sortBy}
-                sortOrder={sortOrder}
-                onSort={onSort}
-              />
-              <th className='py-2 font-medium text-muted-foreground text-xs'>{USERS_LABELS.colProfile}</th>
             </tr>
           </thead>
           <tbody>
-            {users.map((user) => (
-              <tr key={user.id} className='border-b border-border last:border-0'>
-                <td className='py-3 pr-4'>
-                  {user.profilePhoto ? (
-                    <img
-                      src={user.profilePhoto}
-                      alt={user.name}
-                      width={32}
-                      height={32}
-                      className='w-8 h-8 rounded-full object-cover'
-                    />
-                  ) : (
-                    <span
-                      className='w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-medium text-muted-foreground select-none'
-                      aria-hidden='true'
-                    >
-                      {user.name.charAt(0).toUpperCase()}
-                    </span>
-                  )}
-                </td>
-                <td className='py-3 pr-4 text-foreground text-sm'>{user.email}</td>
-                <td className='py-3 pr-4'>
-                  {user.plan ? (
-                    <span className='inline-block px-2 py-0.5 text-xs font-medium bg-primary text-primary-foreground rounded capitalize'>
-                      {user.plan}
-                    </span>
-                  ) : (
-                    <span className='text-muted-foreground text-xs'>free</span>
-                  )}
-                </td>
-                <td className='py-3 pr-4 text-foreground text-sm'>
-                  {user.links.length === 0 ? (
-                    <span className='text-muted-foreground'>—</span>
-                  ) : (
-                    <span title={user.links.map((l) => l.title).join(', ')}>
-                      {user.links.length}
-                    </span>
-                  )}
-                </td>
-                <td className='py-3 pr-4 text-sm text-muted-foreground whitespace-nowrap'>
-                  {new Date(user.createdAt).toLocaleDateString('es-MX')}
-                </td>
-                <td className='py-3 pr-4 text-sm text-muted-foreground whitespace-nowrap'>
-                  {new Date(user.updatedAt).toLocaleDateString('es-MX')}
-                </td>
-                <td className='py-3'>
-                  {user.username ? (
-                    <a
-                      href={`/${user.username}`}
-                      target='_blank'
-                      rel='noopener noreferrer'
-                      className='text-primary underline underline-offset-2 hover:opacity-80 transition-opacity text-sm'
-                    >
-                      {USERS_LABELS.viewProfile}
-                    </a>
-                  ) : (
-                    <span className='text-muted-foreground'>{USERS_LABELS.noUsername}</span>
-                  )}
-                </td>
-              </tr>
-            ))}
+            {users.map((user) => {
+              const status = getStatusInfo(user);
+              return (
+                <tr key={user.id} className='border-b border-border last:border-0'>
+                  <td className='py-3 px-4'>
+                    <div className='flex items-center gap-3 min-w-55'>
+                      {user.profilePhoto ? (
+                        <img
+                          src={user.profilePhoto}
+                          alt={user.name}
+                          width={32}
+                          height={32}
+                          className='w-8 h-8 rounded-full object-cover shrink-0'
+                        />
+                      ) : (
+                        <span
+                          className='w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-medium text-muted-foreground select-none shrink-0'
+                          aria-hidden='true'
+                        >
+                          {user.name.charAt(0).toUpperCase()}
+                        </span>
+                      )}
+                      <div className='min-w-0'>
+                        {user.username ? (
+                          <a
+                            href={`/${user.username}`}
+                            target='_blank'
+                            rel='noopener noreferrer'
+                            className='block font-medium text-foreground hover:text-primary hover:underline underline-offset-2 truncate'
+                            title={user.name}
+                          >
+                            {user.name}
+                          </a>
+                        ) : (
+                          <span className='block font-medium text-foreground truncate'>{user.name}</span>
+                        )}
+                        {user.username && (
+                          <div className='text-xs text-muted-foreground truncate'>@{user.username}</div>
+                        )}
+                        <div className='text-xs text-muted-foreground truncate'>{user.email}</div>
+                      </div>
+                    </div>
+                  </td>
+                  <td className='py-3 px-4'>
+                    <div className='flex flex-col items-start gap-1'>
+                      {user.plan ? (
+                        <span className='inline-block px-2 py-0.5 text-xs font-medium bg-primary text-primary-foreground rounded capitalize'>
+                          {user.plan}
+                        </span>
+                      ) : (
+                        <span className='text-muted-foreground text-xs'>free</span>
+                      )}
+                      {status && <span className={`text-[11px] whitespace-nowrap ${status.className}`}>{status.label}</span>}
+                    </div>
+                  </td>
+                  <td className='py-3 px-4 text-foreground text-sm'>
+                    {user.links.length === 0 ? (
+                      <span className='text-muted-foreground'>—</span>
+                    ) : (
+                      <span title={user.links.map((l) => l.title).join(', ')}>
+                        {user.links.length}
+                      </span>
+                    )}
+                  </td>
+                  <td className='py-3 px-4 text-sm'>
+                    {user.appointmentsLast30d > 0 ? (
+                      <span className='font-medium text-foreground'>{user.appointmentsLast30d}</span>
+                    ) : (
+                      <span className='text-muted-foreground'>—</span>
+                    )}
+                  </td>
+                  <td className='py-3 px-4 text-sm text-muted-foreground whitespace-nowrap'>
+                    {formatRelativeTime(user.updatedAt)}
+                  </td>
+                  <td className='py-3 px-4 text-sm text-muted-foreground whitespace-nowrap'>
+                    {new Date(user.createdAt).toLocaleDateString('es-MX')}
+                  </td>
+                </tr>
+              );
+            })}
           </tbody>
         </table>
       </div>

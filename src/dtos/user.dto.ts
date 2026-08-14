@@ -213,7 +213,11 @@ export interface UserSummaryDto {
 	profilePhoto?: string;
 	plan?: Plan;
 	planExpiredAt?: number | null;
+	subscriptionCancelAtPeriodEnd?: boolean;
+	subscriptionStatus?: string;
+	billingInterval?: 'month' | 'year';
 	links: LinkDto[];
+	appointmentsLast30d: number;
 	createdAt: number;
 	updatedAt: number;
 }
