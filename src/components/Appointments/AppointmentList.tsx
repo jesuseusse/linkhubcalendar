@@ -15,11 +15,13 @@ interface Props {
 	onCancel: (id: string) => Promise<void>;
 	onConfirm: (id: string) => Promise<void>;
 	onReschedule: (id: string) => Promise<void>;
+	/** Name of the establishment (the calendar owner), used as the sender in WhatsApp messages. */
+	businessName: string;
 }
 
-function buildWhatsappLink(phone: string, name: string, date: string): string {
+function buildWhatsappLink(phone: string, businessName: string, date: string): string {
 	const message = encodeURIComponent(
-		`Hola, te escribe ${name}. Tienes una cita para el dia ${date}. Por favor confirma respondiendo este mensaje`
+		`Hola, te escribe ${businessName}. Tienes una cita para el dia ${date}. Por favor confirma respondiendo este mensaje`
 	);
 	const digits = phone.replace(/\D/g, '');
 	return `https://api.whatsapp.com/send?phone=${digits}&text=${message}`;
@@ -98,7 +100,8 @@ export function AppointmentList({
 	onPageChange,
 	onCancel,
 	onConfirm,
-	onReschedule
+	onReschedule,
+	businessName
 }: Props) {
 	const [busy, setBusy] = useState<{ id: string; action: Action } | null>(null);
 
@@ -159,7 +162,7 @@ export function AppointmentList({
 						)}
 						{a.phone && (
 							<a
-								href={buildWhatsappLink(a.phone, a.name, a.date)}
+								href={buildWhatsappLink(a.phone, businessName, a.date)}
 								target='_blank'
 								rel='noopener noreferrer'
 								className='text-xs text-success hover:underline'
@@ -225,7 +228,7 @@ export function AppointmentList({
 								<td className='py-2 px-2'>
 									{a.phone ? (
 										<a
-											href={buildWhatsappLink(a.phone, a.name, a.date)}
+											href={buildWhatsappLink(a.phone, businessName, a.date)}
 											target='_blank'
 											rel='noopener noreferrer'
 											className='text-success hover:underline'

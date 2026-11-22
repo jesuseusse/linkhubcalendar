@@ -95,6 +95,7 @@ export default function AppointmentsDashboardPage() {
 						onCancel={cancelAppointment}
 						onConfirm={confirmAppointment}
 						onReschedule={handleReschedule}
+						businessName={user.name}
 					/>
 				</section>
 			</main>
