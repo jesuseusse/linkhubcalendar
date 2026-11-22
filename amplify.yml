@@ -3,6 +3,10 @@ frontend:
   phases:
     preBuild:
       commands:
+        # Recent @firebase/* releases require Node >=24.12; Amplify's default image ships Node 22.
+        - nvm install 24
+        - nvm use 24
+        - node --version
         - yarn install
     build:
       commands:
