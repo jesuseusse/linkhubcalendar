@@ -85,6 +85,33 @@ select {
 	border-color: var(--color-border);
 }
 
+/*
+ * Prevent the automatic page zoom iOS Safari applies when focusing a form
+ * control whose font size is below 16px. We keep pinch-zoom available (no
+ * maximum-scale / user-scalable=no, which breaks accessibility) and instead
+ * make sure controls are never smaller than 16px on touch devices.
+ *
+ * This rule is intentionally un-layered: un-layered CSS beats Tailwind's
+ * layered utilities (e.g. `text-sm`) regardless of specificity, so no
+ * component needs to change.
+ */
+@media (hover: none) and (pointer: coarse) {
+	input:not([type='checkbox']):not([type='radio']):not([type='range']):not(
+			[type='color']
+		):not([type='file']):not([type='submit']):not([type='button']),
+	select,
+	textarea,
+	[contenteditable='true'] {
+		font-size: 16px;
+	}
+}
+
+/* Stop mobile browsers from inflating text on orientation change. */
+html {
+	-webkit-text-size-adjust: 100%;
+	text-size-adjust: 100%;
+}
+
 input::placeholder,
 textarea::placeholder {
 	color: var(--color-muted-foreground);

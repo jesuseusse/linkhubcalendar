@@ -1,10 +1,12 @@
 // app/_tenants/[tenantId]/layout.tsx
 import { notFound } from 'next/navigation';
 import { Suspense } from 'react';
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { tenantThemeToCssVars } from '@/lib/tenant/tenantTheme';
+import { resolveTenantPwaIdentity } from '@/lib/tenant/pwaManifest';
 import { container } from '@/infrastructure/container';
 import ReferralCapture from '@/components/Common/ReferralCapture';
+import ServiceWorkerRegister from '@/components/Common/ServiceWorkerRegister';
 
 export async function generateMetadata({
 	params
@@ -28,7 +30,7 @@ export async function generateMetadata({
 
 	const faviconUrl = seo?.favicon ?? tenantConfig.logoUrl ?? undefined;
 
-	console.log(tenantConfig.logoUrl);
+	const pwa = resolveTenantPwaIdentity(tenantConfig);
 
 	return {
 		title,
@@ -36,7 +38,16 @@ export async function generateMetadata({
 		keywords: seo?.keywords,
 		metadataBase: canonicalUrl ? new URL(canonicalUrl) : undefined,
 		alternates: canonicalUrl ? { canonical: canonicalUrl } : undefined,
-		icons: faviconUrl ? { icon: faviconUrl, shortcut: faviconUrl } : undefined,
+		manifest: '/manifest',
+		appleWebApp: {
+			capable: true,
+			title: pwa.shortName,
+			statusBarStyle: 'default'
+		},
+		icons: {
+			...(faviconUrl ? { icon: faviconUrl, shortcut: faviconUrl } : {}),
+			apple: '/pwa-icon/180'
+		},
 		openGraph: {
 			siteName,
 			title: title ?? undefined,
@@ -61,6 +72,22 @@ export async function generateMetadata({
 					? [tenantConfig.logoUrl]
 					: undefined
 		}
+	};
+}
+
+export async function generateViewport({
+	params
+}: {
+	params: Promise<{ tenantRegistryId: string }>;
+}): Promise<Viewport> {
+	const { tenantRegistryId } = await params;
+	const tenantConfig =
+		await container.tenantRegistryRepo.getByHostname(tenantRegistryId);
+
+	return {
+		themeColor: tenantConfig
+			? resolveTenantPwaIdentity(tenantConfig).themeColor
+			: undefined
 	};
 }
 
@@ -151,6 +178,7 @@ export default async function TenantLayout({
 			<Suspense fallback={null}>
 				<ReferralCapture />
 			</Suspense>
+			<ServiceWorkerRegister />
 			{children}
 		</section>
 	);

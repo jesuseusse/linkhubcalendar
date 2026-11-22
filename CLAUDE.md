@@ -8,6 +8,7 @@ Multi-tenant link-in-bio platform built with Next.js App Router and Firebase.
 - **Language:** TypeScript 5
 - **Styling:** Tailwind CSS 4 with `@theme` directive (CSS custom properties)
 - **Auth & DB:** Firebase 12.9 + Firebase Admin 13.6 (Firestore, Auth, Storage)
+- **Image processing:** sharp 0.34 (PWA icon generation)
 - **Payments:** Stripe 20.3.1
 - **Email:** Resend 6.9.2 / AWS SES 3.x (tenant-configurable)
 - **Package Manager:** Yarn
@@ -146,6 +147,34 @@ Always use semantic Tailwind classes instead of hardcoded colors:
 ```
 
 Only set the keys you want to override — omitted keys keep `@theme` defaults.
+
+## Installable App (PWA)
+
+Every tenant host installs on a phone as its **own** app (name, icon, colors from the tenant registry). No Firestore fields were added — everything is derived from existing data.
+
+| Manifest field | Source |
+|---|---|
+| `name` | `seoConfig.siteName` → `companyName` → `"LinkHub"` |
+| `short_name` | `companyName` (truncated to 12 chars) → `name` |
+| `theme_color` | `theme.primary` → `#18181b` |
+| `background_color` | `theme.background` → `#ffffff` |
+| `start_url` | Always `/u/admin/dashboard` (the installed app is the owner's admin app; the dashboard sends unauthenticated users to login) |
+| `icons` | `/pwa-icon/192`, `/pwa-icon/512`, `/pwa-icon/512?maskable=1`, generated from `logoUrl` |
+
+**Routes** (all under `src/app/tenants/[tenantRegistryId]/`, reached through the `proxy.ts` host rewrite):
+- `manifest/route.ts` — `GET /manifest`, served as `application/manifest+json`. **Not** `/manifest.webmanifest`: the `proxy.ts` matcher excludes `.webm` without an end anchor, which also swallows `.webmanifest`, so that URL would never be rewritten to the tenant (covered by `pwaManifest.test.ts`).
+- `pwa-icon/[size]/route.ts` — `GET /pwa-icon/{180|192|512}[?maskable=1]`. Uses `sharp` (Node runtime) to center the logo on a square PNG over the tenant background (logo scale 80% for `any`, 62% for `maskable` safe zone). Falls back to a solid primary-color square when there is no/invalid logo. 180 is the iOS `apple-touch-icon`.
+- Pure helpers + tests: `src/lib/tenant/pwaManifest.ts` (`resolveTenantPwaIdentity`, `buildTenantManifest`), `pwaManifest.test.ts`.
+
+**Tenant layout** (`layout.tsx`): `generateMetadata` adds `manifest: '/manifest'`, `appleWebApp` (title = short name) and `icons.apple`; `generateViewport` sets `themeColor` from the tenant.
+
+**Service worker** (`public/sw.js`, registered by `components/Common/ServiceWorkerRegister.tsx`, production only): intentionally minimal — it only serves `public/offline.html` when a page **navigation** fails. Nothing else is cached, so appointments/billing/dashboard data can never be stale. `sw.js` and `offline.html` are static files (excluded from the proxy rewrite); caches are per-origin so each tenant domain is isolated. Bump `CACHE_NAME` in `sw.js` if `offline.html` changes.
+
+Reserved usernames added: `manifest`, `pwa-icon`, `offline`.
+
+## Mobile input zoom
+
+iOS Safari auto-zooms the page when a focused form control has a font size under 16px. `globals.css` forces `font-size: 16px` on `input`/`select`/`textarea`/`[contenteditable]` inside `@media (hover: none) and (pointer: coarse)`. The rule is deliberately **un-layered** so it beats Tailwind's layered utilities (`text-sm`, etc.) without touching components. Do **not** "fix" zoom with `maximum-scale=1` / `user-scalable=no` — that disables pinch-zoom for everyone (accessibility) and iOS ignores it anyway.
 
 ## Permissions
 

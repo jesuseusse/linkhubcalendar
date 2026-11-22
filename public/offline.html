@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="es">
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, initial-scale=1" />
+		<title>Sin conexión</title>
+		<style>
+			:root {
+				color-scheme: light dark;
+			}
+			body {
+				margin: 0;
+				min-height: 100vh;
+				display: flex;
+				align-items: center;
+				justify-content: center;
+				padding: 24px;
+				box-sizing: border-box;
+				font-family:
+					-apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+				text-align: center;
+			}
+			h1 {
+				font-size: 1.25rem;
+				margin: 0 0 8px;
+			}
+			p {
+				margin: 0 0 20px;
+				opacity: 0.7;
+			}
+			button {
+				font: inherit;
+				font-size: 16px;
+				padding: 10px 20px;
+				border-radius: 8px;
+				border: 1px solid currentColor;
+				background: transparent;
+				color: inherit;
+			}
+		</style>
+	</head>
+	<body>
+		<main>
+			<h1>Sin conexión</h1>
+			<p>Revisa tu internet e inténtalo de nuevo.</p>
+			<button type="button" onclick="location.reload()">Reintentar</button>
+		</main>
+	</body>
+</html>

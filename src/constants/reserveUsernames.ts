@@ -59,6 +59,9 @@ export const RESERVED_USERNAMES: ReadonlySet<string> = new Set([
 	'favicon',
 	'robots',
 	'sitemap',
+	'manifest',
+	'pwa-icon',
+	'offline',
 
 	// Brand
 	'linkhub',
