@@ -142,6 +142,11 @@ export interface AppointmentDto {
 	createdAt: number;
 }
 
+export interface PublicAppointmentStatusDto {
+	status: string;
+	createdAt: number;
+}
+
 export interface CreateAppointmentDto {
 	slotId: string;
 	name: string;

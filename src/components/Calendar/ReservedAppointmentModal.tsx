@@ -4,6 +4,10 @@ import { format, parseISO } from 'date-fns';
 import { es } from 'date-fns/locale';
 
 export interface StoredAppointment {
+	/** Backend appointment id — used to validate the stored appointment against the server. */
+	id: string;
+	/** Backend creation timestamp — guards against the id being reused by a different booking. */
+	createdAt: number;
 	name: string;
 	date: string;
 	startTime: string;

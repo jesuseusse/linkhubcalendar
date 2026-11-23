@@ -45,7 +45,9 @@ export function useAppointments(profileService: IProfileService, filter: 'upcomi
 			const updated = await profileService.cancelAppointment(token, appointmentId);
 			setAppointments(prev =>
 				prev.map(a =>
-					a.id === appointmentId ? { ...a, status: updated.status } : a
+					a.id === appointmentId
+						? { ...a, id: updated.id, slotId: updated.slotId, status: updated.status }
+						: a
 				)
 			);
 		},
@@ -59,7 +61,9 @@ export function useAppointments(profileService: IProfileService, filter: 'upcomi
 				const updated = await profileService.rescheduleAppointment(token, appointmentId);
 				setAppointments(prev =>
 					prev.map(a =>
-						a.id === appointmentId ? { ...a, status: updated.status } : a
+						a.id === appointmentId
+						? { ...a, id: updated.id, slotId: updated.slotId, status: updated.status }
+						: a
 					)
 				);
 				return { slotTaken: false };

@@ -1,4 +1,4 @@
-import { AppointmentDto, CreateAppointmentDto, CreateCalendarSlotDto, CreateLeadDto, CreateScheduleBookingDto, GalleryPhotoDto, LeadDto, LeadStatus, PaginatedAppointmentsDto, PaginatedLeadsDto, PublicCalendarDto, PublicProfileDto, ThemeDto, UpdateProfileDto, UpdateUsernameDto, UserDto, WeeklySchedule, ScheduleException } from "../dtos/user.dto";
+import { AppointmentDto, CreateAppointmentDto, CreateCalendarSlotDto, CreateLeadDto, CreateScheduleBookingDto, GalleryPhotoDto, LeadDto, LeadStatus, PaginatedAppointmentsDto, PaginatedLeadsDto, PublicAppointmentStatusDto, PublicCalendarDto, PublicProfileDto, ThemeDto, UpdateProfileDto, UpdateUsernameDto, UserDto, WeeklySchedule, ScheduleException } from "../dtos/user.dto";
 import type { LeadOrder } from "../domain/interfaces/ILeadRepository";
 
 export interface GetLeadsPaginatedParams {
@@ -26,6 +26,8 @@ export interface IProfileService {
   removeScheduleException(token: string, date: string): Promise<UserDto>;
   bookAppointment(username: string, dto: CreateAppointmentDto | CreateScheduleBookingDto): Promise<AppointmentDto>;
   getAppointments(token: string, page: number, filter?: 'upcoming' | 'past'): Promise<PaginatedAppointmentsDto>;
+  /** Returns null when the appointment no longer exists. Throws on network/server errors. */
+  getPublicAppointmentStatus(username: string, appointmentId: string): Promise<PublicAppointmentStatusDto | null>;
   cancelAppointment(token: string, appointmentId: string): Promise<AppointmentDto>;
   confirmAppointment(token: string, appointmentId: string): Promise<AppointmentDto>;
   rescheduleAppointment(token: string, appointmentId: string): Promise<AppointmentDto>;

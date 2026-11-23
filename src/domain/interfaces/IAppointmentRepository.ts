@@ -26,8 +26,10 @@ export interface IAppointmentRepository {
     slotId: string,
     appointmentData: Pick<Appointment, "userId" | "name" | "email" | "phone" | "reason">
   ): Promise<Appointment>;
-  releaseSlotAtomically(tenantId: string, userId: string, appointmentId: string, slotId: string): Promise<void>;
-  markSlotBookedAtomically(tenantId: string, userId: string, appointmentId: string, slotId: string): Promise<void>;
+  // Both return the appointment as it exists after the operation. Schedule-based appointments
+  // change ID on release (the cancelled record is archived) and get the slot-lock ID back on re-book.
+  releaseSlotAtomically(tenantId: string, userId: string, appointmentId: string, slotId: string): Promise<Appointment>;
+  markSlotBookedAtomically(tenantId: string, userId: string, appointmentId: string, slotId: string): Promise<Appointment>;
 
   // Schedule-based methods (inverted model — no slot documents needed)
   findAppointmentsByMonth(tenantId: string, userId: string, year: number, month: number): Promise<Appointment[]>;

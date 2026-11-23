@@ -506,6 +506,18 @@ interface ScheduleException {
 
 `bookScheduleSlotAtomically` in `FirestoreAppointmentRepository` uses a deterministic document ID `${yyyymmdd}_${hhmm}` (e.g. `20260720_0900`) in a Firestore transaction. If the doc already exists → throws "Slot no disponible" (prevents double booking without pre-created slot documents).
 
+### Cancel / reschedule (schedule-based appointments)
+
+The appointment doc with the deterministic ID is the slot **lock**. Cancelling must free it:
+- `releaseSlotAtomically` (cancel) copies the appointment to a fresh random ID with `status: 'cancelled'` (history, `slotId` unchanged) and **deletes the lock doc**, so the slot is bookable again. The cancelled appointment therefore changes `id`; `PUT /api/appointments/[id]/cancel` returns the new id and `useAppointments` swaps it into the list row.
+- `markSlotBookedAtomically` (reschedule) succeeds only if no active appointment holds the lock doc; it then restores the appointment onto the lock ID as `pending` (deleting the archived copy). Otherwise it throws `Slot already booked` → 409 → dashboard shows `SlotTakenModal` ("Ya hay otra cita en este horario…").
+- `findAppointmentsByMonth` excludes `cancelled`, so cancelled slots show as available. `bookScheduleSlotAtomically` also treats a legacy cancelled lock doc as free (archives it, then takes over).
+- Legacy slot-doc appointments (UUID `slotId`) keep the old behavior: `booked` flag flipped on the slot doc. The repo tells them apart with `isScheduleSlotId` (`/^\d{8}_\d{4}$/`).
+
+### Public "you already have an appointment" memory
+
+`PublicCalendarClient` stores the booked appointment (`id`, `createdAt`, name, date, times) in `localStorage` (`linkhub_appointment_{username}`). On load it validates against `GET /api/u/[username]/appointments/[id]` (public, returns only `{ status, createdAt }`); if the appointment is `cancelled`, missing (404) or its `createdAt` differs, the entry is removed. Network errors keep the entry. Entries without an `id` (saved before this check) are discarded.
+
 ### Backward compatibility
 
 Users without `weeklySchedule` continue using the old slot-doc system. All routes check `user.weeklySchedule` and fall back gracefully. `ModalCalendarManager` and `CalendarManager` components are kept but no longer wired from the dashboard.

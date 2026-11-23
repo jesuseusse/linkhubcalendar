@@ -32,19 +32,14 @@ export class CancelAppointmentUseCase {
       throw new Error("Appointment is already cancelled");
     }
 
-    // Atomically: update appointment status to cancelled + release slot
-    await this.appointmentRepository.releaseSlotAtomically(
+    // Atomically: mark the appointment cancelled + re-open its slot for other people
+    const cancelled = await this.appointmentRepository.releaseSlotAtomically(
       tenantId,
       userId,
       appointmentId,
       appointment.slotId
     );
-
-    const updated = await this.appointmentRepository.findById(tenantId, userId, appointmentId);
-    if (!updated) {
-      throw new Error("Failed to cancel appointment");
-    }
-    return toDto(updated);
+    return toDto(cancelled);
   }
 }
 
@@ -63,20 +58,15 @@ export class RescheduleAppointmentUseCase {
       throw new Error("Only cancelled appointments can be rescheduled");
     }
 
-    // Atomically: mark slot booked + set appointment status to pending
-    // markSlotBookedAtomically validates slot exists and is not already booked
-    await this.appointmentRepository.markSlotBookedAtomically(
+    // Atomically: re-take the slot + set appointment status to pending.
+    // Throws "Slot already booked" if someone else took the slot in the meantime.
+    const rescheduled = await this.appointmentRepository.markSlotBookedAtomically(
       tenantId,
       userId,
       appointmentId,
       appointment.slotId
     );
-
-    const updated = await this.appointmentRepository.findById(tenantId, userId, appointmentId);
-    if (!updated) {
-      throw new Error("Failed to reschedule appointment");
-    }
-    return toDto(updated);
+    return toDto(rescheduled);
   }
 }
 

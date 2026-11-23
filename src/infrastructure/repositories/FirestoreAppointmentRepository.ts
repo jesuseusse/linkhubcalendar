@@ -33,6 +33,14 @@ function docToSlot(id: string, data: FirebaseFirestore.DocumentData): CalendarSl
   };
 }
 
+// Schedule-based appointments use a deterministic ID `${yyyymmdd}_${hhmm}` that doubles as the slot lock.
+// Legacy slot-doc appointments reference a UUID slot document instead.
+const SCHEDULE_SLOT_ID = /^\d{8}_\d{4}$/;
+
+function isScheduleSlotId(slotId: string): boolean {
+  return SCHEDULE_SLOT_ID.test(slotId);
+}
+
 export class FirestoreAppointmentRepository implements IAppointmentRepository {
   private col(tenantId: string, userId: string) {
     return adminDb.collection(`tenants/${tenantId}/users/${userId}/appointments`);
@@ -213,7 +221,10 @@ export class FirestoreAppointmentRepository implements IAppointmentRepository {
       .where('date', '>=', from)
       .where('date', '<=', to)
       .get();
-    return snap.docs.map((doc) => docToAppointment(doc.id, doc.data()));
+    // Cancelled appointments no longer hold their slot — they must not show as booked.
+    return snap.docs
+      .map((doc) => docToAppointment(doc.id, doc.data()))
+      .filter((appt) => appt.status !== 'cancelled');
   }
 
   async bookScheduleSlotAtomically(
@@ -229,7 +240,14 @@ export class FirestoreAppointmentRepository implements IAppointmentRepository {
     return adminDb.runTransaction(async (tx) => {
       const existing = await tx.get(appointmentRef);
       if (existing.exists) {
-        throw new Error('Slot no disponible');
+        const existingData = existing.data()!;
+        // A cancelled appointment left on the lock doc (created before cancellations archived it)
+        // frees the slot; keep it as history under a new ID and take over the lock.
+        if (existingData.type !== 'appointment' || existingData.status !== 'cancelled') {
+          throw new Error('Slot no disponible');
+        }
+        const archiveRef = col.doc();
+        tx.set(archiveRef, { ...existingData, id: archiveRef.id });
       }
       const appointment: Appointment = {
         type: 'appointment',
@@ -269,23 +287,76 @@ export class FirestoreAppointmentRepository implements IAppointmentRepository {
     return getCached(tenantId, userId, fromDate, toDate);
   }
 
-  async releaseSlotAtomically(tenantId: string, userId: string, appointmentId: string, slotId: string): Promise<void> {
+  async releaseSlotAtomically(
+    tenantId: string,
+    userId: string,
+    appointmentId: string,
+    slotId: string
+  ): Promise<Appointment> {
     const col = this.col(tenantId, userId);
     const appointmentRef = col.doc(appointmentId);
-    const slotRef = col.doc(slotId);
 
-    await adminDb.runTransaction(async (tx) => {
+    return adminDb.runTransaction(async (tx) => {
+      const apptDoc = await tx.get(appointmentRef);
+      if (!apptDoc.exists || apptDoc.data()?.type !== 'appointment') {
+        throw new Error('Appointment not found');
+      }
+      const data = apptDoc.data()!;
+
+      if (isScheduleSlotId(slotId)) {
+        // Schedule-based: the appointment doc IS the slot lock. Move the cancelled record to a
+        // fresh ID and delete the lock doc so the slot can be booked (or re-booked) again.
+        const archiveRef = col.doc();
+        const archived = { ...data, id: archiveRef.id, status: 'cancelled' };
+        tx.set(archiveRef, archived);
+        tx.delete(appointmentRef);
+        return docToAppointment(archiveRef.id, archived);
+      }
+
+      // Legacy slot-doc model: mark the appointment cancelled and re-open the slot document.
       tx.update(appointmentRef, { status: 'cancelled' });
-      tx.update(slotRef, { booked: false });
+      tx.update(col.doc(slotId), { booked: false });
+      return docToAppointment(appointmentId, { ...data, status: 'cancelled' });
     });
   }
 
-  async markSlotBookedAtomically(tenantId: string, userId: string, appointmentId: string, slotId: string): Promise<void> {
+  async markSlotBookedAtomically(
+    tenantId: string,
+    userId: string,
+    appointmentId: string,
+    slotId: string
+  ): Promise<Appointment> {
     const col = this.col(tenantId, userId);
     const appointmentRef = col.doc(appointmentId);
     const slotRef = col.doc(slotId);
 
-    await adminDb.runTransaction(async (tx) => {
+    return adminDb.runTransaction(async (tx) => {
+      const apptDoc = await tx.get(appointmentRef);
+      if (!apptDoc.exists || apptDoc.data()?.type !== 'appointment') {
+        throw new Error('Appointment not found');
+      }
+      const data = apptDoc.data()!;
+
+      if (isScheduleSlotId(slotId)) {
+        // Schedule-based: the slot is free only if no active appointment holds the lock doc.
+        const lockDoc = slotRef.path === appointmentRef.path ? apptDoc : await tx.get(slotRef);
+        if (lockDoc.exists) {
+          const lockData = lockDoc.data()!;
+          const lockIsFree = lockData.type === 'appointment' && lockData.status === 'cancelled';
+          if (!lockIsFree) throw new Error('Slot already booked');
+          if (lockDoc.ref.path !== appointmentRef.path) {
+            // Another cancelled record sits on the lock doc — keep it as history.
+            const archiveRef = col.doc();
+            tx.set(archiveRef, { ...lockData, id: archiveRef.id });
+          }
+        }
+        // Restore this appointment onto the lock doc and drop its archived copy.
+        const restored = { ...data, id: slotId, status: 'pending' };
+        tx.set(slotRef, restored);
+        if (slotRef.path !== appointmentRef.path) tx.delete(appointmentRef);
+        return docToAppointment(slotId, restored);
+      }
+
       const slotDoc = await tx.get(slotRef);
       if (!slotDoc.exists || slotDoc.data()?.type !== 'slot') {
         throw new Error('Slot not found');
@@ -295,6 +366,7 @@ export class FirestoreAppointmentRepository implements IAppointmentRepository {
       }
       tx.update(slotRef, { booked: true });
       tx.update(appointmentRef, { status: 'pending' });
+      return docToAppointment(appointmentId, { ...data, status: 'pending' });
     });
   }
 }

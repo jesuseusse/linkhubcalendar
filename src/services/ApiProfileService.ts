@@ -7,6 +7,7 @@ import {
   ThemeDto,
   CreateCalendarSlotDto,
   PublicProfileDto,
+  PublicAppointmentStatusDto,
   PublicCalendarDto,
   AppointmentDto,
   CreateAppointmentDto,
@@ -89,6 +90,13 @@ export class ApiProfileService implements IProfileService {
 
   async bookAppointment(username: string, dto: CreateAppointmentDto | CreateScheduleBookingDto): Promise<AppointmentDto> {
     return apiClient(`/api/u/${username}/appointments`, { method: 'POST', body: JSON.stringify(dto) });
+  }
+
+  async getPublicAppointmentStatus(username: string, appointmentId: string): Promise<PublicAppointmentStatusDto | null> {
+    const res = await fetch(`/api/u/${username}/appointments/${appointmentId}`, { cache: 'no-store' });
+    if (res.status === 404) return null;
+    if (!res.ok) throw new Error('Request failed');
+    return res.json();
   }
 
   async getAppointments(_token: string, page: number, filter?: 'upcoming' | 'past'): Promise<PaginatedAppointmentsDto> {

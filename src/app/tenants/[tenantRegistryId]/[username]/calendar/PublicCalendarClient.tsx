@@ -44,13 +44,22 @@ function storageKey(username: string) {
 	return `linkhub_appointment_${username}`;
 }
 
+function clearStoredAppointment(username: string) {
+	try {
+		localStorage.removeItem(storageKey(username));
+	} catch {
+		// ignore
+	}
+}
+
 function loadStoredAppointment(username: string): StoredAppointment | null {
 	try {
 		const raw = localStorage.getItem(storageKey(username));
 		if (!raw) return null;
 		const stored: StoredAppointment = JSON.parse(raw);
 		const today = format(new Date(), 'yyyy-MM-dd');
-		if (stored.date < today) {
+		// Entries without a backend id (saved before validation existed) can't be verified
+		if (stored.date < today || !stored.id) {
 			localStorage.removeItem(storageKey(username));
 			return null;
 		}
@@ -96,9 +105,33 @@ export function PublicCalendarClient({
 	const [reservedAppointment, setReservedAppointment] =
 		useState<StoredAppointment | null>(null);
 
+	// The remembered appointment is only shown if the backend still has it active. If it was
+	// cancelled (or deleted) the localStorage entry is removed so the visitor can book freely.
 	useEffect(() => {
 		const stored = loadStoredAppointment(username);
-		if (stored) setReservedAppointment(stored);
+		if (!stored) return;
+		let cancelled = false;
+		profileService
+			.getPublicAppointmentStatus(username, stored.id)
+			.then(remote => {
+				if (cancelled) return;
+				const stillActive =
+					remote !== null &&
+					remote.status !== 'cancelled' &&
+					remote.createdAt === stored.createdAt;
+				if (stillActive) {
+					setReservedAppointment(stored);
+				} else {
+					clearStoredAppointment(username);
+				}
+			})
+			.catch(() => {
+				// Network/server error: can't tell — keep the entry and trust it until the next visit
+				if (!cancelled) setReservedAppointment(stored);
+			});
+		return () => {
+			cancelled = true;
+		};
 	}, [username]);
 
 	const fetchMonth = useCallback(
@@ -169,8 +202,10 @@ export function PublicCalendarClient({
 						...data
 					}
 				: { slotId: slot.id, ...data };
-			await profileService.bookAppointment(username, dto);
+			const booked = await profileService.bookAppointment(username, dto);
 			const stored: StoredAppointment = {
+				id: booked.id,
+				createdAt: booked.createdAt,
 				name: data.name,
 				date: slot.date,
 				startTime: slot.startTime,

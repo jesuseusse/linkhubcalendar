@@ -9,10 +9,10 @@ export function SlotTakenModal({ onClose }: Props) {
 		<div className='fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/40'>
 			<div className='w-full sm:max-w-sm bg-background border border-border p-6'>
 				<p className='text-sm font-semibold text-foreground mb-2'>
-					Horario ya fué agendado
+					Ya hay otra cita en este horario
 				</p>
 				<p className='text-sm text-muted-foreground mb-5'>
-					Vuelva a agendar en otro horario disponible.
+					Se necesita reagendar desde el enlace público de nuevo.
 				</p>
 				<button
 					onClick={onClose}
